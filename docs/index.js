@@ -1,5 +1,5 @@
 import s from 'sin'
-import dropdown from '../src/theme.js'
+import Dropdown from '../src/theme.js'
 
 s.title = 'Sinewy — Documentation'
 s.css.reset``
@@ -763,7 +763,7 @@ function DropdownPage({}, [], { route }) {
             s`p`('The themed facade keeps the headless part structure and remains open to normal Sin style extension.'),
             s`div`(
               Example(DropdownExample()),
-              Code(`import dropdown from 'sinewy/theme'\n\ndropdown(\n  dropdown.trigger({ variant: 'outline', color: 'accent' },\n    'Open menu',\n    dropdown.triggerIcon()\n  ),\n  dropdown.content({ size: '2', variant: 'soft', color: 'indigo' },\n    dropdown.item('Edit'),\n    dropdown.checkbox({ checked: true },\n      dropdown.indicator('✓'),\n      'Notifications'\n    ),\n    dropdown.item({ color: 'red' }, 'Delete')\n  )\n)`)
+              Code(`import Dropdown from 'sinewy/theme'\n\nDropdown(\n  Dropdown.Trigger({ variant: 'outline', color: 'accent' },\n    'Open menu',\n    Dropdown.TriggerIcon()\n  ),\n  Dropdown.Content({ size: '2', variant: 'soft', color: 'indigo' },\n    Dropdown.Item('Edit'),\n    Dropdown.Checkbox({ checked: true },\n      Dropdown.Indicator('✓'),\n      'Notifications'\n    ),\n    Dropdown.Item({ color: 'red' }, 'Delete')\n  )\n)`)
             )
           ),
           s`section#theme`(
@@ -810,18 +810,18 @@ function DropdownPage({}, [], { route }) {
           s`section#import`(
             s`h2`('Import'),
             s`h3`('Headless'),
-            Code(`import { dropdown } from 'sinewy'`),
+            Code(`import { Dropdown } from 'sinewy'`),
             s`h3`('Themed'),
-            Code(`import dropdown from 'sinewy/theme'`)
+            Code(`import Dropdown from 'sinewy/theme'`)
           ),
           s`section#anatomy`(
             s`h2`('Anatomy'),
-            s`p`('The root is directly callable. Attached parts stay terse because they are already scoped by the dropdown namespace.'),
+            s`p`('The root is directly callable. Component identifiers use PascalCase, while callbacks retain Sin\'s lower-case event naming.'),
             Anatomy(
-              s`code`('dropdown'), s`span`('→'),
-              s`code`('.trigger'), s`span`('+'),
-              s`code`('.content'), s`span`('→'),
-              s`code`('.item / .checkbox / .radio / .sub')
+              s`code`('Dropdown'), s`span`('→'),
+              s`code`('.Trigger'), s`span`('+'),
+              s`code`('.Content'), s`span`('→'),
+              s`code`('.Item / .Checkbox / .Radio / .Sub')
             )
           ),
           s`section#status`(
@@ -851,24 +851,24 @@ function DropdownPage({}, [], { route }) {
 const DropdownExample = s(() => {
   const notifications = s.live(true)
 
-  return () => dropdown(
-    dropdown.trigger({ variant: 'outline', color: 'accent', size: '2' },
+  return () => Dropdown(
+    Dropdown.Trigger({ variant: 'outline', color: 'accent', size: '2' },
       'Open menu',
-      dropdown.triggerIcon()
+      Dropdown.TriggerIcon()
     ),
-    dropdown.content({ align: 'start', offset: 7, variant: 'soft', color: 'indigo' },
-      dropdown.label('Workspace'),
-      dropdown.item({ shortcut: '⌘ E' }, 'Edit details'),
-      dropdown.checkbox({ bind: notifications },
-        dropdown.indicator('✓'),
+    Dropdown.Content({ align: 'start', offset: 7, variant: 'soft', color: 'indigo' },
+      Dropdown.Label('Workspace'),
+      Dropdown.Item({ shortcut: '⌘ E' }, 'Edit details'),
+      Dropdown.Checkbox({ bind: notifications },
+        Dropdown.Indicator('✓'),
         'Notifications'
       ),
-      dropdown.separator(),
-      dropdown.sub(
-        dropdown.subtrigger('Share'),
-        dropdown.subcontent(
-          dropdown.item('Copy link'),
-          dropdown.item('Invite people')
+      Dropdown.Separator(),
+      Dropdown.Sub(
+        Dropdown.SubTrigger('Share'),
+        Dropdown.SubContent(
+          Dropdown.Item('Copy link'),
+          Dropdown.Item('Invite people')
         )
       )
     )
@@ -878,17 +878,17 @@ const DropdownExample = s(() => {
 function ThemePreview({ label, size = '2', variant = 'solid', color, highContrast = false, dark = false }) {
   return ThemeOption({ data: { dark: dark || null } },
     s`span`(label),
-    dropdown(
-      dropdown.trigger({
+    Dropdown(
+      Dropdown.Trigger({
         size,
         variant: variant === 'soft' ? 'soft' : 'outline',
         color,
         highContrast
-      }, 'Open', dropdown.triggerIcon()),
-      dropdown.content({ size, variant, color, highContrast, align: 'start', offset: 6 },
-        dropdown.item({ shortcut: '⌘ E' }, 'Edit'),
-        dropdown.checkbox({ checked: true }, dropdown.indicator('✓'), 'Enabled'),
-        dropdown.item({ color: 'red' }, 'Delete')
+      }, 'Open', Dropdown.TriggerIcon()),
+      Dropdown.Content({ size, variant, color, highContrast, align: 'start', offset: 6 },
+        Dropdown.Item({ shortcut: '⌘ E' }, 'Edit'),
+        Dropdown.Checkbox({ checked: true }, Dropdown.Indicator('✓'), 'Enabled'),
+        Dropdown.Item({ color: 'red' }, 'Delete')
       )
     )
   )

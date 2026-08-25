@@ -1,2 +1,2 @@
-export { default as dropdown } from './dropdown.js'
+export { default as Dropdown } from './dropdown.js'
 export type * from './dropdown.js'

@@ -1,6 +1,6 @@
 import s from 'sin'
 import t from 'sin/test'
-import dropdown from '../src/dropdown.js'
+import Dropdown from '../src/dropdown.js'
 
 t.timeout = 2000
 
@@ -33,9 +33,9 @@ function withHydration(html, defaultOpen, run) {
   document.body.append(host)
   const serverTrigger = host.querySelector('[aria-haspopup="menu"]')
   const serverContent = host.querySelector('[role="menu"]')
-  const mounted = s.mount(host, () => dropdown({ defaultOpen },
-    dropdown.trigger('Actions'),
-    dropdown.content(dropdown.item('Alpha'))
+  const mounted = s.mount(host, () => Dropdown({ defaultOpen },
+    Dropdown.Trigger('Actions'),
+    Dropdown.Content(Dropdown.Item('Alpha'))
   ))
   const menu = {
     host,

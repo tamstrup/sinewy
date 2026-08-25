@@ -24,7 +24,7 @@ s.css([`
   }
 `])
 
-const dropdown = s(({ id, defaultOpen = false }, children, context) => {
+const Dropdown = s(({ id, defaultOpen = false }, [], context) => {
   const base = id || nextId(context)
   const openState = selectionState(defaultOpen, context)
   const state = {
@@ -82,7 +82,7 @@ const dropdown = s(({ id, defaultOpen = false }, children, context) => {
   }
 })
 
-dropdown.trigger = s(({
+Dropdown.Trigger = s(({
   as,
   disabled = false,
   dom,
@@ -156,18 +156,18 @@ dropdown.trigger = s(({
   }, children)
 })
 
-dropdown.content = s((attrs, children, context) => {
+Dropdown.Content = s(({}, [], context) => {
   const state = useDropdown(context, 'content')
 
   return (attrs, children, context) => menuContent(state, attrs, children, context)
 })
 
-dropdown.item = s((attrs, children, context) => {
+Dropdown.Item = s(({}, [], context) => {
   const state = useDropdown(context, 'item')
   return (attrs, children, context) => menuItem(state, attrs, children, context)
 })
 
-dropdown.checkbox = s(({ defaultChecked = false }, children, context) => {
+Dropdown.Checkbox = s(({ defaultChecked = false }, [], context) => {
   const dropdownState = useDropdown(context, 'checkbox')
   const local = selectionState(defaultChecked, context)
   const indicator = s.live(normalizeChecked(defaultChecked))
@@ -201,7 +201,7 @@ dropdown.checkbox = s(({ defaultChecked = false }, children, context) => {
   }
 })
 
-dropdown.radioGroup = s(({ defaultValue }, children, context) => {
+Dropdown.RadioGroup = s(({ defaultValue }, [], context) => {
   useDropdown(context, 'radioGroup')
   const local = selectionState(defaultValue, context)
   const group = {}
@@ -233,12 +233,12 @@ dropdown.radioGroup = s(({ defaultValue }, children, context) => {
   }
 })
 
-dropdown.radio = s((attrs, children, context) => {
+Dropdown.Radio = s(({}, [], context) => {
   const dropdownState = useDropdown(context, 'radio')
   const group = context[$radioGroup]
   const indicator = s.live(false)
   if (!group)
-    throw new Error('dropdown.radio must be used inside dropdown.radioGroup')
+    throw new Error('Dropdown.Radio must be used inside Dropdown.RadioGroup')
 
   return ({ value, ...attrs }, children, context) => {
     const current = readSelection(group.local, group.bind, group.controlled)
@@ -265,7 +265,7 @@ dropdown.radio = s((attrs, children, context) => {
   }
 })
 
-dropdown.sub = s(({ id, defaultOpen = false }, children, context) => {
+Dropdown.Sub = s(({ id, defaultOpen = false }, [], context) => {
   const parent = useDropdown(context, 'sub')
   const base = id || nextId(context)
   const openState = selectionState(defaultOpen, context)
@@ -335,7 +335,7 @@ dropdown.sub = s(({ id, defaultOpen = false }, children, context) => {
   }
 })
 
-dropdown.subtrigger = s(({
+Dropdown.SubTrigger = s(({
   as,
   disabled = false,
   dom,
@@ -421,10 +421,10 @@ dropdown.subtrigger = s(({
   }, children, context)
 })
 
-dropdown.subcontent = s((attrs, children, context) => {
+Dropdown.SubContent = s(({}, [], context) => {
   const state = useDropdown(context, 'subcontent')
   if (!state.parent)
-    throw new Error('dropdown.subcontent must be used inside dropdown.sub')
+    throw new Error('Dropdown.SubContent must be used inside Dropdown.Sub')
 
   return ({ onpointerenter, onpointerleave, ...attrs }, children, context) => menuContent(state, {
     ...attrs,
@@ -441,10 +441,10 @@ dropdown.subcontent = s((attrs, children, context) => {
   }, children, context)
 })
 
-dropdown.indicator = s((attrs, children, context) => {
+Dropdown.Indicator = s(({}, [], context) => {
   const selection = context[$indicator]
   if (!selection)
-    throw new Error('dropdown.indicator must be used inside dropdown.checkbox or dropdown.radio')
+    throw new Error('Dropdown.Indicator must be used inside Dropdown.Checkbox or Dropdown.Radio')
 
   const unobserve = selection.observe(context.redraw)
   context.onremove(unobserve)
@@ -517,7 +517,7 @@ function menuItem(state, {
   }, children)
 }
 
-dropdown.group = s(({ ariaLabel, ...attrs }, children) =>
+Dropdown.Group = s(({ ariaLabel, ...attrs }, children) =>
   s`div`({
     ...attrs,
     role: 'group',
@@ -525,16 +525,16 @@ dropdown.group = s(({ ariaLabel, ...attrs }, children) =>
   }, children)
 )
 
-dropdown.label = s((attrs, children) =>
+Dropdown.Label = s((attrs, children) =>
   s`div`(attrs, children)
 )
 
-dropdown.separator = s((attrs, children) =>
+Dropdown.Separator = s((attrs, children) =>
   s`div`({ ...attrs, role: 'separator' }, children)
 )
 
-export { dropdown }
-export default dropdown
+export { Dropdown }
+export default Dropdown
 
 function mountContent(state, element) {
   mountPart(state, 'content', element)
@@ -543,7 +543,7 @@ function mountContent(state, element) {
 
 function mountPart(state, part, element) {
   if (import.meta.dev && state[part] && state[part] !== element && state[part].isConnected)
-    console.warn('dropdown.' + part + ' should only be rendered once per dropdown state scope')
+    console.warn('Dropdown.' + componentPartName(part) + ' should only be rendered once per Dropdown state scope')
   state[part] = element
 }
 
@@ -815,10 +815,28 @@ function itemText(item) {
   return (item.dataset.textValue || item.textContent).trim().toLocaleLowerCase()
 }
 
+function componentPartName(part) {
+  return {
+    trigger: 'Trigger',
+    content: 'Content',
+    item: 'Item',
+    checkbox: 'Checkbox',
+    radioGroup: 'RadioGroup',
+    radio: 'Radio',
+    indicator: 'Indicator',
+    group: 'Group',
+    label: 'Label',
+    separator: 'Separator',
+    sub: 'Sub',
+    subtrigger: 'SubTrigger',
+    subcontent: 'SubContent'
+  }[part] || part
+}
+
 function useDropdown(context, part) {
   const state = context[$dropdown]
   if (!state)
-    throw new Error('dropdown.' + part + ' must be used inside dropdown')
+    throw new Error('Dropdown.' + componentPartName(part) + ' must be used inside Dropdown')
   return state
 }
 

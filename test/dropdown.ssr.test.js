@@ -1,14 +1,14 @@
 import s from 'sin'
 import t from 'sin/test'
 import ssr from 'sin/ssr'
-import { dropdown } from '../src/index.js'
-import themed from '../src/theme.js'
+import { Dropdown } from '../src/index.js'
+import Themed from '../src/theme.js'
 
 t`dropdown ssr`(
   t`renders deterministic relationships`(async() => {
-    const html = await toHtml(() => dropdown(
-      dropdown.trigger('Actions'),
-      dropdown.content(dropdown.item('Alpha'))
+    const html = await toHtml(() => Dropdown(
+      Dropdown.Trigger('Actions'),
+      Dropdown.Content(Dropdown.Item('Alpha'))
     ))
 
     t.is(true, html.includes('id="sinewy-dropdown-1-trigger"'))
@@ -18,9 +18,9 @@ t`dropdown ssr`(
   }),
 
   t`restarts generated ids for independent renders`(async() => {
-    const render = () => toHtml(() => dropdown(
-      dropdown.trigger('Actions'),
-      dropdown.content(dropdown.item('Alpha'))
+    const render = () => toHtml(() => Dropdown(
+      Dropdown.Trigger('Actions'),
+      Dropdown.Content(Dropdown.Item('Alpha'))
     ))
     const [first, second] = await Promise.all([render(), render()])
     const id = 'id="sinewy-dropdown-1-trigger"'
@@ -29,13 +29,13 @@ t`dropdown ssr`(
 
   t`keeps sibling ids unique`(async() => {
     const html = await toHtml(() => [
-      dropdown(
-        dropdown.trigger('First'),
-        dropdown.content(dropdown.item('Alpha'))
+      Dropdown(
+        Dropdown.Trigger('First'),
+        Dropdown.Content(Dropdown.Item('Alpha'))
       ),
-      dropdown(
-        dropdown.trigger('Second'),
-        dropdown.content(dropdown.item('Beta'))
+      Dropdown(
+        Dropdown.Trigger('Second'),
+        Dropdown.Content(Dropdown.Item('Beta'))
       )
     ])
 
@@ -44,9 +44,9 @@ t`dropdown ssr`(
   }),
 
   t`serializes initially open state for hydration`(async() => {
-    const html = await toHtml(() => dropdown({ defaultOpen: true },
-      dropdown.trigger('Actions'),
-      dropdown.content(dropdown.item('Alpha'))
+    const html = await toHtml(() => Dropdown({ defaultOpen: true },
+      Dropdown.Trigger('Actions'),
+      Dropdown.Content(Dropdown.Item('Alpha'))
     ))
 
     t.is(true, html.includes('aria-expanded="true"'))
@@ -54,13 +54,13 @@ t`dropdown ssr`(
   }),
 
   t`serializes theme metadata without leaking options`(async() => {
-    const html = await toHtml(() => themed(
-      themed.trigger({ size: '3', variant: 'outline', color: 'accent' },
+    const html = await toHtml(() => Themed(
+      Themed.Trigger({ size: '3', variant: 'outline', color: 'accent' },
         'Actions',
-        themed.triggerIcon()
+        Themed.TriggerIcon()
       ),
-      themed.content({ size: '1' },
-        themed.item({ color: 'red', shortcut: '⌘ D' }, 'Delete')
+      Themed.Content({ size: '1' },
+        Themed.Item({ color: 'red', shortcut: '⌘ D' }, 'Delete')
       )
     ))
 

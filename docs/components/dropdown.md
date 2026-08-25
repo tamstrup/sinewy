@@ -5,7 +5,7 @@ description: Headless and themed dropdown-menu components for Sin.js.
 
 ## Overview
 
-`dropdown` is a headless dropdown-menu component for Sin.js. It provides structure, state, accessibility attributes, focus management, keyboard navigation, and selection behavior. It deliberately provides almost no visual design.
+`Dropdown` is a headless dropdown-menu component for Sin.js. It provides structure, state, accessibility attributes, focus management, keyboard navigation, and selection behavior. It deliberately provides almost no visual design.
 
 The current implementation targets browsers with the Popover API and CSS anchor positioning. It uses a native `popover="auto"`, so top-layer rendering, light dismissal, and Escape handling come from the browser rather than a portal or overlay manager.
 
@@ -22,7 +22,7 @@ See [`../../examples/demo.js`](../../examples/demo.js) for a styled demonstratio
 The package root is the canonical headless entry:
 
 ```js
-import { dropdown } from 'sinewy'
+import { Dropdown } from 'sinewy'
 ```
 
 `sinewy/dropdown` exposes the focused implementation module with default and named exports.
@@ -30,16 +30,16 @@ import { dropdown } from 'sinewy'
 The reusable visual facade has the same structure and is exported separately:
 
 ```js
-import dropdown from 'sinewy/theme'
+import Dropdown from 'sinewy/theme'
 
-dropdown(
-  dropdown.trigger({ variant: 'outline', color: 'accent' },
+Dropdown(
+  Dropdown.Trigger({ variant: 'outline', color: 'accent' },
     'Actions',
-    dropdown.triggerIcon()
+    Dropdown.TriggerIcon()
   ),
-  dropdown.content({ size: '2', variant: 'soft', color: 'indigo' },
-    dropdown.item({ shortcut: '⌘ D' }, 'Duplicate'),
-    dropdown.item({ color: 'red', shortcut: '⌘ ⌫' }, 'Delete')
+  Dropdown.Content({ size: '2', variant: 'soft', color: 'indigo' },
+    Dropdown.Item({ shortcut: '⌘ D' }, 'Duplicate'),
+    Dropdown.Item({ color: 'red', shortcut: '⌘ ⌫' }, 'Delete')
   )
 )
 ```
@@ -48,19 +48,19 @@ The theme adds an inherited `size="1|2|3"` menu scale with 12/14/16px item typog
 
 Content and subcontent accept `variant="solid|soft"`, `color`, and `highContrast`. Triggers accept `variant="solid|soft|outline|ghost"` plus the same color and contrast options. Items inherit the menu palette and variant but may use `color` or `highContrast` as semantic overrides. Available colors are `gray`, `accent`, `red`, `orange`, `amber`, `green`, `teal`, `cyan`, `blue`, `indigo`, `purple`, `pink`, and `crimson`; `accent` currently aliases indigo. The light/dark-aware palette is adapted from Radix Colors 3.0.0 under its MIT license, recorded in [`../../licenses/radix-colors.txt`](../../licenses/radix-colors.txt).
 
-These options become stable `data-*` styling hooks and are not forwarded as invalid DOM attributes. The facade also supplies the `shortcut` convenience, styled indicators, `.shortcut`, and an SVG `.triggerIcon`.
+These options become stable `data-*` styling hooks and are not forwarded as invalid DOM attributes. The facade also supplies the `shortcut` convenience, styled indicators, `.Shortcut`, and an SVG `.TriggerIcon`.
 
 Both the headless and themed modules have adjacent TypeScript declarations. The theme wraps each directly styled headless primitive in an explicit Sin component so call-site template extensions retain the intermediate theme class.
 
 ## API stability
 
-The source-level public names were reviewed and frozen for the current-browser preview on 24 August 2026:
+The source-level public names were reviewed and frozen for the current-browser preview on 25 August 2026:
 
-- callable root: `dropdown`
-- headless parts: `.trigger`, `.content`, `.item`, `.checkbox`, `.radioGroup`, `.radio`, `.indicator`, `.group`, `.label`, `.separator`, `.sub`, `.subtrigger`, and `.subcontent`
-- themed conveniences: `.triggerIcon` and `.shortcut`
+- callable root: `Dropdown`
+- headless parts: `.Trigger`, `.Content`, `.Item`, `.Checkbox`, `.RadioGroup`, `.Radio`, `.Indicator`, `.Group`, `.Label`, `.Separator`, `.Sub`, `.SubTrigger`, and `.SubContent`
+- themed conveniences: `.TriggerIcon` and `.Shortcut`
 
-The short checkbox/radio names are deliberate in the scoped `dropdown.*` namespace. The root is directly callable, so there is no redundant `.root`; native top-layer popovers remove the need for `.portal`. Callbacks use Sin's lower-case event naming, and `bind` remains the Sin-native live-value convenience alongside controlled and uncontrolled state.
+Component identifiers use PascalCase throughout the public API. The short `Checkbox` and `Radio` names are deliberate in the scoped `Dropdown.*` namespace. The root is directly callable, so there is no redundant `.Root`; native top-layer popovers remove the need for `.Portal`. Callbacks retain Sin's lower-case event naming, and `bind` remains the Sin-native live-value convenience alongside controlled and uncontrolled state.
 
 An anchor arrow, modal behavior, outside-interaction hooks, collision padding, and legacy fallbacks are not reserved public parts or attributes. They should be added only when the platform can support a truthful contract. Compatibility-only no-ops are deliberately excluded.
 
@@ -70,25 +70,25 @@ The names are frozen, but production accessibility sign-off still requires keybo
 
 ```js
 import s from 'sin'
-import { dropdown } from 'sinewy'
+import { Dropdown } from 'sinewy'
 
 const selected = s.live('Nothing selected')
 
-const App = () => dropdown(
-  dropdown.trigger('Options'),
+const App = () => Dropdown(
+  Dropdown.Trigger('Options'),
 
-  dropdown.content(
-    dropdown.label('File actions'),
-    dropdown.group({ ariaLabel: 'File actions' },
-      dropdown.item({
+  Dropdown.Content(
+    Dropdown.Label('File actions'),
+    Dropdown.Group({ ariaLabel: 'File actions' },
+      Dropdown.Item({
         textValue: 'Edit',
         onselect: () => selected('Edit')
       }, 'Edit'),
 
-      dropdown.item({ disabled: true }, 'Rename')
+      Dropdown.Item({ disabled: true }, 'Rename')
     ),
-    dropdown.separator(),
-    dropdown.item({
+    Dropdown.Separator(),
+    Dropdown.Item({
       onselect: event => {
         selected('Kept open')
         event.preventDefault()
@@ -100,19 +100,19 @@ const App = () => dropdown(
 s.mount(App)
 ```
 
-`dropdown.trigger`, `dropdown.content`, and `dropdown.item` must render below a `dropdown` root. The root shares one private state object with its parts through Sin context. Rendering one of these parts outside a root throws an error. Development builds also warn when more than one trigger or content is mounted in the same state scope.
+`Dropdown.Trigger`, `Dropdown.Content`, and `Dropdown.Item` must render below a `Dropdown` root. The root shares one private state object with its parts through Sin context. Rendering one of these parts outside a root throws an error. Development builds also warn when more than one trigger or content is mounted in the same state scope.
 
 ## Styling
 
 Every part is a normal Sin component and accepts call-site style extensions:
 
 ```js
-const Trigger = dropdown.trigger`
+const Trigger = Dropdown.Trigger`
   padding 8 12
   border-radius 8
 `
 
-const Content = dropdown.content`
+const Content = Dropdown.Content`
   position-area block-end span-inline-end
   position-try-fallbacks flip-block, flip-inline
   min-width 220
@@ -123,7 +123,7 @@ const Content = dropdown.content`
   box-shadow 0 16px 40px rgb(0 0 0 / 0.16)
 `
 
-const Item = dropdown.item`
+const Item = Dropdown.Item`
   padding 7 9
 
   &[data-highlighted] {
@@ -159,7 +159,7 @@ The palette is expressed through inline `--sinewy-accent-*`, neutral, panel, con
 
 ## API reference
 
-### `dropdown(attrs?, ...children)`
+### `Dropdown(attrs?, ...children)`
 
 Creates a dropdown state scope. It does not render a wrapper element.
 
@@ -178,7 +178,7 @@ Generated IDs are deterministic within a render and are shared through Sin conte
 
 Use only one state mode at a time. `defaultOpen` initializes uncontrolled state. With `open`, the prop remains authoritative and `onopenchange` reports requested transitions. With `bind`, native transitions update the live value and external live-value changes update the popover.
 
-### `dropdown.trigger(attrs?, ...children)`
+### `Dropdown.Trigger(attrs?, ...children)`
 
 Renders the button that toggles the menu.
 
@@ -202,13 +202,13 @@ It owns these attributes:
 
 It accepts ordinary button attributes. A custom component must forward the received DOM attributes, event handlers, and `dom` callback to its interactive element. Native buttons use `popovertarget`; other rendered elements are toggled through the Popover API by the internal click handler.
 
-### `dropdown.content(attrs?, ...children)`
+### `Dropdown.Content(attrs?, ...children)`
 
 Renders the menu as a `div` with `popover="auto"` and `role="menu"`.
 
 | Attribute | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` | Requested CSS anchor side. Subcontent defaults to `'right'`. |
+| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` | Requested CSS anchor side. `SubContent` defaults to `'right'`. |
 | `align` | `'start' \| 'center' \| 'end'` | `'start'` | Alignment within the requested anchor side. |
 | `offset` | `number \| CSS length` | `0` | Gap from the trigger; numbers are pixels. |
 | `alignOffset` | `number \| CSS length` | `0` | Cross-axis adjustment; numbers are pixels. |
@@ -223,7 +223,7 @@ Renders the menu as a `div` with `popover="auto"` and `role="menu"`.
 
 The component owns `id`, `popover`, `role`, `data-state`, `data-side`, and `data-align`. It exposes `--sinewy-trigger-width`, `--sinewy-trigger-height`, and `--sinewy-transform-origin` for theme CSS. The demo uses the transform-origin variable and disables motion under `prefers-reduced-motion: reduce`. `data-side`, `data-align`, and the transform origin currently describe the requested placement, not a collision-resolved fallback.
 
-### `dropdown.item(attrs?, ...children)`
+### `Dropdown.Item(attrs?, ...children)`
 
 Renders an actionable `button` with `role="menuitem"` and roving `tabIndex`.
 
@@ -241,7 +241,7 @@ The component owns `role`, `tabIndex`, `aria-disabled`, `data-disabled`, and `da
 
 Disabled items use ARIA disabled state instead of the native `disabled` attribute so the menu can consistently control pointer and focus semantics.
 
-### `dropdown.checkbox(attrs?, ...children)`
+### `Dropdown.Checkbox(attrs?, ...children)`
 
 Renders a checkable item with `role="menuitemcheckbox"`. It supports boolean and indeterminate state.
 
@@ -252,24 +252,24 @@ Renders a checkable item with `role="menuitemcheckbox"`. It supports boolean and
 | `bind` | `s.Live<boolean \| 'indeterminate'>` | — | Optional two-way live binding. |
 | `oncheckedchange` | `(checked, event) => void` | — | Called after activation with the next boolean value. |
 | `onselect` | `(event, element) => void` | — | Prevent default to toggle without closing the menu. |
-| `disabled`, `as`, `textValue` | as for `.item` | — | Uses the same composition, disabled, and typeahead behavior as an ordinary item. |
+| `disabled`, `as`, `textValue` | as for `.Item` | — | Uses the same composition, disabled, and typeahead behavior as an ordinary item. |
 
 The item exposes `aria-checked="true|false|mixed"` and `data-state="checked|unchecked|indeterminate"`. Activating an indeterminate checkbox changes it to `true`.
 
-### `dropdown.indicator(attrs?, ...children)`
+### `Dropdown.Indicator(attrs?, ...children)`
 
 Renders a `span` inside a checkbox when its state is checked or indeterminate. Pass `forceMount: true` to keep it mounted while unchecked; in that case, use `data-state` to style visibility.
 
 ```js
-dropdown.checkbox({ bind: notifications },
-  dropdown.indicator('✓'),
+Dropdown.Checkbox({ bind: notifications },
+  Dropdown.Indicator('✓'),
   'Notifications'
 )
 ```
 
 An indicator exposes `data-state="checked|unchecked|indeterminate"` and defaults to `aria-hidden="true"`. It must be nested in a checkbox or radio item.
 
-### `dropdown.radioGroup(attrs?, ...children)`
+### `Dropdown.RadioGroup(attrs?, ...children)`
 
 Provides exclusive selection state to nested radio items and renders a `div` with `role="group"`.
 
@@ -281,18 +281,18 @@ Provides exclusive selection state to nested radio items and renders a `div` wit
 | `onvaluechange` | `(value, event) => void` | — | Called when activation selects a different value. |
 | `ariaLabel` | `string` | — | Convenience alias for `aria-label`. |
 
-### `dropdown.radio(attrs?, ...children)`
+### `Dropdown.Radio(attrs?, ...children)`
 
-Renders a `button` with `role="menuitemradio"`. It accepts a required `value` plus the same `disabled`, `as`, `textValue`, `onselect`, and DOM event attributes as `.item`.
+Renders a `button` with `role="menuitemradio"`. It accepts a required `value` plus the same `disabled`, `as`, `textValue`, `onselect`, and DOM event attributes as `.Item`.
 
 ```js
-dropdown.radioGroup({ bind: density, ariaLabel: 'Density' },
-  dropdown.radio({ value: 'compact' },
-    dropdown.indicator('•'),
+Dropdown.RadioGroup({ bind: density, ariaLabel: 'Density' },
+  Dropdown.Radio({ value: 'compact' },
+    Dropdown.Indicator('•'),
     'Compact'
   ),
-  dropdown.radio({ value: 'comfortable' },
-    dropdown.indicator('•'),
+  Dropdown.Radio({ value: 'comfortable' },
+    Dropdown.Indicator('•'),
     'Comfortable'
   )
 )
@@ -300,43 +300,43 @@ dropdown.radioGroup({ bind: density, ariaLabel: 'Density' },
 
 The selected item exposes `aria-checked="true"` and `data-state="checked"`; its siblings expose false/unchecked state. Activation closes by default. Prevent `onselect` to change the value while leaving the menu open.
 
-### `dropdown.group(attrs?, ...children)`
+### `Dropdown.Group(attrs?, ...children)`
 
 Renders a `div` with `role="group"`. `ariaLabel` is a convenience alias for `aria-label`; other DOM attributes are forwarded.
 
 ```js
-dropdown.group({ ariaLabel: 'File actions' },
-  dropdown.label('File actions'),
-  dropdown.item('Edit')
+Dropdown.Group({ ariaLabel: 'File actions' },
+  Dropdown.Label('File actions'),
+  Dropdown.Item('Edit')
 )
 ```
 
-### `dropdown.label(attrs?, ...children)`
+### `Dropdown.Label(attrs?, ...children)`
 
 Renders an unstyled, non-focusable `div`. It adds no role or automatic relationship, allowing the consumer to choose visible or ARIA labeling structure.
 
-### `dropdown.separator(attrs?, ...children)`
+### `Dropdown.Separator(attrs?, ...children)`
 
 Renders a `div` with `role="separator"`.
 
-### `dropdown.sub(attrs?, ...children)`
+### `Dropdown.Sub(attrs?, ...children)`
 
 Creates a nested menu state scope without rendering a wrapper. It accepts `defaultOpen`, controlled `open`, `bind: s.Live<boolean>`, `onbeforeopenchange`, `onopenchange`, and `loop` with the same meanings as the root. `openDelay` defaults to 100 ms and `closeDelay` to 300 ms for pointer interaction.
 
-### `dropdown.subtrigger(attrs?, ...children)`
+### `Dropdown.SubTrigger(attrs?, ...children)`
 
 Renders the submenu trigger as a menu item with `aria-haspopup="menu"`, synchronized expanded state, and a native popover target. It accepts `as`, `disabled`, `textValue`, and ordinary item event attributes.
 
-### `dropdown.subcontent(attrs?, ...children)`
+### `Dropdown.SubContent(attrs?, ...children)`
 
-Renders a nested `popover="auto"` menu. It accepts the same attributes as `.content`, with `side` defaulting to `right`.
+Renders a nested `popover="auto"` menu. It accepts the same attributes as `.Content`, with `side` defaulting to `right`.
 
 ```js
-dropdown.sub(
-  dropdown.subtrigger('More'),
-  dropdown.subcontent(
-    dropdown.item({ onselect: archive }, 'Archive'),
-    dropdown.item({ onselect: duplicate }, 'Duplicate')
+Dropdown.Sub(
+  Dropdown.SubTrigger('More'),
+  Dropdown.SubContent(
+    Dropdown.Item({ onselect: archive }, 'Archive'),
+    Dropdown.Item({ onselect: duplicate }, 'Duplicate')
   )
 )
 ```

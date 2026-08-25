@@ -1,14 +1,14 @@
 import s from 'sin'
 import t from 'sin/test'
-import dropdown from '../src/theme.js'
+import Dropdown from '../src/theme.js'
 
 t.timeout = 2000
 
-const ExtendedContent = dropdown.content`
+const ExtendedContent = Dropdown.Content`
   max-height none
 `
 
-const ExtendedTrigger = dropdown.trigger`
+const ExtendedTrigger = Dropdown.Trigger`
   margin-inline-start 7
 `
 
@@ -133,10 +133,10 @@ t`dropdown theme`(
   })),
 
   t`reserves an indicator gutter across a checkable menu`(() => withMenu([
-    dropdown.item({ data: { test: 'plain' } }, 'Plain'),
-    dropdown.group(
-      dropdown.checkbox({ data: { test: 'check' }, checked: true },
-        dropdown.indicator('✓'),
+    Dropdown.Item({ data: { test: 'plain' } }, 'Plain'),
+    Dropdown.Group(
+      Dropdown.Checkbox({ data: { test: 'check' }, checked: true },
+        Dropdown.Indicator('✓'),
         'Check'
       )
     )
@@ -148,14 +148,14 @@ t`dropdown theme`(
   })),
 
   t`keeps nested menu gutters independent`(() => withMenu([
-    dropdown.item({ data: { test: 'parent' } }, 'Parent'),
-    dropdown.sub(
-      dropdown.subtrigger({ data: { test: 'subtrigger' } }, 'More'),
-      dropdown.subcontent(
-        dropdown.item({ data: { test: 'nested' } }, 'Nested'),
-        dropdown.radioGroup({ value: 'one' },
-          dropdown.radio({ data: { test: 'radio' }, value: 'one' },
-            dropdown.indicator('•'),
+    Dropdown.Item({ data: { test: 'parent' } }, 'Parent'),
+    Dropdown.Sub(
+      Dropdown.SubTrigger({ data: { test: 'subtrigger' } }, 'More'),
+      Dropdown.SubContent(
+        Dropdown.Item({ data: { test: 'nested' } }, 'Nested'),
+        Dropdown.RadioGroup({ value: 'one' },
+          Dropdown.Radio({ data: { test: 'radio' }, value: 'one' },
+            Dropdown.Indicator('•'),
             'One'
           )
         )
@@ -169,17 +169,17 @@ t`dropdown theme`(
   })),
 
   t`inherits menu size through every themed part`(() => withMenu([
-    dropdown.label({ data: { test: 'label' } }, 'Density'),
-    dropdown.item({ data: { test: 'large' } }, 'Large'),
-    dropdown.checkbox({ data: { test: 'check' }, checked: true },
-      dropdown.indicator({ data: { test: 'indicator' } }, '✓'),
+    Dropdown.Label({ data: { test: 'label' } }, 'Density'),
+    Dropdown.Item({ data: { test: 'large' } }, 'Large'),
+    Dropdown.Checkbox({ data: { test: 'check' }, checked: true },
+      Dropdown.Indicator({ data: { test: 'indicator' } }, '✓'),
       'Check'
     ),
-    dropdown.item({ data: { test: 'compact' }, size: '1' }, 'Compact override'),
-    dropdown.sub(
-      dropdown.subtrigger({ data: { test: 'subtrigger' } }, 'More'),
-      dropdown.subcontent({ data: { test: 'subcontent' } },
-        dropdown.item({ data: { test: 'nested' } }, 'Nested')
+    Dropdown.Item({ data: { test: 'compact' }, size: '1' }, 'Compact override'),
+    Dropdown.Sub(
+      Dropdown.SubTrigger({ data: { test: 'subtrigger' } }, 'More'),
+      Dropdown.SubContent({ data: { test: 'subcontent' } },
+        Dropdown.Item({ data: { test: 'nested' } }, 'Nested')
       )
     )
   ], host => {
@@ -195,11 +195,11 @@ t`dropdown theme`(
   }, { size: '3' })),
 
   t`allows nested menus to override inherited theme axes`(() => withMenu([
-    dropdown.item({ data: { test: 'parent' } }, 'Parent'),
-    dropdown.sub(
-      dropdown.subtrigger('More'),
-      dropdown.subcontent({ size: '3', variant: 'solid', color: 'cyan' },
-        dropdown.item({ data: { test: 'nested' } }, 'Nested')
+    Dropdown.Item({ data: { test: 'parent' } }, 'Parent'),
+    Dropdown.Sub(
+      Dropdown.SubTrigger('More'),
+      Dropdown.SubContent({ size: '3', variant: 'solid', color: 'cyan' },
+        Dropdown.Item({ data: { test: 'nested' } }, 'Nested')
       )
     )
   ], host => {
@@ -226,9 +226,9 @@ t`dropdown theme`(
 function withMenu(children, run, contentAttrs = {}) {
   const host = document.createElement('div')
   document.body.append(host)
-  const mounted = s.mount(host, () => dropdown(
-    dropdown.trigger('Actions'),
-    dropdown.content(contentAttrs, ...children)
+  const mounted = s.mount(host, () => Dropdown(
+    Dropdown.Trigger('Actions'),
+    Dropdown.Content(contentAttrs, ...children)
   ))
 
   return Promise.resolve()
@@ -245,15 +245,15 @@ function withTheme(options, run) {
   const host = document.createElement('div')
   options.colorScheme && (host.style.colorScheme = options.colorScheme)
   document.body.append(host)
-  const Content = options.content || dropdown.content
-  const Trigger = options.Trigger || dropdown.trigger
-  const mounted = s.mount(host, () => dropdown(
+  const Content = options.content || Dropdown.Content
+  const Trigger = options.Trigger || Dropdown.Trigger
+  const mounted = s.mount(host, () => Dropdown(
     Trigger(options.trigger || {},
       'Actions',
-      options.icon && dropdown.triggerIcon()
+      options.icon && Dropdown.TriggerIcon()
     ),
     Content(options.contentAttrs || {},
-      dropdown.item(options.item || {}, 'Delete')
+      Dropdown.Item(options.item || {}, 'Delete')
     )
   ))
   const menu = {

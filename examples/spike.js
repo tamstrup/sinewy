@@ -1,5 +1,5 @@
 import s from 'sin'
-import dropdown from '../src/dropdown.js'
+import Dropdown from '../src/dropdown.js'
 
 s.css.reset``
 
@@ -66,7 +66,7 @@ const Demo = s`div
   flex-wrap wrap
 `
 
-const Trigger = dropdown.trigger`
+const Trigger = Dropdown.Trigger`
   display inline-flex
   align-items center
   gap 8
@@ -107,7 +107,7 @@ const Warning = s`p
   font-size 13
 `
 
-const Menu = dropdown.content`
+const Menu = Dropdown.Content`
   position-area block-end span-inline-end
   position-try-fallbacks flip-block, flip-inline, flip-block flip-inline
   justify-self start
@@ -145,7 +145,7 @@ const Menu = dropdown.content`
   }
 `
 
-const MenuItem = dropdown.item`
+const MenuItem = Dropdown.Item`
   width 100%
   min-height 34
   display flex
@@ -180,13 +180,13 @@ const MenuItem = dropdown.item`
   }
 `
 
-const Separator = dropdown.separator`
+const Separator = Dropdown.Separator`
   height 1
   margin 5
   background #e7e5e4
 `
 
-const MenuLabel = dropdown.label`
+const MenuLabel = Dropdown.Label`
   padding 7 9 4
   color #78716c
   font-size 11
@@ -221,7 +221,7 @@ const App = s(({}, [], { doc }) => {
         'This browser does not support the Popover API and CSS anchor positioning required by the spike.'
       ),
 
-      dropdown(
+      Dropdown(
         Demo(
           Trigger(
             'Options',
@@ -233,7 +233,7 @@ const App = s(({}, [], { doc }) => {
 
         Menu({ side: 'bottom', align: 'start' },
           MenuLabel('File actions'),
-          dropdown.group({ ariaLabel: 'File actions' },
+          Dropdown.Group({ ariaLabel: 'File actions' },
             MenuItem({ onselect: () => selected('Edit'), textValue: 'Edit' },
               'Edit',
               s`kbd`('⌘ E')

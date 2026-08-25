@@ -1,5 +1,5 @@
 import s from 'sin'
-import dropdown from '../src/theme.js'
+import Dropdown from '../src/theme.js'
 
 s.css.reset``
 
@@ -26,15 +26,15 @@ s.css`
 
 `
 
-const Menu = dropdown.content
-const Submenu = dropdown.subcontent
-const Item = dropdown.item
-const Checkbox = dropdown.checkbox
-const Radio = dropdown.radio
-const Subtrigger = dropdown.subtrigger
-const MenuLabel = dropdown.label
-const Separator = dropdown.separator
-const Shortcut = dropdown.shortcut
+const Menu = Dropdown.Content
+const Submenu = Dropdown.SubContent
+const Item = Dropdown.Item
+const Checkbox = Dropdown.Checkbox
+const Radio = Dropdown.Radio
+const SubTrigger = Dropdown.SubTrigger
+const MenuLabel = Dropdown.Label
+const Separator = Dropdown.Separator
+const Shortcut = Dropdown.Shortcut
 
 const Page = s`main
   width min(1040px, 100%)
@@ -159,7 +159,7 @@ const Account = s`span
   }
 `
 
-const Trigger = dropdown.trigger`
+const Trigger = Dropdown.Trigger`
   margin-inline-start 4
 `
 
@@ -199,7 +199,7 @@ const PlacementGrid = s`div
   gap 9
 `
 
-const PlacementTrigger = s((attrs, children) => dropdown.trigger({
+const PlacementTrigger = s((attrs, children) => Dropdown.Trigger({
   size: '3',
   variant: 'outline',
   color: 'accent',
@@ -391,7 +391,7 @@ const ScrollProbeInner = s`div
 
 const Link = s((attrs, children) => s`a`(attrs, children))
 const Row = (label, shortcut) => [s`span`(label), shortcut && Shortcut(shortcut)]
-const Indicator = symbol => dropdown.indicator(symbol)
+const Indicator = symbol => Dropdown.Indicator(symbol)
 
 const App = s(({}, [], { doc }) => {
   let support
@@ -430,7 +430,7 @@ const App = s(({}, [], { doc }) => {
         ),
 
         DemoStage(
-          dropdown({ bind: menuOpen },
+          Dropdown({ bind: menuOpen },
             Toolbar(
               Avatar('PS'),
               Account(
@@ -439,7 +439,7 @@ const App = s(({}, [], { doc }) => {
               ),
               Trigger({ color: 'accent' },
                 'Actions',
-                dropdown.triggerIcon()
+                Dropdown.TriggerIcon()
               )
             ),
 
@@ -477,7 +477,7 @@ const App = s(({}, [], { doc }) => {
                 oncheckedchange: checked => lastAction('Autosave ' + (checked ? 'enabled' : 'disabled'))
               }, Indicator(autosave.if('indeterminate', '−', '✓')), Row('Autosave')),
 
-              dropdown.radioGroup({
+              Dropdown.RadioGroup({
                 bind: density,
                 ariaLabel: 'Interface density',
                 onvaluechange: value => lastAction('Density changed to ' + value)
@@ -495,8 +495,8 @@ const App = s(({}, [], { doc }) => {
               ),
 
               Separator(),
-              dropdown.sub({ openDelay: 120, closeDelay: 320 },
-                Subtrigger({ textValue: 'Export' },
+              Dropdown.Sub({ openDelay: 120, closeDelay: 320 },
+                SubTrigger({ textValue: 'Export' },
                   s`span`('Export'),
                   Shortcut('→')
                 ),
@@ -580,13 +580,13 @@ const App = s(({}, [], { doc }) => {
 })
 
 const PlacementDemo = s(({ label, side, align, dir = 'ltr', nested = false }) =>
-  dropdown({ dir },
+  Dropdown({ dir },
     PlacementTrigger(label),
     Menu({ side, align, offset: 7, data: { demoMenu: '' } },
       Item({ onselect: () => {} }, Row('First action')),
       Item({ onselect: () => {} }, Row('Second action')),
-      nested && dropdown.sub(
-        Subtrigger(Row(dir === 'rtl' ? 'قائمة فرعية' : 'Nested menu', dir === 'rtl' ? '←' : '→')),
+      nested && Dropdown.Sub(
+        SubTrigger(Row(dir === 'rtl' ? 'قائمة فرعية' : 'Nested menu', dir === 'rtl' ? '←' : '→')),
         Submenu({ offset: 5, data: { demoMenu: '' } },
           Item(Row(dir === 'rtl' ? 'الخيار الأول' : 'Nested action')),
           Item(Row(dir === 'rtl' ? 'الخيار الثاني' : 'Another action'))
@@ -690,7 +690,7 @@ function EdgeCase({ label, corner, side, align, strategy, viewport }) {
     inline === 'start' ? '12px' : 'auto'
   ].join(' ')
 
-  return dropdown(
+  return Dropdown(
     PlacementTrigger({
       style: {
         position: viewport ? 'fixed' : 'absolute',
@@ -731,7 +731,7 @@ const MovingAnchorLab = s(() => {
       )
     ),
     MovingStage(
-      dropdown(
+      Dropdown(
         PlacementTrigger({
           style: {
             position: 'absolute',
@@ -758,7 +758,7 @@ const OversizedLab = s(() =>
     s`h3`('Oversized content containment'),
     s`p`('Open this menu and resize the window vertically. The menu should stay inside the viewport and scroll internally.'),
     DemoStage(
-      dropdown(
+      Dropdown(
         PlacementTrigger('Open 30-item menu'),
         Menu({
           side: 'bottom',
@@ -781,16 +781,16 @@ const DeepMenuLab = s(() =>
     s`h3`('Three-level submenu'),
     s`p`('Open all levels with pointer or keyboard. Escape should unwind one layer; the deepest action should close the whole tree.'),
     DemoStage(
-      dropdown(
+      Dropdown(
         PlacementTrigger('Open deep menu'),
         Menu({ offset: 7, data: { demoMenu: '', evaluationMenu: '' } },
           Item('Root action'),
-          dropdown.sub(
-            Subtrigger({ textValue: 'First level' }, Row('First level', '→')),
+          Dropdown.Sub(
+            SubTrigger({ textValue: 'First level' }, Row('First level', '→')),
             Submenu({ offset: 5, data: { demoMenu: '', evaluationMenu: '' } },
               Item('First-level action'),
-              dropdown.sub(
-                Subtrigger({ textValue: 'Second level' }, Row('Second level', '→')),
+              Dropdown.Sub(
+                SubTrigger({ textValue: 'Second level' }, Row('Second level', '→')),
                 Submenu({ offset: 5, data: { demoMenu: '', evaluationMenu: '' } },
                   Item('Deep action'),
                   Item('Another deep action')
@@ -825,7 +825,7 @@ const LifecycleLab = s(() => {
         'Cancel opening'
       )
     ),
-    dropdown({
+    Dropdown({
       bind: open,
       onbeforeopenchange: (next, event) => {
         beforeCount(beforeCount() + 1)
@@ -862,7 +862,7 @@ const DetachedAnchorLab = s(() =>
     s`p`('Scroll to the trigger, open it, then scroll it fully away. Record whether your browser hides or leaves the popover visible; this is not yet a guaranteed behavior.'),
     ScrollProbe(
       ScrollProbeInner(
-        dropdown(
+        Dropdown(
           PlacementTrigger('Clipped anchor'),
           Menu({ side: 'top', offset: 7, data: { demoMenu: '', evaluationMenu: '' } },
             Item('Interop result'),

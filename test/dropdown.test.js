@@ -1,10 +1,10 @@
 import s from 'sin'
 import t from 'sin/test'
-import dropdown from '../src/dropdown.js'
+import Dropdown from '../src/dropdown.js'
 
 t.timeout = 2000
 const Anchor = s((attrs, children) => s`a`(attrs, children))
-const StyledCheckbox = dropdown.checkbox`
+const StyledCheckbox = Dropdown.Checkbox`
   color inherit
 `
 
@@ -36,11 +36,11 @@ t`dropdown`(
       const warnings = []
       const warn = console.warn
       console.warn = message => warnings.push(message)
-      const mounted = s.mount(host, () => dropdown(
-        dropdown.trigger('First trigger'),
-        dropdown.trigger('Second trigger'),
-        dropdown.content(dropdown.item('First item')),
-        dropdown.content(dropdown.item('Second item'))
+      const mounted = s.mount(host, () => Dropdown(
+        Dropdown.Trigger('First trigger'),
+        Dropdown.Trigger('Second trigger'),
+        Dropdown.Content(Dropdown.Item('First item')),
+        Dropdown.Content(Dropdown.Item('Second item'))
       ))
 
       try {
@@ -168,7 +168,7 @@ t`dropdown`(
       content: {
         style: { width: '160px', overflow: 'auto' }
       },
-      items: () => dropdown.item({ style: { height: '1000px' } }, 'Tall item')
+      items: () => Dropdown.Item({ style: { height: '1000px' } }, 'Tall item')
     }, async menu => {
       await open(menu)
       const content = menu.content.getBoundingClientRect()
@@ -182,7 +182,7 @@ t`dropdown`(
         side: 'right',
         style: { height: '80px', overflow: 'auto' }
       },
-      items: () => dropdown.item({ style: { width: '1600px' } }, 'Wide item')
+      items: () => Dropdown.Item({ style: { width: '1600px' } }, 'Wide item')
     }, async menu => {
       await open(menu)
       const content = menu.content.getBoundingClientRect()
@@ -232,9 +232,9 @@ t`dropdown`(
       const host = document.createElement('div')
       document.body.append(host)
       let visible = false
-      const mounted = s.mount(host, () => dropdown({ open: visible },
-        dropdown.trigger('Options'),
-        dropdown.content(dropdown.item('Alpha'))
+      const mounted = s.mount(host, () => Dropdown({ open: visible },
+        Dropdown.Trigger('Options'),
+        Dropdown.Content(Dropdown.Item('Alpha'))
       ))
 
       try {
@@ -287,9 +287,9 @@ t`dropdown`(
       let renders = 0
       const View = s(() => () => {
         renders++
-        return dropdown(
-          dropdown.trigger('Options'),
-          dropdown.content(dropdown.item('Alpha'))
+        return Dropdown(
+          Dropdown.Trigger('Options'),
+          Dropdown.Content(Dropdown.Item('Alpha'))
         )
       })
       const mounted = s.mount(host, View)
@@ -387,11 +387,11 @@ t`dropdown`(
       const host = document.createElement('div')
       document.body.append(host)
       let showFirst = true
-      const mounted = s.mount(host, () => dropdown(
-        dropdown.trigger('Options'),
-        dropdown.content(
-          showFirst && dropdown.item({ textValue: 'Alpha' }, 'Alpha'),
-          dropdown.item({ textValue: 'Beta' }, 'Beta')
+      const mounted = s.mount(host, () => Dropdown(
+        Dropdown.Trigger('Options'),
+        Dropdown.Content(
+          showFirst && Dropdown.Item({ textValue: 'Alpha' }, 'Alpha'),
+          Dropdown.Item({ textValue: 'Beta' }, 'Beta')
         )
       ))
 
@@ -452,7 +452,7 @@ t`dropdown`(
     t`ordinary selection closes and restores focus`(() => {
       let selections = 0
       return withMenu({
-        items: () => dropdown.item({ onselect: () => selections++ }, 'Select')
+        items: () => Dropdown.Item({ onselect: () => selections++ }, 'Select')
       }, async menu => {
         await open(menu)
         menu.items[0].click()
@@ -464,7 +464,7 @@ t`dropdown`(
     }),
 
     t`prevented selection stays open`(() => withMenu({
-      items: () => dropdown.item({ onselect: event => event.preventDefault() }, 'Keep open')
+      items: () => Dropdown.Item({ onselect: event => event.preventDefault() }, 'Keep open')
     }, async menu => {
       await open(menu)
       menu.items[0].click()
@@ -475,7 +475,7 @@ t`dropdown`(
     t`prevented onclick suppresses selection`(() => {
       let selections = 0
       return withMenu({
-        items: () => dropdown.item({
+        items: () => Dropdown.Item({
           onclick: event => event.preventDefault(),
           onselect: () => selections++
         }, 'Intercept')
@@ -492,7 +492,7 @@ t`dropdown`(
       t`${keyName === ' ' ? 'Space' : keyName} activates once`(() => {
         let selections = 0
         return withMenu({
-          items: () => dropdown.item({ onselect: () => selections++ }, 'Select')
+          items: () => Dropdown.Item({ onselect: () => selections++ }, 'Select')
         }, async menu => {
           await open(menu)
           key(document.activeElement, keyName)
@@ -507,7 +507,7 @@ t`dropdown`(
       let clicks = 0
       let selections = 0
       return withMenu({
-        items: () => dropdown.item({
+        items: () => Dropdown.Item({
           disabled: true,
           onclick: () => clicks++,
           onselect: () => selections++
@@ -576,7 +576,7 @@ t`dropdown`(
       let selections = 0
       const previous = location.href
       return withMenu({
-        items: () => dropdown.item({
+        items: () => Dropdown.Item({
           as: Anchor,
           href: '#composed-item',
           title: 'Composed item',
@@ -598,8 +598,8 @@ t`dropdown`(
 
   t`checkbox items`(
     t`expose checked state and an indicator`(() => withMenu({
-      items: () => dropdown.checkbox({ defaultChecked: true },
-        dropdown.indicator('✓'),
+      items: () => Dropdown.Checkbox({ defaultChecked: true },
+        Dropdown.Indicator('✓'),
         'Notifications'
       )
     }, ({ items }) => {
@@ -612,7 +612,7 @@ t`dropdown`(
     t`uncontrolled activation toggles and closes`(() => {
       let changed
       return withMenu({
-        items: () => dropdown.checkbox({
+        items: () => Dropdown.Checkbox({
           defaultChecked: false,
           oncheckedchange: next => changed = next
         }, 'Notifications')
@@ -628,8 +628,8 @@ t`dropdown`(
     }),
 
     t`indeterminate activation becomes checked`(() => withMenu({
-      items: () => dropdown.checkbox({ defaultChecked: 'indeterminate' },
-        dropdown.indicator('−'),
+      items: () => Dropdown.Checkbox({ defaultChecked: 'indeterminate' },
+        Dropdown.Indicator('−'),
         'Mixed'
       )
     }, async menu => {
@@ -642,7 +642,7 @@ t`dropdown`(
     })),
 
     t`prevented selection toggles without closing`(() => withMenu({
-      items: () => dropdown.checkbox({
+      items: () => Dropdown.Checkbox({
         onselect: event => event.preventDefault()
       }, 'Persistent')
     }, async menu => {
@@ -656,7 +656,7 @@ t`dropdown`(
     t`controlled state only reports changes`(() => {
       let nextValue
       return withMenu({
-        items: () => dropdown.checkbox({
+        items: () => Dropdown.Checkbox({
           checked: false,
           oncheckedchange: next => nextValue = next
         }, 'Controlled')
@@ -672,8 +672,8 @@ t`dropdown`(
     t`live binding synchronizes in both directions`(() => {
       const checked = s.live(false)
       return withMenu({
-        items: () => dropdown.checkbox({ bind: checked },
-          dropdown.indicator('✓'),
+        items: () => Dropdown.Checkbox({ bind: checked },
+          Dropdown.Indicator('✓'),
           'Bound'
         )
       }, async menu => {
@@ -691,8 +691,8 @@ t`dropdown`(
     }),
 
     t`forceMount keeps an unchecked indicator mounted`(() => withMenu({
-      items: () => dropdown.checkbox(
-        dropdown.indicator({ forceMount: true }, '✓'),
+      items: () => Dropdown.Checkbox(
+        Dropdown.Indicator({ forceMount: true }, '✓'),
         'Mounted'
       )
     }, ({ items }) => {
@@ -705,7 +705,7 @@ t`dropdown`(
       const checked = s.live(true)
       return withMenu({
         items: () => StyledCheckbox({ bind: checked },
-          dropdown.indicator({ style: { width: '16px' } }, '✓'),
+          Dropdown.Indicator({ style: { width: '16px' } }, '✓'),
           'Styled'
         )
       }, async menu => {
@@ -721,13 +721,13 @@ t`dropdown`(
 
   t`radio items`(
     t`expose exclusive state and an indicator`(() => withMenu({
-      items: () => dropdown.radioGroup({ defaultValue: 'comfortable', ariaLabel: 'Density' },
-        dropdown.radio({ value: 'compact' },
-          dropdown.indicator('•'),
+      items: () => Dropdown.RadioGroup({ defaultValue: 'comfortable', ariaLabel: 'Density' },
+        Dropdown.Radio({ value: 'compact' },
+          Dropdown.Indicator('•'),
           'Compact'
         ),
-        dropdown.radio({ value: 'comfortable' },
-          dropdown.indicator('•'),
+        Dropdown.Radio({ value: 'comfortable' },
+          Dropdown.Indicator('•'),
           'Comfortable'
         )
       )
@@ -742,12 +742,12 @@ t`dropdown`(
     t`uncontrolled activation changes the value and closes`(() => {
       let changed
       return withMenu({
-        items: () => dropdown.radioGroup({
+        items: () => Dropdown.RadioGroup({
           defaultValue: 'one',
           onvaluechange: next => changed = next
         },
-          dropdown.radio({ value: 'one' }, 'One'),
-          dropdown.radio({ value: 'two' }, 'Two')
+          Dropdown.Radio({ value: 'one' }, 'One'),
+          Dropdown.Radio({ value: 'two' }, 'Two')
         )
       }, async menu => {
         await open(menu)
@@ -761,9 +761,9 @@ t`dropdown`(
     }),
 
     t`prevented selection changes the value without closing`(() => withMenu({
-      items: () => dropdown.radioGroup({ defaultValue: 'one' },
-        dropdown.radio({ value: 'one' }, 'One'),
-        dropdown.radio({
+      items: () => Dropdown.RadioGroup({ defaultValue: 'one' },
+        Dropdown.Radio({ value: 'one' }, 'One'),
+        Dropdown.Radio({
           value: 'two',
           onselect: event => event.preventDefault()
         }, 'Two')
@@ -779,12 +779,12 @@ t`dropdown`(
     t`controlled group only reports changes`(() => {
       let nextValue
       return withMenu({
-        items: () => dropdown.radioGroup({
+        items: () => Dropdown.RadioGroup({
           value: 'one',
           onvaluechange: next => nextValue = next
         },
-          dropdown.radio({ value: 'one' }, 'One'),
-          dropdown.radio({ value: 'two' }, 'Two')
+          Dropdown.Radio({ value: 'one' }, 'One'),
+          Dropdown.Radio({ value: 'two' }, 'Two')
         )
       }, async menu => {
         await open(menu)
@@ -799,9 +799,9 @@ t`dropdown`(
     t`live group binding synchronizes in both directions`(() => {
       const value = s.live('one')
       return withMenu({
-        items: () => dropdown.radioGroup({ bind: value },
-          dropdown.radio({ value: 'one' }, 'One'),
-          dropdown.radio({ value: 'two' }, 'Two')
+        items: () => Dropdown.RadioGroup({ bind: value },
+          Dropdown.Radio({ value: 'one' }, 'One'),
+          Dropdown.Radio({ value: 'two' }, 'Two')
         )
       }, async menu => {
         await open(menu)
@@ -820,10 +820,10 @@ t`dropdown`(
     t`selecting the current value does not report a change`(() => {
       let changes = 0
       return withMenu({
-        items: () => dropdown.radioGroup({
+        items: () => Dropdown.RadioGroup({
           defaultValue: 'one',
           onvaluechange: () => changes++
-        }, dropdown.radio({ value: 'one' }, 'One'))
+        }, Dropdown.Radio({ value: 'one' }, 'One'))
       }, async menu => {
         await open(menu)
         menu.items[0].click()
@@ -1016,14 +1016,14 @@ async function withMenu(options, run) {
   const host = document.createElement('div')
   document.body.append(host)
   const defaultItems = () => [
-    dropdown.item({ textValue: 'Alpha' }, 'Alpha'),
-    dropdown.item({ textValue: 'Beta' }, 'Beta'),
-    dropdown.item({ disabled: true, textValue: 'Blocked' }, 'Blocked'),
-    dropdown.item({ textValue: 'Bravo' }, 'Bravo')
+    Dropdown.Item({ textValue: 'Alpha' }, 'Alpha'),
+    Dropdown.Item({ textValue: 'Beta' }, 'Beta'),
+    Dropdown.Item({ disabled: true, textValue: 'Blocked' }, 'Blocked'),
+    Dropdown.Item({ textValue: 'Bravo' }, 'Bravo')
   ]
-  const mounted = s.mount(host, () => dropdown(options.root || {},
-    dropdown.trigger(options.trigger || {}, 'Options'),
-    dropdown.content(options.content || {},
+  const mounted = s.mount(host, () => Dropdown(options.root || {},
+    Dropdown.Trigger(options.trigger || {}, 'Options'),
+    Dropdown.Content(options.content || {},
       options.items ? options.items() : defaultItems()
     )
   ))
@@ -1056,18 +1056,18 @@ async function open(menu) {
 async function withSubmenu(run, options = {}) {
   const host = document.createElement('div')
   document.body.append(host)
-  const mounted = s.mount(host, () => dropdown(options.root || {},
-    dropdown.trigger('Options'),
-    dropdown.content(
-      dropdown.item({ textValue: 'Before' }, 'Before'),
-      dropdown.sub(options.sub || {},
-        dropdown.subtrigger({ textValue: 'More', ...options.subtrigger }, 'More'),
-        dropdown.subcontent(options.subcontent || {},
-          dropdown.item({ textValue: 'Nested one' }, 'Nested one'),
-          dropdown.item({ textValue: 'Nested two' }, 'Nested two')
+  const mounted = s.mount(host, () => Dropdown(options.root || {},
+    Dropdown.Trigger('Options'),
+    Dropdown.Content(
+      Dropdown.Item({ textValue: 'Before' }, 'Before'),
+      Dropdown.Sub(options.sub || {},
+        Dropdown.SubTrigger({ textValue: 'More', ...options.subtrigger }, 'More'),
+        Dropdown.SubContent(options.subcontent || {},
+          Dropdown.Item({ textValue: 'Nested one' }, 'Nested one'),
+          Dropdown.Item({ textValue: 'Nested two' }, 'Nested two')
         )
       ),
-      dropdown.item({ textValue: 'After' }, 'After')
+      Dropdown.Item({ textValue: 'After' }, 'After')
     )
   ))
   const contents = Array.from(host.querySelectorAll('[role="menu"]'))
@@ -1105,16 +1105,16 @@ async function openSubmenu(menu) {
 async function withDeepSubmenu(run) {
   const host = document.createElement('div')
   document.body.append(host)
-  const mounted = s.mount(host, () => dropdown(
-    dropdown.trigger('Options'),
-    dropdown.content(
-      dropdown.sub(
-        dropdown.subtrigger({ textValue: 'First level' }, 'First level'),
-        dropdown.subcontent(
-          dropdown.sub(
-            dropdown.subtrigger({ textValue: 'Second level' }, 'Second level'),
-            dropdown.subcontent(
-              dropdown.item({ textValue: 'Deep action' }, 'Deep action')
+  const mounted = s.mount(host, () => Dropdown(
+    Dropdown.Trigger('Options'),
+    Dropdown.Content(
+      Dropdown.Sub(
+        Dropdown.SubTrigger({ textValue: 'First level' }, 'First level'),
+        Dropdown.SubContent(
+          Dropdown.Sub(
+            Dropdown.SubTrigger({ textValue: 'Second level' }, 'Second level'),
+            Dropdown.SubContent(
+              Dropdown.Item({ textValue: 'Deep action' }, 'Deep action')
             )
           )
         )

@@ -9,8 +9,8 @@ import type {
   DropdownRadioGroupAttrs,
   DropdownRootAttrs,
   DropdownSubAttrs,
-  DropdownSubcontentAttrs,
-  DropdownSubtriggerAttrs,
+  DropdownSubContentAttrs,
+  DropdownSubTriggerAttrs,
   DropdownTriggerAttrs
 } from './dropdown.js'
 
@@ -50,7 +50,7 @@ export interface DropdownThemeContentOptions extends DropdownThemeOptions {
 }
 
 export type DropdownThemeContentAttrs = DropdownContentAttrs & DropdownThemeContentOptions
-export type DropdownThemeSubcontentAttrs = DropdownSubcontentAttrs & DropdownThemeContentOptions
+export type DropdownThemeSubContentAttrs = DropdownSubContentAttrs & DropdownThemeContentOptions
 
 export interface DropdownThemeItemOptions extends DropdownThemeOptions {
   color?: DropdownThemeColor
@@ -61,27 +61,27 @@ export interface DropdownThemeItemOptions extends DropdownThemeOptions {
 export type DropdownThemeItemAttrs = DropdownItemAttrs & DropdownThemeItemOptions
 export type DropdownThemeCheckboxAttrs = DropdownCheckboxAttrs & DropdownThemeItemOptions
 export type DropdownThemeRadioAttrs = DropdownRadioAttrs & DropdownThemeItemOptions
-export type DropdownThemeSubtriggerAttrs = DropdownSubtriggerAttrs & DropdownThemeItemOptions
+export type DropdownThemeSubTriggerAttrs = DropdownSubTriggerAttrs & DropdownThemeItemOptions
 
 export type DropdownTheme = s.Component<DropdownRootAttrs, s.Children[]> & {
-  trigger: s.Component<HTMLButtonElement, DropdownThemeTriggerAttrs, s.Children[]>
-  content: s.Component<HTMLDivElement, DropdownThemeContentAttrs, s.Children[]>
-  item: s.Component<HTMLButtonElement, DropdownThemeItemAttrs, s.Children[]>
-  checkbox: s.Component<HTMLButtonElement, DropdownThemeCheckboxAttrs, s.Children[]>
-  radioGroup: s.Component<HTMLDivElement, DropdownRadioGroupAttrs, s.Children[]>
-  radio: s.Component<HTMLButtonElement, DropdownThemeRadioAttrs, s.Children[]>
-  indicator: s.Component<HTMLElement, DropdownIndicatorAttrs, s.Children[]>
-  group: s.Component<HTMLDivElement, DropdownGroupAttrs, s.Children[]>
-  label: s.Component<HTMLDivElement, DropdownThemeOptions, s.Children[]>
-  separator: s.Component<HTMLDivElement, {}, s.Children[]>
-  sub: s.Component<DropdownSubAttrs, s.Children[]>
-  subtrigger: s.Component<HTMLButtonElement, DropdownThemeSubtriggerAttrs, s.Children[]>
-  subcontent: s.Component<HTMLDivElement, DropdownThemeSubcontentAttrs, s.Children[]>
-  shortcut: s.Component<HTMLElement, {}, s.Children[]>
-  triggerIcon: s.Component<Record<string, unknown>, s.Children[]>
+  Trigger: s.Component<HTMLButtonElement, DropdownThemeTriggerAttrs, s.Children[]>
+  Content: s.Component<HTMLDivElement, DropdownThemeContentAttrs, s.Children[]>
+  Item: s.Component<HTMLButtonElement, DropdownThemeItemAttrs, s.Children[]>
+  Checkbox: s.Component<HTMLButtonElement, DropdownThemeCheckboxAttrs, s.Children[]>
+  RadioGroup: s.Component<HTMLDivElement, DropdownRadioGroupAttrs, s.Children[]>
+  Radio: s.Component<HTMLButtonElement, DropdownThemeRadioAttrs, s.Children[]>
+  Indicator: s.Component<HTMLElement, DropdownIndicatorAttrs, s.Children[]>
+  Group: s.Component<HTMLDivElement, DropdownGroupAttrs, s.Children[]>
+  Label: s.Component<HTMLDivElement, DropdownThemeOptions, s.Children[]>
+  Separator: s.Component<HTMLDivElement, {}, s.Children[]>
+  Sub: s.Component<DropdownSubAttrs, s.Children[]>
+  SubTrigger: s.Component<HTMLButtonElement, DropdownThemeSubTriggerAttrs, s.Children[]>
+  SubContent: s.Component<HTMLDivElement, DropdownThemeSubContentAttrs, s.Children[]>
+  Shortcut: s.Component<HTMLElement, {}, s.Children[]>
+  TriggerIcon: s.Component<Record<string, unknown>, s.Children[]>
 }
 
-declare const dropdown: DropdownTheme
+declare const Dropdown: DropdownTheme
 
-export { dropdown }
-export default dropdown
+export { Dropdown }
+export default Dropdown

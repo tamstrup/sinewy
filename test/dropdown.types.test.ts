@@ -1,7 +1,7 @@
 import s from 'sin'
-import { dropdown as headless } from '../src/index.js'
+import { Dropdown as Headless } from '../src/index.js'
 import type { DropdownContentAttrs } from '../src/index.js'
-import themed from '../src/theme.js'
+import Themed from '../src/theme.js'
 
 const open = s.live(false)
 const checked = s.live<boolean | 'indeterminate'>('indeterminate')
@@ -9,7 +9,7 @@ const value = s.live('comfortable')
 const contentOmitsForceMount: 'forceMount' extends keyof DropdownContentAttrs ? never : true = true
 void contentOmitsForceMount
 
-headless({
+Headless({
   bind: open,
   dir: 'rtl',
   onbeforeopenchange: (next, event) => next && event.preventDefault(),
@@ -18,56 +18,59 @@ headless({
     void value
   }
 },
-  headless.trigger({ disabled: false }, 'Actions'),
-  headless.content({
+  Headless.Trigger({ disabled: false }, 'Actions'),
+  Headless.Content({
     side: 'bottom',
     align: 'end',
     offset: 8,
     collisionStrategy: 'most-space'
   },
-    headless.item({ textValue: 'Rename', onselect: event => event.preventDefault() }, 'Rename'),
-    headless.checkbox({ bind: checked },
-      headless.indicator('✓'),
+    Headless.Item({ textValue: 'Rename', onselect: event => event.preventDefault() }, 'Rename'),
+    Headless.Checkbox({ bind: checked },
+      Headless.Indicator('✓'),
       'Spellcheck'
     ),
-    headless.radioGroup({ bind: value },
-      headless.radio({ value: 'compact' }, 'Compact'),
-      headless.radio({ value: 'comfortable' }, 'Comfortable')
+    Headless.RadioGroup({ bind: value },
+      Headless.Radio({ value: 'compact' }, 'Compact'),
+      Headless.Radio({ value: 'comfortable' }, 'Comfortable')
     ),
-    headless.sub({ openDelay: 120, closeDelay: 300 },
-      headless.subtrigger('More'),
-      headless.subcontent({ side: 'right' },
-        headless.item('Nested action')
+    Headless.Sub({ openDelay: 120, closeDelay: 300 },
+      Headless.SubTrigger('More'),
+      Headless.SubContent({ side: 'right' },
+        Headless.Item('Nested action')
       )
     )
   )
 )
 
-const CustomItem = themed.item`
+const CustomItem = Themed.Item`
   font-weight 800
 `
 
-themed(
-  themed.trigger({ size: '3', variant: 'outline', color: 'accent' },
+Themed(
+  Themed.Trigger({ size: '3', variant: 'outline', color: 'accent' },
     'Actions',
-    themed.triggerIcon()
+    Themed.TriggerIcon()
   ),
-  themed.content({ size: '2', variant: 'soft', color: 'cyan', highContrast: true },
-    themed.label('Document'),
+  Themed.Content({ size: '2', variant: 'soft', color: 'cyan', highContrast: true },
+    Themed.Label('Document'),
     CustomItem({ color: 'red', highContrast: true, shortcut: '⌘ D' }, 'Delete'),
-    themed.separator(),
-    themed.checkbox({ bind: checked }, themed.indicator('✓'), 'Enabled')
+    Themed.Separator(),
+    Themed.Checkbox({ bind: checked }, Themed.Indicator('✓'), 'Enabled')
   )
 )
 
 // @ts-expect-error invalid placement side
-headless.content({ side: 'diagonal' })
+Headless.Content({ side: 'diagonal' })
 
 // @ts-expect-error invalid theme variant
-themed.trigger({ variant: 'raised' })
+Themed.Trigger({ variant: 'raised' })
 
 // @ts-expect-error content has menu variants, not trigger variants
-themed.content({ variant: 'outline' })
+Themed.Content({ variant: 'outline' })
 
 // @ts-expect-error invalid theme color
-themed.content({ color: 'chartreuse' })
+Themed.Content({ color: 'chartreuse' })
+
+// @ts-expect-error component identifiers are PascalCase
+Headless.trigger('Lower-case aliases are intentionally absent')

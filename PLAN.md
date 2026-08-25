@@ -81,26 +81,26 @@ Do not introduce a portal for ordinary dropdown content. Native popovers enter t
 Use a directly callable root with attached Sin components:
 
 ```js
-import dropdown from 'sinewy/theme'
+import Dropdown from 'sinewy/theme'
 
-dropdown(
-  dropdown.trigger({ variant: 'soft' },
+Dropdown(
+  Dropdown.Trigger({ variant: 'soft' },
     'Options',
-    dropdown.triggerIcon()
+    Dropdown.TriggerIcon()
   ),
-  dropdown.content({ align: 'end', offset: 6 },
-    dropdown.item({ shortcut: '⌘ E', onselect: edit }, 'Edit'),
-    dropdown.item({ shortcut: '⌘ D', onselect: duplicate }, 'Duplicate'),
-    dropdown.separator(),
-    dropdown.sub(
-      dropdown.subtrigger('More'),
-      dropdown.subcontent(
-        dropdown.item({ onselect: moveToProject }, 'Move to project…'),
-        dropdown.item({ onselect: moveToFolder }, 'Move to folder…')
+  Dropdown.Content({ align: 'end', offset: 6 },
+    Dropdown.Item({ shortcut: '⌘ E', onselect: edit }, 'Edit'),
+    Dropdown.Item({ shortcut: '⌘ D', onselect: duplicate }, 'Duplicate'),
+    Dropdown.Separator(),
+    Dropdown.Sub(
+      Dropdown.SubTrigger('More'),
+      Dropdown.SubContent(
+        Dropdown.Item({ onselect: moveToProject }, 'Move to project…'),
+        Dropdown.Item({ onselect: moveToFolder }, 'Move to folder…')
       )
     ),
-    dropdown.separator(),
-    dropdown.item({ color: 'red', onselect: remove }, 'Delete')
+    Dropdown.Separator(),
+    Dropdown.Item({ color: 'red', onselect: remove }, 'Delete')
   )
 )
 ```
@@ -108,11 +108,11 @@ dropdown(
 Every part should remain a normal Sin component and support call-site style overrides:
 
 ```js
-dropdown.content`
+Dropdown.Content`
   min-width 260
   border-radius 14
 `(
-  dropdown.item('Edit')
+  Dropdown.Item('Edit')
 )
 ```
 
@@ -120,21 +120,21 @@ dropdown.content`
 
 | Part | Purpose and initial attributes |
 | --- | --- |
-| `dropdown(...)` | Root state: `open`, `defaultOpen`, `onopenchange`, `bind`, `dir` |
-| `.trigger` | Invoker: `as`, `disabled` |
-| `.triggerIcon` | Optional themed affordance |
-| `.content` | Menu and positioning: `side`, `align`, `offset`, `alignOffset`, `avoidCollisions`, `collisionStrategy`, `loop` |
-| `.item` | Action: `as`, `disabled`, `onselect`, `textValue`, `shortcut` |
-| `.group` | Groups related items |
-| `.label` | Non-focusable group label |
-| `.separator` | Non-focusable separator |
-| `.checkbox` | `checked`, `defaultChecked`, `oncheckedchange`, `bind`, `disabled` |
-| `.radioGroup` | `value`, `defaultValue`, `onvaluechange`, `bind` |
-| `.radio` | `value`, `disabled` |
-| `.indicator` | Custom checkbox/radio indicator |
-| `.sub` | Submenu state: `open`, `defaultOpen`, `onopenchange` |
-| `.subtrigger` | Submenu invoker: `disabled`, `textValue` |
-| `.subcontent` | Nested menu with content-positioning attributes |
+| `Dropdown(...)` | Root state: `open`, `defaultOpen`, `onopenchange`, `bind`, `dir` |
+| `.Trigger` | Invoker: `as`, `disabled` |
+| `.TriggerIcon` | Optional themed affordance |
+| `.Content` | Menu and positioning: `side`, `align`, `offset`, `alignOffset`, `avoidCollisions`, `collisionStrategy`, `loop` |
+| `.Item` | Action: `as`, `disabled`, `onselect`, `textValue`, `shortcut` |
+| `.Group` | Groups related items |
+| `.Label` | Non-focusable group label |
+| `.Separator` | Non-focusable separator |
+| `.Checkbox` | `checked`, `defaultChecked`, `oncheckedchange`, `bind`, `disabled` |
+| `.RadioGroup` | `value`, `defaultValue`, `onvaluechange`, `bind` |
+| `.Radio` | `value`, `disabled` |
+| `.Indicator` | Custom checkbox/radio indicator |
+| `.Sub` | Submenu state: `open`, `defaultOpen`, `onopenchange` |
+| `.SubTrigger` | Submenu invoker: `disabled`, `textValue` |
+| `.SubContent` | Nested menu with content-positioning attributes |
 
 Use lower-case callback names to match Sin's event style. `onselect` must represent both pointer and keyboard activation. Calling `event.preventDefault()` during selection should keep the menu open.
 
@@ -145,13 +145,13 @@ Prefer `as: Component` over React's `asChild`. The part owns behavior and render
 Support uncontrolled state:
 
 ```js
-dropdown({ defaultOpen: true }, ...children)
+Dropdown({ defaultOpen: true }, ...children)
 ```
 
 Support controlled state:
 
 ```js
-dropdown({
+Dropdown({
   open,
   onopenchange: next => open = next
 }, ...children)
@@ -161,7 +161,7 @@ Evaluate an explicit Sin live binding convenience:
 
 ```js
 const open = s.live(false)
-dropdown({ bind: open }, ...children)
+Dropdown({ bind: open }, ...children)
 ```
 
 Native popover state is authoritative when the component is uncontrolled. `toggle` synchronizes internal state and notifies `onopenchange`. Controlled state and live bindings call `showPopover()` or `hidePopover()` to reconcile the DOM.
@@ -196,7 +196,7 @@ For the initial implementation, query menu items from the live DOM when opening 
 
 - Create `src/dropdown.js`.
 - Keep `examples/spike.js` as the development example consuming the extracted component.
-- Implement `dropdown`, `trigger`, `content`, `item`, `separator`, `group`, and `label`.
+- Implement `Dropdown`, `Trigger`, `Content`, `Item`, `Separator`, `Group`, and `Label`.
 - Move root state and DOM helpers out of the example.
 - Generate deterministic IDs that survive SSR and hydration.
 - Add stable state attributes:
@@ -235,7 +235,7 @@ For the initial implementation, query menu items from the live DOM when opening 
 - Add checkbox roles and checked/indeterminate state. — Complete
 - Add radio groups and exclusive value selection. — Complete
 - Add controlled, uncontrolled, and optional live-bound state. — Complete
-- Add `.indicator` customization. — Complete
+- Add `.Indicator` customization. — Complete
 - Decide through parity testing whether checkbox/radio activation closes the menu. — Close by default; preventing `onselect` keeps it open
 
 ### 5. Submenus
@@ -398,7 +398,7 @@ The completed public API review used these criteria:
 ## Remaining Platform Questions
 
 - Can resolved collision placement be exposed reliably without JavaScript measurement?
-- Is an explicit `.arrow` useful with CSS anchor positioning, and how should its fallback orientation be determined?
+- Is an explicit `.Arrow` useful with CSS anchor positioning, and how should its fallback orientation be determined?
 - Which outside-interaction hooks remain necessary when native popover dismissal owns the transition?
 - Revisit detached-anchor hiding when `position-visibility` behavior is interoperable for adjacent popover content.
 
@@ -406,13 +406,14 @@ The completed public API review used these criteria:
 
 The source-level names are frozen for the current-browser preview:
 
-- `dropdown(...)` is the directly callable root; no redundant `.root` is added.
-- Headless parts are `.trigger`, `.content`, `.item`, `.checkbox`, `.radioGroup`, `.radio`, `.indicator`, `.group`, `.label`, `.separator`, `.sub`, `.subtrigger`, and `.subcontent`.
-- The theme adds `.triggerIcon` and `.shortcut` without changing the headless structure.
+- Public component identifiers use PascalCase; DOM attributes and callbacks retain Sin's lower-case naming.
+- `Dropdown(...)` is the directly callable root; no redundant `.Root` is added.
+- Headless parts are `.Trigger`, `.Content`, `.Item`, `.Checkbox`, `.RadioGroup`, `.Radio`, `.Indicator`, `.Group`, `.Label`, `.Separator`, `.Sub`, `.SubTrigger`, and `.SubContent`.
+- The theme adds `.TriggerIcon` and `.Shortcut` without changing the headless structure.
 - Lower-case callbacks follow Sin event naming; `bind` is the deliberate Sin-native state convenience.
-- `.portal` and `modal` are omitted because native non-modal popovers own top-layer behavior.
+- `.Portal` and `modal` are omitted because native non-modal popovers own top-layer behavior.
 - Compatibility-only no-ops are omitted; public attributes must have observable, testable Sin or platform semantics.
-- `.arrow`, collision padding, outside-interaction callbacks, and legacy fallbacks remain unreserved until they can have a dependable implementation.
+- `.Arrow`, collision padding, outside-interaction callbacks, and legacy fallbacks remain unreserved until they can have a dependable implementation.
 - `sinewy`, `sinewy/dropdown`, and `sinewy/theme` are the canonical package entrypoints for the standalone preview.
 
 ## References

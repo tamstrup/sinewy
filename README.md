@@ -43,8 +43,20 @@ npm test
 ## Imports
 
 ```js
-import { dropdown } from 'sinewy'
-import themedDropdown from 'sinewy/theme'
+import { Dropdown } from 'sinewy'
+import ThemedDropdown from 'sinewy/theme'
 ```
 
 The public dropdown contract and its current platform limits are documented in [`docs/components/dropdown.md`](docs/components/dropdown.md).
+
+## Component conventions
+
+Public component identifiers use PascalCase, including directly callable roots and attached parts such as `Dropdown`, `Dropdown.Trigger`, and `Dropdown.RadioGroup`. DOM attributes and callbacks retain their native lower-case names.
+
+Sin component functions use empty destructuring for unused signature positions:
+
+```js
+const Component = s(({}, [], { route }) =>
+  s`a`({ href: '/home', active: route.has('/home') }, 'Home')
+)
+```

@@ -48,10 +48,12 @@ Omit irrelevant sections rather than creating empty placeholders. Use descriptiv
 
 ## API tables
 
+Use PascalCase for every component identifier, including callable roots and attached parts: `Dropdown`, `Dropdown.Trigger`, and `Dropdown.RadioGroup`. Keep DOM attributes and callbacks in their native lower-case form, such as `onclick`, `onselect`, and `onopenchange`.
+
 Document component signatures as headings:
 
 ```md
-### `component.part(attrs?, ...children)`
+### `Component.Part(attrs?, ...children)`
 ```
 
 Use a table for attributes with consistent columns:
@@ -93,7 +95,7 @@ What the component does, its current status, and its important constraints.
 ## Import
 
 ```js
-import component from '../component.js'
+import Component from '../component.js'
 ```
 
 ## Basic usage
@@ -108,7 +110,7 @@ How to extend the component with Sin's tagged-template styles.
 
 ## API reference
 
-### `component(attrs?, ...children)`
+### `Component(attrs?, ...children)`
 
 | Attribute | Type | Default | Behavior |
 | --- | --- | --- | --- |

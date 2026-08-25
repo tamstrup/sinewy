@@ -1,10 +1,10 @@
 import s from 'sin'
-import headless from './dropdown.js'
+import Headless from './dropdown.js'
 import { themeColorStyle } from './theme-colors.js'
 
 const $theme = Symbol('sinewy-theme')
 
-const ContentSurface = headless.content`
+const ContentSurface = Headless.Content`
   $dropdown-item-gutter initial
   $dropdown-item-gutter-size 35px
   $dropdown-separator-margin 5px
@@ -74,7 +74,7 @@ const ContentSurface = headless.content`
   }
 `
 
-const SubcontentSurface = headless.subcontent`
+const SubContentSurface = Headless.SubContent`
   $dropdown-item-gutter initial
   $dropdown-item-gutter-size 35px
   $dropdown-separator-margin 5px
@@ -144,7 +144,7 @@ const SubcontentSurface = headless.subcontent`
   }
 `
 
-const TriggerControl = headless.trigger`
+const TriggerControl = Headless.Trigger`
   min-height 36
   display inline-flex
   align-items center
@@ -348,12 +348,12 @@ const ItemControl = component => component`
 
 `
 
-const ItemButton = ItemControl(headless.item)
-const CheckboxButton = ItemControl(headless.checkbox)
-const RadioButton = ItemControl(headless.radio)
-const SubtriggerButton = ItemControl(headless.subtrigger)
+const ItemButton = ItemControl(Headless.Item)
+const CheckboxButton = ItemControl(Headless.Checkbox)
+const RadioButton = ItemControl(Headless.Radio)
+const SubTriggerButton = ItemControl(Headless.SubTrigger)
 
-const LabelText = headless.label`
+const LabelText = Headless.Label`
   padding 7 9 4
   color $sinewy-neutral-11
   font-size 11
@@ -372,13 +372,13 @@ const LabelText = headless.label`
   }
 `
 
-const SeparatorLine = headless.separator`
+const SeparatorLine = Headless.Separator`
   height 1
   margin $dropdown-separator-margin
   background $sinewy-neutral-6
 `
 
-const IndicatorMark = headless.indicator`
+const IndicatorMark = Headless.Indicator`
   width $dropdown-indicator-width
   display inline-grid
   place-items center
@@ -398,9 +398,9 @@ const ShortcutText = s`kbd
   opacity 0.58
 `
 
-const dropdown = s((attrs, children) => headless(attrs, children))
+const Dropdown = s((attrs, children) => Headless(attrs, children))
 
-dropdown.trigger = s(({
+Dropdown.Trigger = s(({
   size = '2',
   variant = 'solid',
   color = 'gray',
@@ -414,7 +414,7 @@ dropdown.trigger = s(({
   data: themedData(data, { size, variant, color, highContrast })
 }, children))
 
-dropdown.content = s(({
+Dropdown.Content = s(({
   size = '2',
   variant = 'solid',
   color = 'gray',
@@ -431,12 +431,12 @@ dropdown.content = s(({
   }, themedChildren(context, theme, children))
 })
 
-dropdown.item = themedItem(ItemButton)
-dropdown.checkbox = themedItem(CheckboxButton)
-dropdown.radio = themedItem(RadioButton)
-dropdown.subtrigger = themedItem(SubtriggerButton)
+Dropdown.Item = themedItem(ItemButton)
+Dropdown.Checkbox = themedItem(CheckboxButton)
+Dropdown.Radio = themedItem(RadioButton)
+Dropdown.SubTrigger = themedItem(SubTriggerButton)
 
-dropdown.subcontent = s(({
+Dropdown.SubContent = s(({
   size,
   variant,
   color,
@@ -446,14 +446,14 @@ dropdown.subcontent = s(({
   ...attrs
 }, children, context) => {
   const theme = resolveTheme(context, { size, variant, color, highContrast })
-  return SubcontentSurface({
+  return SubContentSurface({
     ...attrs,
     style: color == null ? style : themeColorStyle(color, style),
     data: themedData(data, theme)
   }, themedChildren(context, theme, children))
 })
 
-dropdown.label = s(({ size, data, ...attrs }, children, context) => {
+Dropdown.Label = s(({ size, data, ...attrs }, children, context) => {
   const theme = resolveTheme(context, { size })
   return LabelText({
     ...attrs,
@@ -461,14 +461,14 @@ dropdown.label = s(({ size, data, ...attrs }, children, context) => {
   }, children)
 })
 
-dropdown.separator = s((attrs, children) => SeparatorLine(attrs, children))
-dropdown.indicator = s((attrs, children) => IndicatorMark(attrs, children))
-dropdown.shortcut = s((attrs, children) => ShortcutText(attrs, children))
-dropdown.triggerIcon = s((attrs, children) => Chevron(attrs, children))
+Dropdown.Separator = s((attrs, children) => SeparatorLine(attrs, children))
+Dropdown.Indicator = s((attrs, children) => IndicatorMark(attrs, children))
+Dropdown.Shortcut = s((attrs, children) => ShortcutText(attrs, children))
+Dropdown.TriggerIcon = s((attrs, children) => Chevron(attrs, children))
 
-dropdown.group = headless.group
-dropdown.radioGroup = headless.radioGroup
-dropdown.sub = headless.sub
+Dropdown.Group = Headless.Group
+Dropdown.RadioGroup = Headless.RadioGroup
+Dropdown.Sub = Headless.Sub
 
 function themedItem(Base) {
   return s(({
@@ -541,5 +541,5 @@ function themedData(data, values) {
   }
 }
 
-export { dropdown }
-export default dropdown
+export { Dropdown }
+export default Dropdown

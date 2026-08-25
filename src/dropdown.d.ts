@@ -80,29 +80,29 @@ export interface DropdownSubAttrs extends DropdownRootAttrs {
   closeDelay?: number
 }
 
-export interface DropdownSubtriggerAttrs extends DropdownItemAttrs {
+export interface DropdownSubTriggerAttrs extends DropdownItemAttrs {
 }
 
-export interface DropdownSubcontentAttrs extends DropdownContentAttrs {
+export interface DropdownSubContentAttrs extends DropdownContentAttrs {
 }
 
 export type Dropdown = s.Component<DropdownRootAttrs, s.Children[]> & {
-  trigger: s.Component<HTMLButtonElement, DropdownTriggerAttrs, s.Children[]>
-  content: s.Component<HTMLDivElement, DropdownContentAttrs, s.Children[]>
-  item: s.Component<HTMLButtonElement, DropdownItemAttrs, s.Children[]>
-  checkbox: s.Component<HTMLButtonElement, DropdownCheckboxAttrs, s.Children[]>
-  radioGroup: s.Component<HTMLDivElement, DropdownRadioGroupAttrs, s.Children[]>
-  radio: s.Component<HTMLButtonElement, DropdownRadioAttrs, s.Children[]>
-  indicator: s.Component<HTMLElement, DropdownIndicatorAttrs, s.Children[]>
-  group: s.Component<HTMLDivElement, DropdownGroupAttrs, s.Children[]>
-  label: s.Component<HTMLDivElement, {}, s.Children[]>
-  separator: s.Component<HTMLDivElement, {}, s.Children[]>
-  sub: s.Component<DropdownSubAttrs, s.Children[]>
-  subtrigger: s.Component<HTMLButtonElement, DropdownSubtriggerAttrs, s.Children[]>
-  subcontent: s.Component<HTMLDivElement, DropdownSubcontentAttrs, s.Children[]>
+  Trigger: s.Component<HTMLButtonElement, DropdownTriggerAttrs, s.Children[]>
+  Content: s.Component<HTMLDivElement, DropdownContentAttrs, s.Children[]>
+  Item: s.Component<HTMLButtonElement, DropdownItemAttrs, s.Children[]>
+  Checkbox: s.Component<HTMLButtonElement, DropdownCheckboxAttrs, s.Children[]>
+  RadioGroup: s.Component<HTMLDivElement, DropdownRadioGroupAttrs, s.Children[]>
+  Radio: s.Component<HTMLButtonElement, DropdownRadioAttrs, s.Children[]>
+  Indicator: s.Component<HTMLElement, DropdownIndicatorAttrs, s.Children[]>
+  Group: s.Component<HTMLDivElement, DropdownGroupAttrs, s.Children[]>
+  Label: s.Component<HTMLDivElement, {}, s.Children[]>
+  Separator: s.Component<HTMLDivElement, {}, s.Children[]>
+  Sub: s.Component<DropdownSubAttrs, s.Children[]>
+  SubTrigger: s.Component<HTMLButtonElement, DropdownSubTriggerAttrs, s.Children[]>
+  SubContent: s.Component<HTMLDivElement, DropdownSubContentAttrs, s.Children[]>
 }
 
-declare const dropdown: Dropdown
+declare const Dropdown: Dropdown
 
-export { dropdown }
-export default dropdown
+export { Dropdown }
+export default Dropdown

@@ -1,0 +1,43 @@
+{
+  "name": "sinewy",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Strong, flexible UI components for Sin.js.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./dropdown": {
+      "types": "./src/dropdown.d.ts",
+      "import": "./src/dropdown.js"
+    },
+    "./theme": {
+      "types": "./src/theme.d.ts",
+      "import": "./src/theme.js"
+    }
+  },
+  "files": [
+    "src",
+    "licenses",
+    "README.md"
+  ],
+  "scripts": {
+    "docs": "sin dev docs/index.js",
+    "demo": "sin dev examples/demo.js",
+    "test": "npm run test:browser && npm run test:ssr && npm run test:types",
+    "test:browser": "sin test test/index.js --headless --ci",
+    "test:ssr": "node test/dropdown.ssr.test.js",
+    "test:types": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM --skipLibCheck test/dropdown.types.test.ts"
+  },
+  "dependencies": {
+    "sin": "file:../sin"
+  },
+  "devDependencies": {
+    "typescript": "4.9.5"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}

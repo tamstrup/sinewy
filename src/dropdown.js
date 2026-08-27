@@ -1,6 +1,6 @@
 import s from 'sin'
+import { $menu } from './menu-context.js'
 
-const $dropdown = Symbol('dropdown')
 const $indicator = Symbol('dropdown-indicator')
 const $radioGroup = Symbol('dropdown-radio-group')
 const $ids = Symbol('sinewy-ids')
@@ -28,6 +28,8 @@ const Dropdown = s(({ id, defaultOpen = false }, [], context) => {
   const base = id || nextId(context)
   const openState = selectionState(defaultOpen, context)
   const state = {
+    name: 'Dropdown',
+    prefix: 'dropdown',
     id: base,
     triggerId: base + '-trigger',
     contentId: base + '-content',
@@ -52,7 +54,7 @@ const Dropdown = s(({ id, defaultOpen = false }, [], context) => {
     onopenchange: undefined
   }
   const childContext = Object.create(context)
-  childContext[$dropdown] = state
+  childContext[$menu] = state
   state.root = state
 
   context.onremove(() => {
@@ -90,7 +92,7 @@ Dropdown.Trigger = s(({
   onkeydown,
   ...attrs
 }, children, context) => {
-  const state = useDropdown(context, 'trigger')
+  const state = useMenu(context, 'trigger')
 
   return renderPart(as, 'button', {
     ...attrs,
@@ -157,18 +159,18 @@ Dropdown.Trigger = s(({
 })
 
 Dropdown.Content = s(({}, [], context) => {
-  const state = useDropdown(context, 'content')
+  const state = useMenu(context, 'content')
 
   return (attrs, children, context) => menuContent(state, attrs, children, context)
 })
 
 Dropdown.Item = s(({}, [], context) => {
-  const state = useDropdown(context, 'item')
+  const state = useMenu(context, 'item')
   return (attrs, children, context) => menuItem(state, attrs, children, context)
 })
 
 Dropdown.Checkbox = s(({ defaultChecked = false }, [], context) => {
-  const dropdownState = useDropdown(context, 'checkbox')
+  const dropdownState = useMenu(context, 'checkbox')
   const local = selectionState(defaultChecked, context)
   const indicator = s.live(normalizeChecked(defaultChecked))
 
@@ -202,7 +204,7 @@ Dropdown.Checkbox = s(({ defaultChecked = false }, [], context) => {
 })
 
 Dropdown.RadioGroup = s(({ defaultValue }, [], context) => {
-  useDropdown(context, 'radioGroup')
+  useMenu(context, 'radioGroup')
   const local = selectionState(defaultValue, context)
   const group = {}
   const childContext = Object.create(context)
@@ -234,11 +236,11 @@ Dropdown.RadioGroup = s(({ defaultValue }, [], context) => {
 })
 
 Dropdown.Radio = s(({}, [], context) => {
-  const dropdownState = useDropdown(context, 'radio')
+  const dropdownState = useMenu(context, 'radio')
   const group = context[$radioGroup]
   const indicator = s.live(false)
   if (!group)
-    throw new Error('Dropdown.Radio must be used inside Dropdown.RadioGroup')
+    throw new Error(dropdownState.name + '.Radio must be used inside ' + dropdownState.name + '.RadioGroup')
 
   return ({ value, ...attrs }, children, context) => {
     const current = readSelection(group.local, group.bind, group.controlled)
@@ -266,10 +268,12 @@ Dropdown.Radio = s(({}, [], context) => {
 })
 
 Dropdown.Sub = s(({ id, defaultOpen = false }, [], context) => {
-  const parent = useDropdown(context, 'sub')
-  const base = id || nextId(context)
+  const parent = useMenu(context, 'sub')
+  const base = id || nextId(context, parent.prefix)
   const openState = selectionState(defaultOpen, context)
   const state = {
+    name: parent.name,
+    prefix: parent.prefix,
     id: base,
     triggerId: base + '-trigger',
     contentId: base + '-content',
@@ -300,7 +304,7 @@ Dropdown.Sub = s(({ id, defaultOpen = false }, [], context) => {
     root: parent.root
   }
   const childContext = Object.create(context)
-  childContext[$dropdown] = state
+  childContext[$menu] = state
 
   context.onremove(() => {
     clearTimeout(state.searchTimer)
@@ -345,7 +349,7 @@ Dropdown.SubTrigger = s(({
   onpointerleave,
   ...attrs
 }, children, context) => {
-  const state = useDropdown(context, 'subtrigger')
+  const state = useMenu(context, 'subtrigger')
 
   return menuItem(state.parent, {
     ...attrs,
@@ -422,9 +426,9 @@ Dropdown.SubTrigger = s(({
 })
 
 Dropdown.SubContent = s(({}, [], context) => {
-  const state = useDropdown(context, 'subcontent')
+  const state = useMenu(context, 'subcontent')
   if (!state.parent)
-    throw new Error('Dropdown.SubContent must be used inside Dropdown.Sub')
+    throw new Error(state.name + '.SubContent must be used inside ' + state.name + '.Sub')
 
   return ({ onpointerenter, onpointerleave, ...attrs }, children, context) => menuContent(state, {
     ...attrs,
@@ -442,15 +446,16 @@ Dropdown.SubContent = s(({}, [], context) => {
 })
 
 Dropdown.Indicator = s(({}, [], context) => {
-  const selection = context[$indicator]
-  if (!selection)
-    throw new Error('Dropdown.Indicator must be used inside Dropdown.Checkbox or Dropdown.Radio')
+  const menu = context[$menu]
+  const indicator = context[$indicator]
+  if (!indicator)
+    throw new Error((menu ? menu.name : 'Dropdown') + '.Indicator must be used inside a Checkbox or Radio')
 
-  const unobserve = selection.observe(context.redraw)
+  const unobserve = indicator.selection.observe(context.redraw)
   context.onremove(unobserve)
 
   return ({ forceMount = false, ...attrs }, children) => {
-    const value = selection()
+    const value = indicator.selection()
     return forceMount || value !== false
       ? s`span`({
         ...attrs,
@@ -543,7 +548,7 @@ function mountContent(state, element) {
 
 function mountPart(state, part, element) {
   if (import.meta.dev && state[part] && state[part] !== element && state[part].isConnected)
-    console.warn('Dropdown.' + componentPartName(part) + ' should only be rendered once per Dropdown state scope')
+    console.warn(state.name + '.' + componentPartName(part) + ' should only be rendered once per ' + state.name + ' state scope')
   state[part] = element
 }
 
@@ -833,10 +838,10 @@ function componentPartName(part) {
   }[part] || part
 }
 
-function useDropdown(context, part) {
-  const state = context[$dropdown]
+function useMenu(context, part) {
+  const state = context[$menu]
   if (!state)
-    throw new Error('Dropdown.' + componentPartName(part) + ' must be used inside Dropdown')
+    throw new Error(componentPartName(part) + ' must be used inside a menu root')
   return state
 }
 
@@ -876,7 +881,7 @@ function writeSelection(state, bind, controlled, value, context) {
 
 function indicatorContext(context, selection) {
   const childContext = Object.create(context)
-  childContext[$indicator] = selection
+  childContext[$indicator] = { selection }
   return childContext
 }
 
@@ -1068,7 +1073,7 @@ function backKey(state) {
   return state.dir === 'rtl' ? 'ArrowRight' : 'ArrowLeft'
 }
 
-function nextId(context) {
+function nextId(context, prefix = 'dropdown') {
   let root = context
   let parent
 
@@ -1076,7 +1081,7 @@ function nextId(context) {
     root = parent
 
   const ids = root[$ids] || (root[$ids] = { value: 0 })
-  return 'sinewy-dropdown-' + ++ids.value
+  return 'sinewy-' + prefix + '-' + ++ids.value
 }
 
 function toAnchorName(id) {

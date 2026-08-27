@@ -1,0 +1,218 @@
+import s from 'sin'
+import Dropdown from './dropdown.js'
+import { $menu } from './menu-context.js'
+
+const $ids = Symbol('sinewy-context-menu-ids')
+const itemSelector = [
+  '[role="menuitem"]',
+  '[role="menuitemcheckbox"]',
+  '[role="menuitemradio"]'
+].join(',')
+
+const ContextMenu = s(({ id }, [], context) => {
+  const base = id || nextId(context)
+  const state = {
+    name: 'ContextMenu',
+    prefix: 'context-menu',
+    id: base,
+    triggerId: base + '-trigger',
+    contentId: base + '-content',
+    anchorName: toAnchorName(base),
+    trigger: undefined,
+    content: undefined,
+    anchor: undefined,
+    open: false,
+    renderOpen: false,
+    openState: { value: false },
+    openBind: undefined,
+    controlledOpen: undefined,
+    reconcileFrame: undefined,
+    reconcileTo: undefined,
+    loop: false,
+    dir: 'ltr',
+    openFocus: 'first',
+    restoreFocus: true,
+    search: '',
+    searchTimer: undefined,
+    pointerGrace: undefined,
+    onbeforeopenchange: undefined,
+    onopenchange: undefined
+  }
+  const childContext = Object.create(context)
+  childContext[$menu] = state
+  state.root = state
+
+  context.onremove(() => {
+    clearTimeout(state.searchTimer)
+    cancelAnimationFrame(state.reconcileFrame)
+    state.anchor && state.anchor.remove()
+  })
+
+  return ({
+    loop = false,
+    dir = 'ltr',
+    onbeforeopenchange,
+    onopenchange
+  }, children) => {
+    state.loop = loop
+    state.dir = dir
+    state.onbeforeopenchange = onbeforeopenchange
+    state.onopenchange = onopenchange
+    state.renderOpen = state.openState.value
+
+    return s({ context: childContext }, () => children)
+  }
+})
+
+ContextMenu.Trigger = s(({
+  as,
+  disabled = false,
+  dom,
+  oncontextmenu,
+  ...attrs
+}, children, context) => {
+  const state = useContextMenu(context, 'Trigger')
+
+  return renderPart(as, 'div', {
+    ...attrs,
+    id: state.triggerId,
+    tabIndex: as ? attrs.tabIndex : attrs.tabIndex == null ? 0 : attrs.tabIndex,
+    disabled: as ? disabled || undefined : undefined,
+    'aria-haspopup': 'menu',
+    'aria-controls': state.contentId,
+    'aria-expanded': String(state.renderOpen),
+    'aria-disabled': String(disabled),
+    data: {
+      ...attrs.data,
+      disabled: disabled ? '' : null,
+      state: state.renderOpen ? 'open' : 'closed'
+    },
+    dom: compact([
+      element => mountTrigger(state, element),
+      ...array(dom)
+    ]),
+    oncontextmenu: (event, element, elementAttrs, elementContext) => {
+      invokeHandler(oncontextmenu, event, element, elementAttrs, elementContext)
+      if (disabled || event.defaultPrevented || !state.content)
+        return
+
+      event.preventDefault()
+      const point = invocationPoint(event, element, state.dir)
+      moveAnchor(state, element.ownerDocument, point.x, point.y)
+      state.openFocus = 'first'
+      state.restoreFocus = true
+
+      if (state.content.matches(':popover-open')) {
+        focusFirst(state.content)
+      } else {
+        state.content.showPopover({ source: element })
+      }
+    }
+  }, children)
+})
+
+ContextMenu.Content = Dropdown.Content
+ContextMenu.Item = Dropdown.Item
+ContextMenu.Checkbox = Dropdown.Checkbox
+ContextMenu.RadioGroup = Dropdown.RadioGroup
+ContextMenu.Radio = Dropdown.Radio
+ContextMenu.Indicator = Dropdown.Indicator
+ContextMenu.Group = Dropdown.Group
+ContextMenu.Label = Dropdown.Label
+ContextMenu.Separator = Dropdown.Separator
+ContextMenu.Sub = Dropdown.Sub
+ContextMenu.SubTrigger = Dropdown.SubTrigger
+ContextMenu.SubContent = Dropdown.SubContent
+
+function useContextMenu(context, part) {
+  const state = context[$menu]
+  if (!state || state.name !== 'ContextMenu')
+    throw new Error('ContextMenu.' + part + ' must be used inside ContextMenu')
+  return state
+}
+
+function mountTrigger(state, element) {
+  if (import.meta.dev && state.trigger && state.trigger !== element && state.trigger.isConnected)
+    console.warn('ContextMenu.Trigger should only be rendered once per ContextMenu state scope')
+  state.trigger = element
+}
+
+function invocationPoint(event, element, dir) {
+  if (event.clientX !== 0 || event.clientY !== 0 || event.button === 2 || event.pointerType)
+    return { x: event.clientX, y: event.clientY }
+
+  const rect = element.getBoundingClientRect()
+  return {
+    x: dir === 'rtl' ? rect.right : rect.left,
+    y: rect.bottom
+  }
+}
+
+function moveAnchor(state, doc, x, y) {
+  const anchor = state.anchor || createAnchor(state, doc)
+  anchor.style.left = x + 'px'
+  anchor.style.top = y + 'px'
+}
+
+function createAnchor(state, doc) {
+  const anchor = doc.createElement('span')
+  anchor.setAttribute('aria-hidden', 'true')
+  anchor.setAttribute('data-sinewy-context-anchor', '')
+  anchor.style.position = 'fixed'
+  anchor.style.inset = 'auto'
+  anchor.style.width = '0'
+  anchor.style.height = '0'
+  anchor.style.pointerEvents = 'none'
+  anchor.style.setProperty('anchor-name', state.anchorName)
+  doc.body.insertBefore(anchor, doc.body.firstChild)
+  state.anchor = anchor
+  return anchor
+}
+
+function focusFirst(content) {
+  const item = Array.from(content.querySelectorAll(itemSelector))
+    .find(item => item.closest('[role="menu"]') === content && item.getAttribute('aria-disabled') !== 'true')
+  item && item.focus({ preventScroll: true })
+}
+
+function nextId(context) {
+  let root = context
+  let parent
+
+  while ((parent = Object.getPrototypeOf(root)) && parent !== Object.prototype)
+    root = parent
+
+  const ids = root[$ids] || (root[$ids] = { value: 0 })
+  return 'sinewy-context-menu-' + ++ids.value
+}
+
+function toAnchorName(id) {
+  return '--' + id.replace(/[^a-zA-Z0-9_-]/g, '-') + '-anchor'
+}
+
+function compact(xs) {
+  return xs.filter(Boolean)
+}
+
+function array(value) {
+  return value == null ? [] : Array.isArray(value) ? value : [value]
+}
+
+function invokeHandler(handler, event, ...args) {
+  array(handler).forEach(handler => {
+    if (typeof handler === 'function') {
+      handler.call(event.currentTarget, event, ...args)
+    } else if (handler && typeof handler.handleEvent === 'function') {
+      handler.handleEvent(event, ...args)
+    }
+  })
+}
+
+function renderPart(as, fallback, attrs, children) {
+  return as
+    ? as(attrs, children)
+    : s(fallback, attrs, children)
+}
+
+export { ContextMenu }
+export default ContextMenu

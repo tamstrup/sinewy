@@ -13,6 +13,10 @@
       "types": "./src/dropdown.d.ts",
       "import": "./src/dropdown.js"
     },
+    "./context-menu": {
+      "types": "./src/context-menu.d.ts",
+      "import": "./src/context-menu.js"
+    },
     "./theme": {
       "types": "./src/theme.d.ts",
       "import": "./src/theme.js"
@@ -26,10 +30,11 @@
   "scripts": {
     "docs": "sin dev docs/index.js",
     "demo": "sin dev examples/demo.js",
+    "context-menu-demo": "sin dev examples/context-menu.js",
     "test": "npm run test:browser && npm run test:ssr && npm run test:types",
     "test:browser": "sin test test/index.js --headless --ci",
-    "test:ssr": "node test/dropdown.ssr.test.js",
-    "test:types": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM --skipLibCheck test/dropdown.types.test.ts"
+    "test:ssr": "node test/dropdown.ssr.test.js && node test/context-menu.ssr.test.js",
+    "test:types": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM --skipLibCheck test/dropdown.types.test.ts test/context-menu.types.test.ts"
   },
   "dependencies": {
     "sin": "file:../sin"

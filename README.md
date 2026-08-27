@@ -6,9 +6,9 @@ Sinewy is an independent component library built with Sin and modern browser
 primitives. It is maintained separately from Sin.js and is not an official
 Sin.js project.
 
-The current preview contains a headless dropdown and an optional themed facade.
-It targets current evergreen browsers with the Popover API and CSS Anchor
-Positioning.
+The current preview contains headless dropdown and context-menu components plus
+an optional themed dropdown facade. It targets current evergreen browsers with
+the Popover API and CSS Anchor Positioning.
 
 ## Local setup
 
@@ -39,6 +39,12 @@ npm run docs
 npm run demo
 ```
 
+## Context menu demo
+
+```sh
+npm run context-menu-demo
+```
+
 ## Tests
 
 ```sh
@@ -48,12 +54,13 @@ npm test
 ## Imports
 
 ```js
-import { Dropdown } from 'sinewy'
+import { ContextMenu, Dropdown } from 'sinewy'
 import ThemedDropdown from 'sinewy/theme'
 ```
 
-The public dropdown contract and its current platform limits are documented in
-[`docs/components/dropdown.md`](docs/components/dropdown.md).
+The public contracts and their current platform limits are documented in
+[`docs/components/dropdown.md`](docs/components/dropdown.md) and
+[`docs/components/context-menu.md`](docs/components/context-menu.md).
 
 ## Component conventions
 

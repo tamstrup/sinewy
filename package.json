@@ -28,11 +28,16 @@
     "README.md"
   ],
   "scripts": {
+    "predocs": "npm run docs:content",
     "docs": "sin dev docs/index.js",
+    "docs:content": "node docs/build-content.js",
+    "pregenerate": "npm run docs:content",
+    "generate": "sin generate docs/index.js",
     "demo": "sin dev examples/demo.js",
     "context-menu-demo": "sin dev examples/context-menu.js",
-    "test": "npm run test:browser && npm run test:ssr && npm run test:types",
+    "test": "npm run test:browser && npm run test:ssr && npm run test:types && npm run test:docs",
     "test:browser": "sin test test/index.js --headless --ci",
+    "test:docs": "npm run docs:content && node test/docs.test.js && node test/docs.ssr.test.js",
     "test:ssr": "node test/dropdown.ssr.test.js && node test/context-menu.ssr.test.js",
     "test:types": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM --skipLibCheck test/dropdown.types.test.ts test/context-menu.types.test.ts"
   },
@@ -40,6 +45,7 @@
     "sin": "file:../sin"
   },
   "devDependencies": {
+    "marked": "18.0.11",
     "typescript": "4.9.5"
   },
   "engines": {

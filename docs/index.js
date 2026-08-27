@@ -1,5 +1,7 @@
 import s from 'sin'
 import Dropdown from '../src/theme.js'
+import { ContextMenu } from '../src/index.js'
+import documents, { documentsBySlug } from './content.generated.js'
 
 s.title = 'Sinewy — Documentation'
 s.css.reset``
@@ -37,7 +39,7 @@ s.css`
 const App = s(({}, [], { route }) => Site(
   route({
     '/': Overview,
-    '/components/dropdown': DropdownPage,
+    '/components/:slug': ComponentPage,
     '/?': NotFound
   })
 ))
@@ -83,7 +85,12 @@ const Brand = s`a
     letter-spacing -0.02em
   }
 
-  span:last-child {
+  > span:last-child {
+    display grid
+    gap 1
+  }
+
+  > span:last-child > span {
     color #77766f
     font-size 12
   }
@@ -161,9 +168,11 @@ const SideFooter = s`footer
 `
 
 const MobileNav = s`nav
+  min-width 0
   display none
   align-items center
   gap 5
+  overflow-x auto
 
   @media (max-width: 780px) {
     display flex
@@ -215,6 +224,7 @@ const Hero = s`header
     font-size clamp(42px, 7vw, 78px)
     line-height 0.96
     letter-spacing -0.062em
+    word-spacing 0.08em
   }
 
   p {
@@ -456,6 +466,7 @@ const ArticleHeader = s`header
     font-size clamp(40px, 6vw, 65px)
     line-height 1
     letter-spacing -0.055em
+    word-spacing 0.08em
   }
 
   p {
@@ -549,10 +560,123 @@ const Article = s`article
   }
 `
 
+const Markdown = s`div
+  min-width 0
+  display grid
+  gap 14
+
+  h2,
+  h3 {
+    scroll-margin-top 24
+  }
+
+  h2 {
+    margin-top 34
+    font-size 23
+    letter-spacing -0.035em
+  }
+
+  h2:first-child {
+    margin-top 0
+  }
+
+  h3 {
+    margin-top 15
+    font-size 15
+    letter-spacing -0.015em
+  }
+
+  p,
+  li,
+  td,
+  th {
+    color #656660
+    font-size 14
+    line-height 1.68
+  }
+
+  ul,
+  ol {
+    display grid
+    gap 7
+    padding-left 21
+  }
+
+  a {
+    color #5e4cc2
+    text-underline-offset 3px
+  }
+
+  pre {
+    min-width 0
+    overflow-x auto
+    padding 17 19
+    border-radius 11
+    background #242522
+    color #e9e8e2
+    font 12px/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace
+    tab-size 2
+  }
+
+  code {
+    font-family "SFMono-Regular", Consolas, "Liberation Mono", monospace
+    font-size 0.9em
+  }
+
+  :not(pre) > code {
+    padding 2px 5px
+    border 1px solid #dfdcd3
+    border-radius 5px
+    background #efede7
+    color #4f504b
+  }
+
+  table {
+    width 100%
+    display block
+    overflow-x auto
+    border-collapse collapse
+    border 1px solid #dedbd2
+    border-radius 10
+  }
+
+  th,
+  td {
+    min-width 120
+    padding 9 11
+    border-bottom 1px solid #e5e2da
+    text-align left
+    vertical-align top
+  }
+
+  th {
+    background #efede7
+    color #444540
+    font-weight 720
+  }
+
+  tr:last-child td {
+    border-bottom 0
+  }
+
+  blockquote {
+    padding 13 16
+    border-left 3px solid #7a67d9
+    background #efecff
+  }
+
+  hr {
+    border 0
+    border-top 1px solid #dddbd3
+  }
+`
+
 const Toc = s`aside
   position sticky
   top 28
   display grid
+  max-height calc(100svh - 56px)
+  overflow-y auto
   gap 10
 
   strong {
@@ -654,53 +778,93 @@ const Code = s`pre
   tab-size 2
 `
 
-const Anatomy = s`div
-  display flex
-  flex-wrap wrap
-  align-items center
-  gap 7
-
-  code {
-    padding 7 9
-    border 1px solid #dcd9d0
-    border-radius 7
-    background #efede7
-    color #53544f
-    font-family "SFMono-Regular", Consolas, monospace
-    font-size 11
-  }
-
-  span {
-    color #aaa79e
-    font-size 11
-  }
-`
-
-const Note = s`div
-  padding 15 17
-  border-left 3px solid #7a67d9
-  border-radius 0 9px 9px 0
-  background #efecff
-  color #5e5683
+const ContextTarget = ContextMenu.Trigger`
+  width min(100%, 380px)
+  min-height 120
+  display grid
+  place-items center
+  padding 24
+  border 1px dashed #8b7dd8
+  border-radius 13
+  background #f7f5ff
+  color #55489b
   font-size 13
-  line-height 1.58
+  font-weight 690
+  text-align center
+  user-select none
+
+  &:focus-visible {
+    outline 3px solid rgb(111 91 211 / 0.3)
+    outline-offset 3px
+  }
 `
+
+const ContextContent = ContextMenu.Content`
+  width 190
+  padding 5
+  border 1px solid #ded9f7
+  border-radius 10
+  background white
+  box-shadow 0 18px 50px rgb(39 31 73 / 0.18)
+`
+
+const ContextItem = ContextMenu.Item`
+  width 100%
+  min-height 32
+  padding 6 8
+  border 0
+  border-radius 6
+  background transparent
+  color #302a4f
+  text-align left
+
+  &[data-highlighted] {
+    background #6f5bd3
+    color white
+  }
+`
+
+const ContextSeparator = ContextMenu.Separator`
+  height 1
+  margin 4
+  background #ece9f8
+`
+
+const componentDetails = {
+  'context-menu': {
+    status: 'Preview',
+    tags: ['Popover API', 'Point anchors', 'Headless'],
+    summary: 'Contextual actions at pointer or keyboard invocation points, backed by the shared menu engine.',
+    preview: ContextMenuPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
+  dropdown: {
+    status: 'API reviewed',
+    tags: ['Popover API', 'CSS anchors', 'Headless + theme'],
+    summary: 'Actions, checkbox and radio choices, nested menus, room-aware placement, and a theme facade.',
+    preview: DropdownPreview,
+    previewHeadings: [
+      { id: 'live-example', text: 'Live example' },
+      { id: 'theme-preview', text: 'Theme preview' }
+    ]
+  }
+}
 
 function ShellContent(content, route) {
-  const overview = route.has('/')
-  const component = route.has('/components/dropdown')
-
   return [
     Sidebar(
       Brand({ href: '/' }, Mark('S'), s`span`(s`strong`('Sinewy'), s`span`('Documentation'))),
       Navigation(
         NavGroup(
           s`h2`('Start here'),
-          NavLink({ href: '/', data: { active: overview || undefined } }, 'Overview')
+          NavLink({ href: '/', data: { active: route.has('/') || undefined } }, 'Overview')
         ),
         NavGroup(
           s`h2`('Components'),
-          NavLink({ href: '/components/dropdown', data: { active: component || undefined } }, 'Dropdown', s`span`('Preview'))
+          documents.map(document => NavLink({
+            href: '/components/' + document.slug,
+            data: { active: route.has('/components/' + document.slug) || undefined }
+          }, document.title, s`span`(componentDetails[document.slug]?.status || 'Preview')))
         )
       ),
       SideFooter(s`strong`('Independent preview'), 'Built for Sin.js with the platform.')
@@ -709,7 +873,8 @@ function ShellContent(content, route) {
   ]
 }
 
-function Overview({}, [], { route }) {
+function Overview({}, [], { route, doc }) {
+  doc.title('Sinewy — Documentation')
   return ShellContent([
     MobileHeader(route),
     Page(
@@ -721,24 +886,24 @@ function Overview({}, [], { route }) {
       Section(
         s`header`(s`h2`('Where things stand'), s`p`('The status here follows implemented and verified behavior, not a speculative component catalog.')),
         StatusGrid(
-          StatusCard(StatusTop(s`strong`('Dropdown API'), Badge('Reviewed')), s`p`('Names, composition rules, state modes, and source entrypoints are frozen for the preview.'), Progress(s`span`({ style: { width: '100%' } }))),
-          StatusCard(StatusTop(s`strong`('Behavior suite'), Badge('Green')), s`p`('Browser, server rendering, hydration, deep submenu, and type declaration coverage are in place.'), Progress(s`span`({ style: { width: '100%' } }))),
+          StatusCard(StatusTop(s`strong`('Portable reference'), Badge('Markdown')), s`p`('Component prose, API tables, and platform limits now come directly from the repository documents.'), Progress(s`span`({ style: { width: '100%' } }))),
+          StatusCard(StatusTop(s`strong`('Behavior suite'), Badge('Green')), s`p`('Browser, server rendering, hydration, submenu, and type declaration coverage are in place.'), Progress(s`span`({ style: { width: '100%' } }))),
           StatusCard(StatusTop(s`strong`('Accessibility sign-off'), Badge({ data: { tone: 'manual' } }, 'Manual')), s`p`('Keyboard behavior is covered; supported-browser and assistive-technology verification remains.'))
         )
       ),
       Section(
-        s`header`(s`h2`('Components'), s`p`('Each component page combines the reviewed contract, a live example, implementation status, and known limits.')),
-        ComponentCard({ href: '/components/dropdown' },
-          s`div`(s`h3`('Dropdown'), s`p`('Actions, checkbox and radio choices, nested menus, room-aware placement, and a theme facade.')),
+        s`header`(s`h2`('Components'), s`p`('Each component page combines its portable contract with live Sin examples and generated navigation.')),
+        documents.map(document => ComponentCard({ href: '/components/' + document.slug },
+          s`div`(s`h3`(document.title), s`p`(componentDetails[document.slug]?.summary || document.description)),
           Arrow('→')
-        )
+        ))
       ),
       Section({ id: 'roadmap' },
-        s`header`(s`h2`('Documentation roadmap'), s`p`('The site itself becomes the visible checklist for turning implementation work into a usable system.')),
+        s`header`(s`h2`('Documentation roadmap'), s`p`('The site itself is the visible checklist for turning implementation work into a usable system.')),
         Roadmap(
-          s`li`(Step({ data: { done: '' } }, '✓'), s`div`(s`strong`('Freeze the first component contract'), 'Dropdown public names and behavior boundaries reviewed.')),
-          s`li`(Step({ data: { current: '' } }, '2'), s`div`(s`strong`('Establish the documentation shell'), 'Navigation, progress overview, component layout, and live examples.')),
-          s`li`(Step('3'), s`div`(s`strong`('Render portable Markdown'), 'Make the generator-neutral component documents feed the site directly.')),
+          s`li`(Step({ data: { done: '' } }, '✓'), s`div`(s`strong`('Establish the documentation shell'), 'Navigation, progress overview, component layout, and live examples.')),
+          s`li`(Step({ data: { done: '' } }, '✓'), s`div`(s`strong`('Render portable Markdown'), 'Frontmatter, GFM content, heading IDs, links, and tables feed the site directly.')),
+          s`li`(Step({ data: { current: '' } }, '3'), s`div`(s`strong`('Generate the static site'), 'Use Sin SSR and route discovery to publish every documented component.')),
           s`li`(Step('4'), s`div`(s`strong`('Expand through real components'), 'Add primitives only as their contracts become concrete enough to document.'))
         )
       )
@@ -746,106 +911,97 @@ function Overview({}, [], { route }) {
   ], route)
 }
 
-function DropdownPage({}, [], { route }) {
+function ComponentPage({ slug }, [], context) {
+  const document = documentsBySlug[slug]
+  if (!document) {
+    context.doc.status(404)
+    return NotFound({}, [], context)
+  }
+
+  const details = componentDetails[slug] || {}
+  const preview = details.preview ? details.preview() : []
+  const previewHeadings = details.previewHeadings || []
+  context.doc.title(document.title + ' — Sinewy')
+
   return ShellContent([
-    MobileHeader(route),
+    MobileHeader(context.route),
     Page(
       ArticleHeader(
-        Breadcrumb(s`a`({ href: '/' }, 'Components'), s`span`('/'), s`span`('Dropdown')),
-        Meta(Badge('API reviewed'), Tag('Popover API'), Tag('CSS anchors'), Tag('Headless + theme')),
-        s`h1`('Dropdown'),
-        s`p`('A composable menu for actions and choices, with native top-layer rendering, browser-owned collision fallback, keyboard navigation, and Sin-native controlled or live-bound state.')
+        Breadcrumb(s`a`({ href: '/' }, 'Components'), s`span`('/'), s`span`(document.title)),
+        Meta(Badge(details.status || 'Preview'), (details.tags || []).map(tag => Tag(tag))),
+        s`h1`(document.title),
+        s`p`(document.description)
       ),
       ArticleGrid(
         Article(
-          s`section#example`(
-            s`h2`('Example'),
-            s`p`('The themed facade keeps the headless part structure and remains open to normal Sin style extension.'),
-            s`div`(
-              Example(DropdownExample()),
-              Code(`import Dropdown from 'sinewy/theme'\n\nDropdown(\n  Dropdown.Trigger({ variant: 'outline', color: 'accent' },\n    'Open menu',\n    Dropdown.TriggerIcon()\n  ),\n  Dropdown.Content({ size: '2', variant: 'soft', color: 'indigo' },\n    Dropdown.Item('Edit'),\n    Dropdown.Checkbox({ checked: true },\n      Dropdown.Indicator('✓'),\n      'Notifications'\n    ),\n    Dropdown.Item({ color: 'red' }, 'Delete')\n  )\n)`)
-            )
-          ),
-          s`section#theme`(
-            s`h2`('Theme'),
-            s`p`('Size and color establish an inherited menu scope. Items and nested menus follow it by default, while any part can make a deliberate local override.'),
-            ThemeMatrix(
-              ThemeGroup(
-                s`h3`('Sizes'),
-                ThemeOptions(
-                  ThemePreview({ label: 'Size 1', size: '1', color: 'indigo' }),
-                  ThemePreview({ label: 'Size 2', size: '2', color: 'indigo' }),
-                  ThemePreview({ label: 'Size 3', size: '3', color: 'indigo' })
-                )
-              ),
-              ThemeGroup(
-                s`h3`('Menu variants'),
-                ThemeOptions(
-                  ThemePreview({ label: 'Solid', variant: 'solid', color: 'purple' }),
-                  ThemePreview({ label: 'Soft', variant: 'soft', color: 'purple' })
-                )
-              ),
-              ThemeGroup(
-                s`h3`('Colors'),
-                ThemeOptions(
-                  ...['gray', 'indigo', 'cyan', 'green', 'amber', 'orange', 'crimson', 'purple'].map(color =>
-                    ThemePreview({ label: capitalize(color), variant: 'soft', color })
-                  )
-                )
-              ),
-              ThemeGroup(
-                s`h3`('Appearance'),
-                ThemeOptions(
-                  ThemePreview({ label: 'High contrast', color: 'amber', highContrast: true }),
-                  ThemePreview({ label: 'Dark cyan', color: 'cyan', dark: true })
-                )
-              )
-            )
-          ),
-          s`section#overview`(
-            s`h2`('Overview'),
-            s`p`('Dropdown supplies roles, relationships, state synchronization, focus movement, typeahead, selection semantics, checkable items, radio groups, and nested menus. It deliberately leaves product styling to the caller unless the theme entrypoint is used.'),
-            Note('Current evergreen browsers are the first target. Native popovers provide the top layer, light dismissal, and Escape behavior; CSS Anchor Positioning provides placement and room-aware fallbacks.')
-          ),
-          s`section#import`(
-            s`h2`('Import'),
-            s`h3`('Headless'),
-            Code(`import { Dropdown } from 'sinewy'`),
-            s`h3`('Themed'),
-            Code(`import Dropdown from 'sinewy/theme'`)
-          ),
-          s`section#anatomy`(
-            s`h2`('Anatomy'),
-            s`p`('The root is directly callable. Component identifiers use PascalCase, while callbacks retain Sin\'s lower-case event naming.'),
-            Anatomy(
-              s`code`('Dropdown'), s`span`('→'),
-              s`code`('.Trigger'), s`span`('+'),
-              s`code`('.Content'), s`span`('→'),
-              s`code`('.Item / .Checkbox / .Radio / .Sub')
-            )
-          ),
-          s`section#status`(
-            s`h2`('Status and limits'),
-            s`ul`(
-              s`li`('The source-level component and attribute names are reviewed and frozen for the current-browser preview.'),
-              s`li`('An arrow, modal mode, collision padding, outside-interaction callbacks, and legacy positioning are not reserved APIs.'),
-              s`li`('Content remains mounted while closed, so a compatibility-only content forceMount attribute is deliberately not exposed.'),
-              s`li`('Production accessibility sign-off still requires manual keyboard and assistive-technology testing in each supported browser.')
-            )
-          )
+          preview,
+          Markdown({ data: { source: document.source } }, s.trust(document.html))
         ),
         Toc(
           s`strong`('On this page'),
-          s`a`({ href: '#example' }, 'Example'),
-          s`a`({ href: '#theme' }, 'Theme'),
-          s`a`({ href: '#overview' }, 'Overview'),
-          s`a`({ href: '#import' }, 'Import'),
-          s`a`({ href: '#anatomy' }, 'Anatomy'),
-          s`a`({ href: '#status' }, 'Status and limits')
+          [...previewHeadings, ...document.headings.filter(heading => heading.depth === 2)].map(heading =>
+            s`a`({ href: '#' + heading.id }, heading.text)
+          )
         )
       )
     )
-  ], route)
+  ], context.route)
+}
+
+function DropdownPreview() {
+  return [
+    s`section#live-example`(
+      s`h2`('Live example'),
+      s`p`('The themed facade keeps the headless part structure and remains open to normal Sin style extension.'),
+      s`div`(
+        Example(DropdownExample()),
+        Code(`import Dropdown from 'sinewy/theme'\n\nDropdown(\n  Dropdown.Trigger('Open menu'),\n  Dropdown.Content(\n    Dropdown.Item('Edit'),\n    Dropdown.Checkbox({ checked: true },\n      Dropdown.Indicator('✓'),\n      'Notifications'\n    )\n  )\n)`)
+      )
+    ),
+    s`section#theme-preview`(
+      s`h2`('Theme preview'),
+      s`p`('Size and color establish an inherited menu scope. Parts can make deliberate local overrides.'),
+      ThemeMatrix(
+        ThemeGroup(
+          s`h3`('Sizes'),
+          ThemeOptions(
+            ThemePreview({ label: 'Size 1', size: '1', color: 'indigo' }),
+            ThemePreview({ label: 'Size 2', size: '2', color: 'indigo' }),
+            ThemePreview({ label: 'Size 3', size: '3', color: 'indigo' })
+          )
+        ),
+        ThemeGroup(
+          s`h3`('Colors'),
+          ThemeOptions(
+            ...['gray', 'indigo', 'cyan', 'green', 'amber', 'crimson', 'purple'].map(color =>
+              ThemePreview({ label: capitalize(color), variant: 'soft', color })
+            )
+          )
+        )
+      )
+    )
+  ]
+}
+
+function ContextMenuPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('Right-click the target, or focus it and press Shift+F10.'),
+    s`div`(
+      Example(
+        ContextMenu(
+          ContextTarget('Open a contextual menu here'),
+          ContextContent(
+            ContextItem('Rename'),
+            ContextItem('Duplicate'),
+            ContextSeparator(),
+            ContextItem('Delete')
+          )
+        )
+      ),
+      Code(`ContextMenu(\n  ContextMenu.Trigger('Right-click here'),\n  ContextMenu.Content(\n    ContextMenu.Item('Rename'),\n    ContextMenu.Item('Duplicate')\n  )\n)`)
+    )
+  )
 }
 
 const DropdownExample = s(() => {
@@ -915,12 +1071,16 @@ function MobileHeader(route) {
     Brand({ href: '/' }, Mark('S'), s`strong`('Sinewy')),
     MobileNav(
       MobileLink({ href: '/', data: { active: route.has('/') || undefined } }, 'Overview'),
-      MobileLink({ href: '/components/dropdown', data: { active: route.has('/components/dropdown') || undefined } }, 'Dropdown')
+      documents.map(document => MobileLink({
+        href: '/components/' + document.slug,
+        data: { active: route.has('/components/' + document.slug) || undefined }
+      }, document.title))
     )
   )
 }
 
-function NotFound({}, [], { route }) {
+function NotFound({}, [], { route, doc }) {
+  doc.title('Not found — Sinewy')
   return ShellContent([
     MobileHeader(route),
     Page(
@@ -934,4 +1094,4 @@ function NotFound({}, [], { route }) {
   ], route)
 }
 
-s.mount(App)
+export default s.mount(App)

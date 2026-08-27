@@ -371,7 +371,7 @@ When an ordinary item is selected, the popover closes. Calling `event.preventDef
 
 | Hook | Element | Meaning |
 | --- | --- | --- |
-| `[data-state="open|closed"]` | trigger, content | Current native popover state. |
+| `[data-state="open\|closed"]` | trigger, content | Current native popover state. |
 | `[data-highlighted]` | item | Current roving-focus/pointer-highlighted item. |
 | `[data-disabled]` | trigger, item | Trigger or item is disabled. |
 | `[data-text-value]` | item | Explicit typeahead value when supplied. |

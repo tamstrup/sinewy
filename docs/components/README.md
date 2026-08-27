@@ -12,7 +12,7 @@ Keep documents generator-neutral:
 - Use `.md`, not MDX or framework components.
 - Avoid generator-specific directives, imports, shortcodes, and frontmatter.
 - Use relative links between documentation files and include the `.md` extension.
-- Let the eventual renderer generate heading IDs and tables of contents.
+- Let the documentation compiler generate heading IDs and tables of contents.
 - Use the file path for grouping and the lowercase, kebab-case filename for the default slug.
 
 ## Frontmatter
@@ -44,7 +44,7 @@ Use the following sections when they apply, in this order:
 8. `Styling hooks` — stable attributes, pseudo-classes, and CSS variables.
 9. `Current limits` — experimental behavior and intentionally unsupported surface.
 
-Omit irrelevant sections rather than creating empty placeholders. Use descriptive level-two and level-three headings; the eventual documentation utility will derive the on-page table of contents from them.
+Omit irrelevant sections rather than creating empty placeholders. Use descriptive level-two and level-three headings; the documentation compiler derives the on-page table of contents from them.
 
 ## API tables
 

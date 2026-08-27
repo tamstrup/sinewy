@@ -33,6 +33,12 @@ personal/
 npm run docs
 ```
 
+Generate the static documentation routes with:
+
+```sh
+npm run generate
+```
+
 ## Dropdown demo
 
 ```sh

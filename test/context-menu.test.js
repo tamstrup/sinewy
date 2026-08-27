@@ -33,6 +33,36 @@ t`context menu`(
       return [90, Math.round(rect.top)]
     })),
 
+    t`waits for a held secondary button to be released`(() => withMenu({}, async menu => {
+      menu.trigger.dispatchEvent(new PointerEvent('pointerdown', {
+        bubbles: true,
+        button: 2,
+        buttons: 2,
+        pointerId: 1,
+        pointerType: 'mouse'
+      }))
+      menu.trigger.dispatchEvent(contextEvent({
+        clientX: 120,
+        clientY: 90,
+        button: 2,
+        buttons: 0,
+        pointerId: 1,
+        pointerType: 'mouse'
+      }))
+
+      t.is(false, menu.content.matches(':popover-open'))
+      document.dispatchEvent(new PointerEvent('pointerup', {
+        bubbles: true,
+        button: 2,
+        buttons: 0,
+        pointerId: 1,
+        pointerType: 'mouse'
+      }))
+      await settle()
+
+      return [true, menu.content.matches(':popover-open')]
+    })),
+
     t`uses the target corner for keyboard-origin events`(() => withMenu({
       trigger: {
         style: {

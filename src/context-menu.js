@@ -35,6 +35,9 @@ const ContextMenu = s(({ id }, [], context) => {
     search: '',
     searchTimer: undefined,
     pointerGrace: undefined,
+    pointerDown: undefined,
+    pointerCleanup: undefined,
+    pendingOpen: undefined,
     onbeforeopenchange: undefined,
     onopenchange: undefined
   }
@@ -45,6 +48,8 @@ const ContextMenu = s(({ id }, [], context) => {
   context.onremove(() => {
     clearTimeout(state.searchTimer)
     cancelAnimationFrame(state.reconcileFrame)
+    state.pointerCleanup && state.pointerCleanup()
+    state.pendingOpen && state.pendingOpen()
     state.anchor && state.anchor.remove()
   })
 
@@ -102,10 +107,11 @@ ContextMenu.Trigger = s(({
       state.openFocus = 'first'
       state.restoreFocus = true
 
-      if (state.content.matches(':popover-open')) {
-        focusFirst(state.content)
+      state.pendingOpen && state.pendingOpen()
+      if (state.pointerDown) {
+        openAfterRelease(state, element, state.pointerDown)
       } else {
-        state.content.showPopover({ source: element })
+        open(state, element)
       }
     }
   }, children)
@@ -135,6 +141,13 @@ function mountTrigger(state, element) {
   if (import.meta.dev && state.trigger && state.trigger !== element && state.trigger.isConnected)
     console.warn('ContextMenu.Trigger should only be rendered once per ContextMenu state scope')
   state.trigger = element
+
+  const pointerdown = event => trackPointer(state, event)
+  element.addEventListener('pointerdown', pointerdown, true)
+  return () => {
+    element.removeEventListener('pointerdown', pointerdown, true)
+    state.pointerCleanup && state.pointerCleanup()
+  }
 }
 
 function invocationPoint(event, element, dir) {
@@ -152,6 +165,86 @@ function moveAnchor(state, doc, x, y) {
   const anchor = state.anchor || createAnchor(state, doc)
   anchor.style.left = x + 'px'
   anchor.style.top = y + 'px'
+}
+
+function open(state, trigger) {
+  if (!state.content || !trigger.isConnected)
+    return
+
+  if (state.content.matches(':popover-open')) {
+    focusFirst(state.content)
+  } else {
+    state.content.showPopover({ source: trigger })
+  }
+}
+
+function openAfterRelease(state, trigger, pointer) {
+  const doc = trigger.ownerDocument
+  const { button, pointerId } = pointer
+  let frame
+
+  const detach = () => {
+    doc.removeEventListener('pointerup', release, true)
+    doc.removeEventListener('mouseup', release, true)
+    doc.removeEventListener('pointercancel', cancelEvent, true)
+  }
+  const cancel = () => {
+    detach()
+    cancelAnimationFrame(frame)
+    state.pendingOpen === cancel && (state.pendingOpen = undefined)
+  }
+  const matchesPointer = event => pointerId == null
+    || event.pointerId == null
+    || event.pointerId === pointerId
+  const release = event => {
+    if (event.button !== button || !matchesPointer(event))
+      return
+
+    state.pointerCleanup && state.pointerCleanup()
+    detach()
+    frame = requestAnimationFrame(() => {
+      state.pendingOpen === cancel && (state.pendingOpen = undefined)
+      open(state, trigger)
+    })
+  }
+  const cancelEvent = event => {
+    if (matchesPointer(event))
+      cancel()
+  }
+
+  doc.addEventListener('pointerup', release, true)
+  doc.addEventListener('mouseup', release, true)
+  doc.addEventListener('pointercancel', cancelEvent, true)
+  state.pendingOpen = cancel
+}
+
+function trackPointer(state, event) {
+  state.pointerCleanup && state.pointerCleanup()
+
+  const doc = event.currentTarget.ownerDocument
+  const pointer = state.pointerDown = {
+    button: event.button,
+    pointerId: event.pointerId
+  }
+  const clear = event => {
+    if (event.pointerId !== pointer.pointerId)
+      return
+
+    doc.removeEventListener('pointerup', clear, true)
+    doc.removeEventListener('pointercancel', clear, true)
+    state.pointerDown === pointer && (state.pointerDown = undefined)
+    state.pointerCleanup === cleanup && (state.pointerCleanup = undefined)
+  }
+  const cleanup = () => {
+    doc.removeEventListener('pointerup', clear, true)
+    doc.removeEventListener('pointercancel', clear, true)
+    state.pointerDown === pointer && (state.pointerDown = undefined)
+    state.pointerCleanup === cleanup && (state.pointerCleanup = undefined)
+  }
+
+  doc.addEventListener('pointerup', clear, true)
+  doc.addEventListener('pointercancel', clear, true)
+  state.pointerCleanup = cleanup
 }
 
 function createAnchor(state, doc) {

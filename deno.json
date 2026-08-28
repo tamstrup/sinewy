@@ -1,7 +1,7 @@
 {
   "lock": false,
   "deploy": {
-    "install": "git clone https://github.com/tamstrup/sin.git ../sin && git -C ../sin checkout 47063bdfc7ad4187c118aac9ee60e49bbf565a04 && npm install --prefix ../sin --no-audit --no-fund && npm ci",
+    "install": "git clone https://github.com/porsager/sin.git ../sin && git -C ../sin checkout 27aa6384513f6c57a749776550a6d9c544ed8265 && git -C ../sin apply $PWD/deploy/sin.patch && npm install --prefix ../sin --no-audit --no-fund && npm ci",
     "build": "npm run generate",
     "runtime": {
       "type": "static",

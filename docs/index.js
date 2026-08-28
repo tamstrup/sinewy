@@ -1,6 +1,5 @@
 import s from 'sin'
-import Dropdown from '../src/theme.js'
-import { ContextMenu } from '../src/index.js'
+import Dropdown, { ContextMenu } from '../src/theme.js'
 import documents, { documentsBySlug } from './content.generated.js'
 
 s.title = 'Sinewy — Documentation'
@@ -528,10 +527,12 @@ const ArticleGrid = s`div
 const Article = s`article
   min-width 0
   display grid
+  grid-template-columns minmax(0, 1fr)
   gap 48
 
   section {
     display grid
+    grid-template-columns minmax(0, 1fr)
     gap 14
     scroll-margin-top 24
   }
@@ -561,6 +562,7 @@ const Article = s`article
 `
 
 const Markdown = s`div
+  width 100%
   min-width 0
   display grid
   gap 14
@@ -633,6 +635,7 @@ const Markdown = s`div
 
   table {
     width 100%
+    max-width 100%
     display block
     overflow-x auto
     border-collapse collapse
@@ -799,43 +802,10 @@ const ContextTarget = ContextMenu.Trigger`
   }
 `
 
-const ContextContent = ContextMenu.Content`
-  width 190
-  padding 5
-  border 1px solid #ded9f7
-  border-radius 10
-  background white
-  box-shadow 0 18px 50px rgb(39 31 73 / 0.18)
-`
-
-const ContextItem = ContextMenu.Item`
-  width 100%
-  min-height 32
-  padding 6 8
-  border 0
-  border-radius 6
-  background transparent
-  color #302a4f
-  font-size 14
-  line-height 20px
-  text-align left
-
-  &[data-highlighted] {
-    background #6f5bd3
-    color white
-  }
-`
-
-const ContextSeparator = ContextMenu.Separator`
-  height 1
-  margin 4
-  background #ece9f8
-`
-
 const componentDetails = {
   'context-menu': {
     status: 'Preview',
-    tags: ['Popover API', 'Point anchors', 'Headless'],
+    tags: ['Popover API', 'Point anchors', 'Headless + theme'],
     summary: 'Contextual actions at pointer or keyboard invocation points, backed by the shared menu engine.',
     preview: ContextMenuPreview,
     previewHeadings: [{ id: 'live-example', text: 'Live example' }]
@@ -993,15 +963,15 @@ function ContextMenuPreview() {
       Example(
         ContextMenu(
           ContextTarget('Open a contextual menu here'),
-          ContextContent(
-            ContextItem('Rename'),
-            ContextItem('Duplicate'),
-            ContextSeparator(),
-            ContextItem('Delete')
+          ContextMenu.Content({ variant: 'soft', color: 'indigo' },
+            ContextMenu.Item({ shortcut: '⌘ R' }, 'Rename'),
+            ContextMenu.Item({ shortcut: '⌘ D' }, 'Duplicate'),
+            ContextMenu.Separator(),
+            ContextMenu.Item({ color: 'red' }, 'Delete')
           )
         )
       ),
-      Code(`ContextMenu(\n  ContextMenu.Trigger('Right-click here'),\n  ContextMenu.Content(\n    ContextMenu.Item('Rename'),\n    ContextMenu.Item('Duplicate')\n  )\n)`)
+      Code(`import { ContextMenu } from 'sinewy/theme'\n\nContextMenu(\n  ContextMenu.Trigger('Right-click here'),\n  ContextMenu.Content({ variant: 'soft', color: 'indigo' },\n    ContextMenu.Item({ shortcut: '⌘ R' }, 'Rename'),\n    ContextMenu.Item('Duplicate')\n  )\n)`)
     )
   )
 }

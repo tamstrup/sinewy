@@ -1,5 +1,6 @@
 import s from 'sin'
 import Headless from './dropdown.js'
+import HeadlessContextMenu from './context-menu.js'
 import { themeColorStyle } from './theme-colors.js'
 
 const $theme = Symbol('sinewy-theme')
@@ -470,6 +471,23 @@ Dropdown.Group = Headless.Group
 Dropdown.RadioGroup = Headless.RadioGroup
 Dropdown.Sub = Headless.Sub
 
+const ContextMenu = s((attrs, children) => HeadlessContextMenu(attrs, children))
+
+ContextMenu.Trigger = HeadlessContextMenu.Trigger
+ContextMenu.Content = Dropdown.Content
+ContextMenu.Item = Dropdown.Item
+ContextMenu.Checkbox = Dropdown.Checkbox
+ContextMenu.RadioGroup = HeadlessContextMenu.RadioGroup
+ContextMenu.Radio = Dropdown.Radio
+ContextMenu.Indicator = Dropdown.Indicator
+ContextMenu.Group = HeadlessContextMenu.Group
+ContextMenu.Label = Dropdown.Label
+ContextMenu.Separator = Dropdown.Separator
+ContextMenu.Sub = HeadlessContextMenu.Sub
+ContextMenu.SubTrigger = Dropdown.SubTrigger
+ContextMenu.SubContent = Dropdown.SubContent
+ContextMenu.Shortcut = Dropdown.Shortcut
+
 function themedItem(Base) {
   return s(({
     size,
@@ -541,5 +559,5 @@ function themedData(data, values) {
   }
 }
 
-export { Dropdown }
+export { ContextMenu, Dropdown }
 export default Dropdown

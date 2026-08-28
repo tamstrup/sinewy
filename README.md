@@ -7,8 +7,8 @@ primitives. It is maintained separately from Sin.js and is not an official
 Sin.js project.
 
 The current preview contains headless dropdown and context-menu components plus
-an optional themed dropdown facade. It targets current evergreen browsers with
-the Popover API and CSS Anchor Positioning.
+optional themed facades. It targets current evergreen browsers with the Popover
+API and CSS Anchor Positioning.
 
 ## Local setup
 
@@ -61,7 +61,7 @@ npm test
 
 ```js
 import { ContextMenu, Dropdown } from 'sinewy'
-import ThemedDropdown from 'sinewy/theme'
+import ThemedDropdown, { ContextMenu as ThemedContextMenu } from 'sinewy/theme'
 ```
 
 The public contracts and their current platform limits are documented in

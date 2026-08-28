@@ -21,6 +21,12 @@ The focused entrypoint provides the same default and named export:
 import ContextMenu from 'sinewy/context-menu'
 ```
 
+The optional themed facade is a named export from the shared theme entrypoint:
+
+```js
+import { ContextMenu } from 'sinewy/theme'
+```
+
 ## Basic usage
 
 ```js
@@ -59,6 +65,21 @@ const Content = ContextMenu.Content`
   box-shadow 0 16px 40px rgb(0 0 0 / 0.16)
 `
 ```
+
+### Themed facade
+
+The themed facade leaves `ContextMenu.Trigger` visually unstyled because it represents an arbitrary contextual target rather than a menu button. `Content`, `SubContent`, and the shared menu parts reuse Dropdown's theme system:
+
+| Part | Option | Values | Default and behavior |
+| --- | --- | --- | --- |
+| content, subcontent | `size` | `1 \| 2 \| 3` | `2` on root content; inherited by submenu content and menu parts. |
+| content, subcontent | `variant` | `solid \| soft` | `solid`; controls highlighted and open-subtrigger treatment. |
+| content, subcontent | `color` | theme color | `gray` on root content; inherited by submenu content and item states. |
+| content, subcontent, item | `highContrast` | `boolean` | Strengthens solid highlighted states. |
+| item, checkbox, radio, subtrigger | `color` | theme color | An explicit value provides a semantic override. |
+| item, checkbox, radio, subtrigger | `shortcut` | Sin children | Renders a trailing themed `kbd`. |
+
+`ContextMenu.Shortcut` is also available for explicit composition. Theme values are rendered as data attributes and CSS custom properties; ordinary `style` values and tagged-template extensions continue to work.
 
 ## API reference
 
@@ -122,4 +143,3 @@ Consumers using `as` must forward received attributes, event handlers, `dom`, an
 
 - Programmatic or controlled opening has no public contract yet.
 - The ephemeral point anchor is inserted into `document.body` when invoked and removed with the component; menu content itself remains in its original Sin ancestry and enters the top layer through the Popover API.
-- The component is currently headless; a themed facade will follow after interaction behavior is stable.

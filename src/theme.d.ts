@@ -13,6 +13,20 @@ import type {
   DropdownSubTriggerAttrs,
   DropdownTriggerAttrs
 } from './dropdown.js'
+import type {
+  ContextMenuCheckboxAttrs,
+  ContextMenuContentAttrs,
+  ContextMenuGroupAttrs,
+  ContextMenuIndicatorAttrs,
+  ContextMenuItemAttrs,
+  ContextMenuRadioAttrs,
+  ContextMenuRadioGroupAttrs,
+  ContextMenuRootAttrs,
+  ContextMenuSubAttrs,
+  ContextMenuSubContentAttrs,
+  ContextMenuSubTriggerAttrs,
+  ContextMenuTriggerAttrs
+} from './context-menu.js'
 
 export type DropdownThemeSize = '1' | '2' | '3'
 export type DropdownThemeColor =
@@ -81,7 +95,32 @@ export type DropdownTheme = s.Component<DropdownRootAttrs, s.Children[]> & {
   TriggerIcon: s.Component<Record<string, unknown>, s.Children[]>
 }
 
-declare const Dropdown: DropdownTheme
+export type ContextMenuThemeContentAttrs = ContextMenuContentAttrs & DropdownThemeContentOptions
+export type ContextMenuThemeSubContentAttrs = ContextMenuSubContentAttrs & DropdownThemeContentOptions
+export type ContextMenuThemeItemAttrs = ContextMenuItemAttrs & DropdownThemeItemOptions
+export type ContextMenuThemeCheckboxAttrs = ContextMenuCheckboxAttrs & DropdownThemeItemOptions
+export type ContextMenuThemeRadioAttrs = ContextMenuRadioAttrs & DropdownThemeItemOptions
+export type ContextMenuThemeSubTriggerAttrs = ContextMenuSubTriggerAttrs & DropdownThemeItemOptions
 
-export { Dropdown }
+export type ContextMenuTheme = s.Component<ContextMenuRootAttrs, s.Children[]> & {
+  Trigger: s.Component<HTMLElement, ContextMenuTriggerAttrs, s.Children[]>
+  Content: s.Component<HTMLDivElement, ContextMenuThemeContentAttrs, s.Children[]>
+  Item: s.Component<HTMLButtonElement, ContextMenuThemeItemAttrs, s.Children[]>
+  Checkbox: s.Component<HTMLButtonElement, ContextMenuThemeCheckboxAttrs, s.Children[]>
+  RadioGroup: s.Component<HTMLDivElement, ContextMenuRadioGroupAttrs, s.Children[]>
+  Radio: s.Component<HTMLButtonElement, ContextMenuThemeRadioAttrs, s.Children[]>
+  Indicator: s.Component<HTMLElement, ContextMenuIndicatorAttrs, s.Children[]>
+  Group: s.Component<HTMLDivElement, ContextMenuGroupAttrs, s.Children[]>
+  Label: s.Component<HTMLDivElement, DropdownThemeOptions, s.Children[]>
+  Separator: s.Component<HTMLDivElement, {}, s.Children[]>
+  Sub: s.Component<ContextMenuSubAttrs, s.Children[]>
+  SubTrigger: s.Component<HTMLButtonElement, ContextMenuThemeSubTriggerAttrs, s.Children[]>
+  SubContent: s.Component<HTMLDivElement, ContextMenuThemeSubContentAttrs, s.Children[]>
+  Shortcut: s.Component<HTMLElement, {}, s.Children[]>
+}
+
+declare const Dropdown: DropdownTheme
+declare const ContextMenu: ContextMenuTheme
+
+export { ContextMenu, Dropdown }
 export default Dropdown

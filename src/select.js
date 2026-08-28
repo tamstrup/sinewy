@@ -6,6 +6,9 @@ import { themedData } from './theme-options.js'
 const $select = Symbol('sinewy-select')
 
 const SelectControl = s`select
+  $sinewy-select-indicator-width 16px
+  $sinewy-select-indicator-start 9px
+  $sinewy-select-indicator-font-size 12px
   min-width 0
   min-height 36
   margin 0
@@ -22,6 +25,9 @@ const SelectControl = s`select
   transition background-color 80ms ease, border-color 80ms ease, box-shadow 80ms ease
 
   &[data-size='1'] {
+    $sinewy-select-indicator-width 14px
+    $sinewy-select-indicator-start 7px
+    $sinewy-select-indicator-font-size 11px
     min-height 30
     padding-inline 8px
     border-radius 7
@@ -29,6 +35,9 @@ const SelectControl = s`select
   }
 
   &[data-size='3'] {
+    $sinewy-select-indicator-width 18px
+    $sinewy-select-indicator-start 11px
+    $sinewy-select-indicator-font-size 13px
     min-height 42
     padding-inline 12px
     border-radius 11
@@ -55,8 +64,198 @@ const SelectControl = s`select
     opacity 0.5
   }
 
+  @supports (appearance: base-select) {
+    align-items center
+    gap 8
+    appearance base-select
+
+    &::picker(select) {
+      min-width anchor-size(width)
+      max-width min(340px, calc(100vw - 24px))
+      max-height min(480px, calc(100vh - 24px))
+      padding 6
+      overflow auto
+      border 1px solid $sinewy-neutral-6
+      border-radius 13
+      appearance base-select
+      background color-mix(in srgb, $sinewy-panel 98%, transparent)
+      color $sinewy-neutral-12
+      box-shadow 0 22px 60px light-dark(rgb(35 31 24 / 0.18), rgb(0 0 0 / 0.5)), 0 3px 10px light-dark(rgb(35 31 24 / 0.08), rgb(0 0 0 / 0.28))
+      opacity 0
+      transform translateY(-4px) scale(0.985)
+      transform-origin top
+      transition opacity 120ms ease, transform 120ms ease, display 120ms allow-discrete, overlay 120ms allow-discrete
+    }
+
+    &:open::picker(select) {
+      opacity 1
+      transform translateY(0) scale(1)
+    }
+
+    @starting-style {
+      &:open::picker(select) {
+        opacity 0
+        transform translateY(-4px) scale(0.985)
+      }
+    }
+
+    &::picker-icon {
+      margin-inline-start auto
+      color $sinewy-accent-11
+      transition transform 120ms ease
+    }
+
+    &:open::picker-icon {
+      transform rotate(180deg)
+    }
+
+    & optgroup {
+      margin 0
+      padding 5px 0 0
+      border 0
+      color $sinewy-neutral-11
+      font-size 11
+      font-weight 750
+      letter-spacing 0.08em
+      text-transform uppercase
+    }
+
+    & optgroup + optgroup {
+      margin-block-start 5px
+      border-block-start 1px solid $sinewy-neutral-6
+    }
+
+    & option {
+      min-height 36
+      display flex
+      position relative
+      align-items center
+      gap 10
+      margin 0
+      padding 7px 9px
+      padding-inline-start 35px
+      border 0
+      border-radius 8
+      background transparent
+      color $sinewy-neutral-12
+      cursor pointer
+      font-size 14
+      font-weight 500
+      line-height 20px
+      letter-spacing normal
+      text-align start
+      text-transform none
+      user-select none
+    }
+
+    &[data-size='1']::picker(select) {
+      max-width min(300px, calc(100vw - 20px))
+      max-height min(400px, calc(100vh - 20px))
+      padding 5
+      border-radius 11
+    }
+
+    &[data-size='1'] optgroup {
+      padding-block-start 4px
+      font-size 10
+    }
+
+    &[data-size='1'] option {
+      min-height 30
+      gap 8
+      padding 5px 7px
+      padding-inline-start 29px
+      border-radius 7
+      font-size 12
+      line-height 16px
+    }
+
+    &[data-size='3']::picker(select) {
+      max-width min(380px, calc(100vw - 28px))
+      max-height min(540px, calc(100vh - 28px))
+      padding 7
+      border-radius 15
+    }
+
+    &[data-size='3'] optgroup {
+      padding-block-start 6px
+      font-size 12
+    }
+
+    &[data-size='3'] option {
+      min-height 42
+      gap 12
+      padding 9px 11px
+      padding-inline-start 41px
+      border-radius 10
+      font-size 16
+      line-height 24px
+    }
+
+    & option::checkmark {
+      content '✓'
+      width $sinewy-select-indicator-width
+      display inline-grid
+      place-items center
+      position absolute
+      inset-inline-start $sinewy-select-indicator-start
+      color $sinewy-accent-11
+      font-size $sinewy-select-indicator-font-size
+      font-weight 900
+    }
+
+    & option:checked {
+      background $sinewy-accent-3
+      color $sinewy-accent-12
+    }
+
+    & option:hover:not(:disabled) {
+      outline 0
+      background $sinewy-accent-9
+      color $sinewy-accent-contrast
+    }
+
+    & option:focus:not(:disabled) {
+      outline 0
+      background $sinewy-accent-9
+      color $sinewy-accent-contrast
+    }
+
+    & option:hover:not(:disabled)::checkmark {
+      color currentColor
+    }
+
+    & option:focus:not(:disabled)::checkmark {
+      color currentColor
+    }
+
+    &[data-high-contrast] option:checked {
+      background $sinewy-accent-12
+      color $sinewy-accent-1
+    }
+
+    &[data-high-contrast] option:checked::checkmark {
+      color currentColor
+    }
+
+    & option:disabled {
+      cursor default
+      color $sinewy-neutral-9
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     transition none
+
+    &::picker(select) {
+      transition none
+      transform none
+    }
+
+    &::picker-icon {
+      transition none
+      transform none
+    }
   }
 `
 

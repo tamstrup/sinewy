@@ -7,6 +7,8 @@ description: A themed native single-value select with option and optgroup helper
 
 `Select` renders a native `select`. The browser supplies its popup, keyboard navigation, focus behavior, validation, form submission, and disabled semantics; Sinewy supplies sizing, color-aware interaction styling, controlled state, and live binding.
 
+In browsers with customizable Select support, Sinewy progressively enhances the native picker with the same surface, option sizing, selection gutter, group typography, shadow, and interaction colors used by Dropdown and ContextMenu. Other browsers keep their platform picker and the existing themed closed control.
+
 `Select.Option` renders `option`, and `Select.Group` renders `optgroup`. They exist because options and labelled groups are concrete parts of the native select model, not custom menu abstractions.
 
 The initial contract is deliberately single-value. Native `multiple` selection is deferred because it needs an array-valued state contract and a materially different visual interaction.
@@ -65,7 +67,7 @@ const WideSelect = Select`
 `
 ```
 
-The browser continues to own the platform-specific popup and option rendering.
+The browser continues to own popup behavior and placement. Where `appearance: base-select` and `::picker(select)` are supported, Sinewy also themes the popup and options. The enhancement requires no additional public attribute and falls back to the platform picker without changing behavior.
 
 ## API reference
 
@@ -99,10 +101,15 @@ Keyboard and popup behavior follow the browser's native select implementation, i
 | --- | --- |
 | `data-size`, `data-color` | Resolved theme options. |
 | `data-high-contrast` | Present when high contrast is enabled. |
+| `:open` | Native open-picker state in customizable Select implementations. |
+| `::picker(select)` | Native top-layer picker surface where supported. |
+| `::picker-icon` | Native disclosure icon where supported. |
+| `option:checked`, `option::checkmark` | Native selected option and indicator where supported. |
 | `:hover`, `:focus-visible`, `:disabled` | Native interaction states. |
 
 ## Current limits
 
 - Select supports one scalar string value; `multiple` is not yet public.
-- The native popup and its option styling remain browser and operating-system controlled.
+- Browsers without customizable Select support use their native popup appearance.
+- Popup placement remains browser controlled and does not expose Dropdown placement options.
 - There is no custom trigger, portal, searchable combobox behavior, or composition API.

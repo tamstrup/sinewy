@@ -114,6 +114,33 @@ t`select`(
     const rules = cssRules()
     return [true, rules.some(rule => rule.selectorText?.includes(':focus-visible') &&
       rule.style.outlineOffset === '2px')]
+  })),
+
+  t`progressively matches the shared menu surface and item styling`(() => withSelect({ attrs: {
+    defaultValue: 'pear',
+    color: 'cyan',
+    highContrast: true
+  } }, select => {
+    t.is(true, CSS.supports('appearance', 'base-select'))
+    t.is('base-select', getComputedStyle(select).appearance)
+
+    const rules = cssRules()
+    const picker = rules.find(rule => rule.selectorText?.includes('::picker(select)') &&
+      rule.style.borderRadius === '13px')
+    const option = rules.find(rule => / option$/.test(rule.selectorText || ''))
+    const group = rules.find(rule => / optgroup$/.test(rule.selectorText || ''))
+    const checkmark = rules.find(rule => rule.selectorText?.endsWith('option::checkmark'))
+    const highlighted = rules.find(rule => rule.selectorText?.includes('option:hover:not(:disabled)'))
+    const contrast = rules.find(rule => rule.selectorText?.includes('[data-high-contrast] option:checked'))
+
+    t.is('6px', picker.style.padding)
+    t.is(true, picker.style.boxShadow.includes('22px 60px'))
+    t.is('36px', option.style.minHeight)
+    t.is('35px', option.style.paddingInlineStart)
+    t.is('750', group.style.fontWeight)
+    t.is('absolute', checkmark.style.position)
+    t.is('var(--sinewy-accent-9)', highlighted.style.background)
+    return ['var(--sinewy-accent-12)', contrast.style.background]
   }))
 )
 

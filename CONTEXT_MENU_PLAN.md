@@ -26,7 +26,7 @@ Functional parity means pointer and keyboard invocation, point placement, focus 
 4. Complete keyboard and assistive-technology verification in supported browsers.
    - [x] Verify the Chromium accessibility tree, menu naming, item roles, focus, navigation, typeahead, and dismissal.
    - [x] Handle Shift+F10 and the Context Menu key without depending on browser event synthesis.
-   - [ ] Verify Safari with VoiceOver manually.
+   - [x] Verify Safari 26.6 with VoiceOver manually.
    - [ ] Verify Firefox after it implements the named CSS Anchor Positioning used by the component.
 5. [x] Add the themed facade using the shared menu palette and density contracts.
 

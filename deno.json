@@ -1,8 +1,7 @@
 {
   "lock": false,
   "deploy": {
-    "install": "git clone https://github.com/porsager/sin.git ../sin && git -C ../sin checkout 27aa6384513f6c57a749776550a6d9c544ed8265 && git -C ../sin apply $PWD/deploy/sin.patch && npm install --prefix ../sin --no-audit --no-fund && npm ci",
-    "build": "npm run generate",
+    "build": "test -f +build/index.html && test -f +build/index.js && test -f +build/components/dropdown/index.html && test -f +build/components/context-menu/index.html",
     "runtime": {
       "type": "static",
       "cwd": "./+build"

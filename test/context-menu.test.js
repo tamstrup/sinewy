@@ -173,6 +173,53 @@ t`context menu`(
     }))
   ),
 
+  t`positioning`(
+    t`stays inside every viewport corner across repeated invocation`(() => withMenu({
+      content: {
+        style: {
+          width: '160px',
+          height: '100px'
+        }
+      }
+    }, async menu => {
+      const inset = 4
+      const corners = [
+        { x: inset, y: inset, horizontal: 'after', vertical: 'after' },
+        { x: innerWidth - inset, y: inset, horizontal: 'before', vertical: 'after' },
+        { x: inset, y: innerHeight - inset, horizontal: 'after', vertical: 'before' },
+        { x: innerWidth - inset, y: innerHeight - inset, horizontal: 'before', vertical: 'before' }
+      ]
+
+      for (const corner of corners) {
+        menu.trigger.dispatchEvent(contextEvent({
+          clientX: corner.x,
+          clientY: corner.y,
+          button: 2,
+          pointerType: 'mouse'
+        }))
+        await settle()
+
+        const content = menu.content.getBoundingClientRect()
+        t.is(true,
+          content.left >= 0
+          && content.top >= 0
+          && content.right <= innerWidth
+          && content.bottom <= innerHeight
+        )
+        t.is(true, corner.horizontal === 'after'
+          ? content.left >= corner.x - 1
+          : content.right <= corner.x + 1
+        )
+        t.is(true, corner.vertical === 'after'
+          ? content.top >= corner.y - 1
+          : content.bottom <= corner.y + 1
+        )
+      }
+
+      return [true, menu.content.matches(':popover-open')]
+    }))
+  ),
+
   t`selection`(
     t`selects, closes, reports lifecycle, and restores target focus`(() => {
       const changes = []
@@ -227,7 +274,36 @@ t`context menu`(
         t.is(false, menu.subContent.matches(':popover-open'))
         return [false, menu.content.matches(':popover-open')]
       })
-    })
+    }),
+
+    t`RTL opens deep submenus toward inline start and unwinds with the back key`(() => withDeepSubmenu({
+      root: { dir: 'rtl' }
+    }, async menu => {
+      menu.trigger.dispatchEvent(contextEvent({
+        clientX: innerWidth - 4,
+        clientY: 100,
+        button: 2,
+        pointerType: 'mouse'
+      }))
+      await settle()
+
+      t.is(menu.subtriggers[0], document.activeElement)
+      key(menu.subtriggers[0], 'ArrowLeft')
+      await settle()
+      t.is(menu.subtriggers[1], document.activeElement)
+      key(menu.subtriggers[1], 'ArrowLeft')
+      await settle()
+
+      t.is(menu.deepItem, document.activeElement)
+      t.is('true,true,true', menu.contents.map(content => content.matches(':popover-open')).join(','))
+      t.is(true, menu.contents[1].getBoundingClientRect().right <= menu.subtriggers[0].getBoundingClientRect().left + 1)
+      t.is(true, menu.contents[2].getBoundingClientRect().right <= menu.subtriggers[1].getBoundingClientRect().left + 1)
+
+      key(menu.deepItem, 'ArrowRight')
+      await settle()
+      t.is('true,true,false', menu.contents.map(content => content.matches(':popover-open')).join(','))
+      return [menu.subtriggers[1], document.activeElement]
+    }))
   )
 )
 
@@ -237,7 +313,13 @@ function withMenu(options, run) {
   const mounted = s.mount(host, () => ContextMenu(options.root || {},
     ContextMenu.Trigger(options.trigger || {}, 'Right-click target'),
     ContextMenu.Content({
-      style: { width: '180px', padding: '4px', background: 'white' }
+      ...options.content,
+      style: {
+        width: '180px',
+        padding: '4px',
+        background: 'white',
+        ...options.content?.style
+      }
     },
       ContextMenu.Item({ onselect: options.onselect }, 'Rename'),
       ContextMenu.Checkbox({ defaultChecked: true },
@@ -313,6 +395,54 @@ function withSubmenu(onselect, run) {
       host.remove()
       document.querySelectorAll('[data-sinewy-context-anchor]').forEach(anchor => anchor.remove())
     })
+}
+
+function withDeepSubmenu(options, run) {
+  const host = document.createElement('div')
+  document.body.append(host)
+  const mounted = s.mount(host, () => ContextMenu(options.root || {},
+    ContextMenu.Trigger('Right-click target'),
+    ContextMenu.Content({ style: { width: '180px', padding: '4px', background: 'white' } },
+      ContextMenu.Sub(
+        ContextMenu.SubTrigger({ textValue: 'First level' }, 'First level'),
+        ContextMenu.SubContent({ style: { width: '150px', padding: '4px', background: 'white' } },
+          ContextMenu.Sub(
+            ContextMenu.SubTrigger({ textValue: 'Second level' }, 'Second level'),
+            ContextMenu.SubContent({ style: { width: '130px', padding: '4px', background: 'white' } },
+              ContextMenu.Item({ textValue: 'Deep action' }, 'Deep action')
+            )
+          )
+        )
+      )
+    )
+  ))
+  const contents = Array.from(host.querySelectorAll('[role="menu"]'))
+  const menu = {
+    host,
+    trigger: host.querySelector(':scope > [aria-haspopup="menu"]'),
+    contents,
+    subtriggers: Array.from(host.querySelectorAll('[role="menuitem"][aria-haspopup="menu"]')),
+    deepItem: host.querySelector('[data-text-value="Deep action"]')
+  }
+
+  return Promise.resolve()
+    .then(() => run(menu))
+    .finally(() => {
+      contents.slice().reverse().forEach(content =>
+        content.matches(':popover-open') && content.hidePopover()
+      )
+      mounted.unmount()
+      host.remove()
+      document.querySelectorAll('[data-sinewy-context-anchor]').forEach(anchor => anchor.remove())
+    })
+}
+
+function key(element, keyName) {
+  element.dispatchEvent(new KeyboardEvent('keydown', {
+    key: keyName,
+    bubbles: true,
+    cancelable: true
+  }))
 }
 
 function settle() {

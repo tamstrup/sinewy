@@ -20,11 +20,11 @@ Functional parity means pointer and keyboard invocation, point placement, focus 
 
 ## Next Milestones
 
-1. Add touch long-press with movement, release, scroll, and pointer-cancellation handling.
-2. Exercise collision behavior at all viewport edges and repeated invocation while open.
-3. Add deep submenu and RTL parity cases specific to point-origin menus.
+1. [x] Add touch long-press with movement, release, scroll, and pointer-cancellation handling.
+2. [x] Exercise collision behavior at all viewport edges and repeated invocation while open.
+3. [x] Add deep submenu and RTL parity cases specific to point-origin menus.
 4. Complete keyboard and assistive-technology verification in supported browsers.
-5. Add the themed facade using the shared menu palette and density contracts.
+5. [x] Add the themed facade using the shared menu palette and density contracts.
 
 ## Deliberate Omissions
 

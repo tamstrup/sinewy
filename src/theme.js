@@ -6,6 +6,9 @@ import Toggle from './toggle.js'
 import Dialog from './dialog.js'
 import AlertDialog from './alert-dialog.js'
 import Switch from './switch.js'
+import Select from './select.js'
+import Checkbox from './checkbox.js'
+import Radio from './radio.js'
 import { controlTheme } from './control-theme.js'
 import { themeColorStyle } from './theme-colors.js'
 import { themedData } from './theme-options.js'
@@ -488,5 +491,5 @@ function submenuChevron() {
   )
 }
 
-export { AlertDialog, Button, ContextMenu, Dialog, Dropdown, Switch, Toggle }
+export { AlertDialog, Button, Checkbox, ContextMenu, Dialog, Dropdown, Radio, Select, Switch, Toggle }
 export default Dropdown

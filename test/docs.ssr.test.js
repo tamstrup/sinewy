@@ -11,7 +11,10 @@ t`documentation ssr`(
     t.is(true, result.links.has('/components/toggle'))
     t.is(true, result.links.has('/components/dialog'))
     t.is(true, result.links.has('/components/alert-dialog'))
-    return [true, result.links.has('/components/switch')]
+    t.is(true, result.links.has('/components/switch'))
+    t.is(true, result.links.has('/components/select'))
+    t.is(true, result.links.has('/components/checkbox'))
+    return [true, result.links.has('/components/radio')]
   }),
 
   t`renders the toggle document and live example`(async() => {
@@ -40,6 +43,27 @@ t`documentation ssr`(
     t.is('Switch — Sinewy', result.title)
     t.is(true, result.html.includes('data-source="docs/components/switch.md"'))
     return [true, result.html.includes('role="switch"')]
+  }),
+
+  t`renders the select document and grouped live example`(async() => {
+    const result = await render('/components/select')
+    t.is('Select — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/select.md"'))
+    return [true, result.html.includes('<optgroup')]
+  }),
+
+  t`renders the checkbox document and live example`(async() => {
+    const result = await render('/components/checkbox')
+    t.is('Checkbox — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/checkbox.md"'))
+    return [true, result.html.includes('type="checkbox"')]
+  }),
+
+  t`renders the radio document and live example`(async() => {
+    const result = await render('/components/radio')
+    t.is('Radio — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/radio.md"'))
+    return [true, result.html.includes('type="radio"')]
   }),
 
   t`renders the button document and live example`(async() => {

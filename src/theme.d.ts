@@ -4,6 +4,9 @@ import type { Toggle as ToggleComponent } from './toggle.js'
 import type { Dialog as DialogComponent } from './dialog.js'
 import type { AlertDialog as AlertDialogComponent } from './alert-dialog.js'
 import type { Switch as SwitchComponent } from './switch.js'
+import type { Select as SelectComponent } from './select.js'
+import type { Checkbox as CheckboxComponent } from './checkbox.js'
+import type { Radio as RadioComponent } from './radio.js'
 import type {
   ControlThemeOptions,
   ControlVariant,
@@ -56,6 +59,9 @@ export type {
   AlertDialogTriggerAttrs
 } from './alert-dialog.js'
 export type { SwitchAttrs } from './switch.js'
+export type { SelectAttrs } from './select.js'
+export type { CheckboxAttrs, CheckboxGroupAttrs } from './checkbox.js'
+export type { RadioAttrs, RadioGroupAttrs } from './radio.js'
 
 export type DropdownThemeSize = ThemeSize
 export type DropdownThemeColor = ThemeColor
@@ -132,6 +138,9 @@ declare const Toggle: ToggleComponent
 declare const Dialog: DialogComponent
 declare const AlertDialog: AlertDialogComponent
 declare const Switch: SwitchComponent
+declare const Select: SelectComponent
+declare const Checkbox: CheckboxComponent
+declare const Radio: RadioComponent
 
-export { AlertDialog, Button, ContextMenu, Dialog, Dropdown, Switch, Toggle }
+export { AlertDialog, Button, Checkbox, ContextMenu, Dialog, Dropdown, Radio, Select, Switch, Toggle }
 export default Dropdown

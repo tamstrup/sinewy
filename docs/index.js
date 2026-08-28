@@ -1,5 +1,5 @@
 import s from 'sin'
-import Dropdown, { AlertDialog, Button, ContextMenu, Dialog, Switch, Toggle } from '../src/theme.js'
+import Dropdown, { AlertDialog, Button, Checkbox, ContextMenu, Dialog, Radio, Select, Switch, Toggle } from '../src/theme.js'
 import documents, { documentsBySlug } from './content.generated.js'
 
 s.title = 'Sinewy — Documentation'
@@ -810,7 +810,7 @@ const DialogActions = s`div
   margin-top 24
 `
 
-const SwitchLabel = s`label
+const ChoiceLabel = s`label
   display inline-flex
   align-items center
   gap 9
@@ -854,6 +854,27 @@ const componentDetails = {
     tags: ['Native checkbox', 'Form control', 'Shared theme'],
     summary: 'A native checkbox switch with real form behavior and controlled, uncontrolled, and live state.',
     preview: SwitchPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
+  select: {
+    status: 'Preview',
+    tags: ['Native select', 'Optgroup', 'Shared theme'],
+    summary: 'A themed native scalar select with option groups and controlled, uncontrolled, and live values.',
+    preview: SelectPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
+  checkbox: {
+    status: 'Preview',
+    tags: ['Native checkbox', 'Array binding', 'Fieldset group'],
+    summary: 'A native checkbox with boolean state and optional array-valued fieldset grouping.',
+    preview: CheckboxPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
+  radio: {
+    status: 'Preview',
+    tags: ['Native radio', 'Scalar binding', 'Fieldset group'],
+    summary: 'A native radio with a named fieldset group and one shared scalar value.',
+    preview: RadioPreview,
     previewHeadings: [{ id: 'live-example', text: 'Live example' }]
   },
   'context-menu': {
@@ -1062,9 +1083,9 @@ const SwitchExample = s(() => {
   const notifications = s.live(true)
 
   return () => ThemeOptions(
-    SwitchLabel(Switch({ bind: notifications }), 'Notifications'),
-    SwitchLabel(Switch({ defaultChecked: true, color: 'green' }), 'Auto-save'),
-    SwitchLabel(Switch({ color: 'crimson', highContrast: true }), 'Public profile')
+    ChoiceLabel(Switch({ bind: notifications }), 'Notifications'),
+    ChoiceLabel(Switch({ defaultChecked: true, color: 'green' }), 'Auto-save'),
+    ChoiceLabel(Switch({ color: 'crimson', highContrast: true }), 'Public profile')
   )
 })
 
@@ -1075,6 +1096,75 @@ function SwitchPreview() {
     s`div`(
       Example(SwitchExample()),
       Code(`import s from 'sin'\nimport { Switch } from 'sinewy'\n\nconst notifications = s.live(true)\n\ns\`label\`(\n  Switch({\n    bind: notifications,\n    color: 'accent'\n  }),\n  'Notifications'\n)`)
+    )
+  )
+}
+
+const SelectExample = s(() => {
+  const produce = s.live('pear')
+
+  return () => Select({ bind: produce, name: 'produce', 'aria-label': 'Produce', color: 'cyan' },
+    Select.Group({ label: 'Fruit' },
+      Select.Option({ value: 'apple' }, 'Apple'),
+      Select.Option({ value: 'pear' }, 'Pear')
+    ),
+    Select.Group({ label: 'Vegetables' },
+      Select.Option({ value: 'carrot' }, 'Carrot')
+    )
+  )
+})
+
+function SelectPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('The closed control is themed while its popup, grouped options, keyboard behavior, and form semantics remain native.'),
+    s`div`(
+      Example(SelectExample()),
+      Code(`import s from 'sin'\nimport { Select } from 'sinewy'\n\nconst produce = s.live('pear')\n\nSelect({ bind: produce, name: 'produce' },\n  Select.Group({ label: 'Fruit' },\n    Select.Option({ value: 'apple' }, 'Apple'),\n    Select.Option({ value: 'pear' }, 'Pear')\n  )\n)`)
+    )
+  )
+}
+
+const CheckboxExample = s(() => {
+  const channels = s.live(['email'])
+
+  return () => Checkbox.Group({ bind: channels, name: 'channels', color: 'green' },
+    s`legend`('Notifications'),
+    ChoiceLabel(Checkbox({ value: 'email' }), 'Email'),
+    ChoiceLabel(Checkbox({ value: 'sms' }), 'SMS'),
+    ChoiceLabel(Checkbox({ value: 'push' }), 'Push')
+  )
+})
+
+function CheckboxPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('The fieldset binds its checked native values to one array while labels, form data, focus, and toggling remain HTML behavior.'),
+    s`div`(
+      Example(CheckboxExample()),
+      Code(`import s from 'sin'\nimport { Checkbox } from 'sinewy'\n\nconst channels = s.live(['email'])\n\nCheckbox.Group({ bind: channels, name: 'channels' },\n  s\`legend\`('Notifications'),\n  s\`label\`(Checkbox({ value: 'email' }), 'Email'),\n  s\`label\`(Checkbox({ value: 'sms' }), 'SMS')\n)`)
+    )
+  )
+}
+
+const RadioExample = s(() => {
+  const plan = s.live('free')
+
+  return () => Radio.Group({ bind: plan, name: 'plan', color: 'purple' },
+    s`legend`('Plan'),
+    ChoiceLabel(Radio({ value: 'free' }), 'Free'),
+    ChoiceLabel(Radio({ value: 'pro' }), 'Pro'),
+    ChoiceLabel(Radio({ value: 'team' }), 'Team')
+  )
+})
+
+function RadioPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('The named native radio group shares one live string value and keeps fieldset, legend, label, form, and arrow-key semantics.'),
+    s`div`(
+      Example(RadioExample()),
+      Code(`import s from 'sin'\nimport { Radio } from 'sinewy'\n\nconst plan = s.live('free')\n\nRadio.Group({ bind: plan, name: 'plan' },\n  s\`legend\`('Plan'),\n  s\`label\`(Radio({ value: 'free' }), 'Free'),\n  s\`label\`(Radio({ value: 'pro' }), 'Pro')\n)`)
     )
   )
 }

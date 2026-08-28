@@ -69,6 +69,8 @@ const WideSelect = Select`
 
 The browser continues to own popup behavior and placement. Where `appearance: base-select` and `::picker(select)` are supported, Sinewy also themes the popup and options. The enhancement requires no additional public attribute and falls back to the platform picker without changing behavior.
 
+> **Safari support:** Customizable picker styling requires Safari 27 or later. Safari 26 and earlier render the regular platform-native picker. Sinewy does not currently replace it with a custom listbox fallback.
+
 ## API reference
 
 ### `Select(attrs?, ...children)`

@@ -2837,6 +2837,9 @@ Select.Option({ value: &#39;pear&#39; }, &#39;Pear&#39;)
 \`
 </code></pre>
 <p>The browser continues to own popup behavior and placement. Where <code>appearance: base-select</code> and <code>::picker(select)</code> are supported, Sinewy also themes the popup and options. The enhancement requires no additional public attribute and falls back to the platform picker without changing behavior.</p>
+<blockquote>
+<p><strong>Safari support:</strong> Customizable picker styling requires Safari 27 or later. Safari 26 and earlier render the regular platform-native picker. Sinewy does not currently replace it with a custom listbox fallback.</p>
+</blockquote>
 <h2 id="api-reference">API reference</h2>
 <h3 id="selectattrs-children"><code>Select(attrs?, ...children)</code></h3>
 <table>
@@ -4059,7 +4062,7 @@ s\`label\`(
     color: 'accent'
   }),
   'Notifications'
-)`)))}var Rc=d(()=>{let e=d.live("pear");return()=>Oe({bind:e,name:"produce","aria-label":"Produce",color:"cyan"},Oe.Group({label:"Fruit"},Oe.Option({value:"apple"},"Apple"),Oe.Option({value:"pear"},"Pear")),Oe.Group({label:"Vegetables"},Oe.Option({value:"carrot"},"Carrot")))});function qc(){return d`section#live-example`(d`h2`("Live example"),d`p`("Supporting browsers render the native picker with Sinewy\u2019s menu surface, grouped options, selection gutter, and theme colors; behavior and forms remain native."),d`div`(ue(Rc()),he(`import s from 'sin'
+)`)))}var Rc=d(()=>{let e=d.live("pear");return()=>Oe({bind:e,name:"produce","aria-label":"Produce",color:"cyan"},Oe.Group({label:"Fruit"},Oe.Option({value:"apple"},"Apple"),Oe.Option({value:"pear"},"Pear")),Oe.Group({label:"Vegetables"},Oe.Option({value:"carrot"},"Carrot")))});function qc(){return d`section#live-example`(d`h2`("Live example"),d`p`("Supporting browsers render the native picker with Sinewy\u2019s menu surface, grouped options, selection gutter, and theme colors. Customizable picker styling requires Safari 27 or later; Safari 26 and earlier show the regular platform-native picker."),d`div`(ue(Rc()),he(`import s from 'sin'
 import { Select } from 'sinewy'
 
 const produce = s.live('pear')

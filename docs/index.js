@@ -1117,7 +1117,7 @@ const SelectExample = s(() => {
 function SelectPreview() {
   return s`section#live-example`(
     s`h2`('Live example'),
-    s`p`('Supporting browsers render the native picker with Sinewy’s menu surface, grouped options, selection gutter, and theme colors; behavior and forms remain native.'),
+    s`p`('Supporting browsers render the native picker with Sinewy’s menu surface, grouped options, selection gutter, and theme colors. Customizable picker styling requires Safari 27 or later; Safari 26 and earlier show the regular platform-native picker.'),
     s`div`(
       Example(SelectExample()),
       Code(`import s from 'sin'\nimport { Select } from 'sinewy'\n\nconst produce = s.live('pear')\n\nSelect({ bind: produce, name: 'produce' },\n  Select.Group({ label: 'Fruit' },\n    Select.Option({ value: 'apple' }, 'Apple'),\n    Select.Option({ value: 'pear' }, 'Pear')\n  )\n)`)

@@ -508,6 +508,10 @@ typeof globalThis>"u"&&(window.globalThis=window);var x=typeof window>"u"?{}:win
       user-select none
     }
 
+    & optgroup > option:first-of-type {
+      margin-block-start 4px
+    }
+
     &[data-size='1']::picker(select) {
       max-width min(300px, calc(100vw - 20px))
       max-height min(400px, calc(100vh - 20px))
@@ -530,6 +534,10 @@ typeof globalThis>"u"&&(window.globalThis=window);var x=typeof window>"u"?{}:win
       line-height 16px
     }
 
+    &[data-size='1'] optgroup > option:first-of-type {
+      margin-block-start 3px
+    }
+
     &[data-size='3']::picker(select) {
       max-width min(380px, calc(100vw - 28px))
       max-height min(540px, calc(100vh - 28px))
@@ -550,6 +558,10 @@ typeof globalThis>"u"&&(window.globalThis=window);var x=typeof window>"u"?{}:win
       border-radius 10
       font-size 16
       line-height 24px
+    }
+
+    &[data-size='3'] optgroup > option:first-of-type {
+      margin-block-start 5px
     }
 
     & option::checkmark {

@@ -129,6 +129,7 @@ t`select`(
       rule.style.borderRadius === '13px')
     const option = rules.find(rule => / option$/.test(rule.selectorText || ''))
     const group = rules.find(rule => / optgroup$/.test(rule.selectorText || ''))
+    const groupGaps = rules.filter(rule => rule.selectorText?.includes('optgroup > option:first-of-type'))
     const checkmark = rules.find(rule => rule.selectorText?.endsWith('option::checkmark'))
     const highlighted = rules.find(rule => rule.selectorText?.includes('option:hover:not(:disabled)'))
     const contrast = rules.find(rule => rule.selectorText?.includes('[data-high-contrast] option:checked'))
@@ -138,6 +139,7 @@ t`select`(
     t.is('36px', option.style.minHeight)
     t.is('35px', option.style.paddingInlineStart)
     t.is('750', group.style.fontWeight)
+    t.is('3px,4px,5px', groupGaps.map(rule => rule.style.marginBlockStart).sort().join(','))
     t.is('absolute', checkmark.style.position)
     t.is('var(--sinewy-accent-9)', highlighted.style.background)
     return ['var(--sinewy-accent-12)', contrast.style.background]

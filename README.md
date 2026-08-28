@@ -7,8 +7,8 @@ primitives. It is maintained separately from Sin.js and is not an official
 Sin.js project.
 
 The current preview contains headless dropdown and context-menu components plus
-optional themed facades. It targets current evergreen browsers with the Popover
-API and CSS Anchor Positioning.
+optional themed facades. It targets browsers with the Popover API and named CSS
+Anchor Positioning; there is currently no JavaScript positioning fallback.
 
 ## Local setup
 

@@ -77,6 +77,7 @@ ContextMenu.Trigger = s(({
   disabled = false,
   dom,
   oncontextmenu,
+  onkeydown,
   ...attrs
 }, children, context) => {
   const state = useContextMenu(context, 'Trigger')
@@ -106,18 +107,15 @@ ContextMenu.Trigger = s(({
       if (disabled || event.defaultPrevented || !state.content)
         return
 
-      event.preventDefault()
-      const point = invocationPoint(event, element, state.dir)
-      moveAnchor(state, element.ownerDocument, point.x, point.y)
-      state.openFocus = 'first'
-      state.restoreFocus = true
+      invoke(state, event, element, invocationPoint(event, element, state.dir), true)
+    },
+    onkeydown: (event, element, elementAttrs, elementContext) => {
+      invokeHandler(onkeydown, event, element, elementAttrs, elementContext)
+      if (!isContextKey(event) || disabled || event.defaultPrevented || !state.content)
+        return
 
-      state.pendingOpen && state.pendingOpen()
-      if (state.pointerDown) {
-        openAfterRelease(state, element, state.pointerDown)
-      } else {
-        open(state, element)
-      }
+      clearLongPress(state)
+      invoke(state, event, element, keyboardPoint(element, state.dir), false)
     }
   }, children)
 })
@@ -159,11 +157,31 @@ function invocationPoint(event, element, dir) {
   if (event.clientX !== 0 || event.clientY !== 0 || event.button === 2 || event.pointerType)
     return { x: event.clientX, y: event.clientY }
 
+  return keyboardPoint(element, dir)
+}
+
+function keyboardPoint(element, dir) {
   const rect = element.getBoundingClientRect()
   return {
     x: dir === 'rtl' ? rect.right : rect.left,
     y: rect.bottom
   }
+}
+
+function isContextKey(event) {
+  return event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)
+}
+
+function invoke(state, event, trigger, point, afterRelease) {
+  event.preventDefault()
+  moveAnchor(state, trigger.ownerDocument, point.x, point.y)
+  state.openFocus = 'first'
+  state.restoreFocus = true
+
+  state.pendingOpen && state.pendingOpen()
+  afterRelease && state.pointerDown
+    ? openAfterRelease(state, trigger, state.pointerDown)
+    : open(state, trigger)
 }
 
 function moveAnchor(state, doc, x, y) {

@@ -106,8 +106,9 @@ Renders the area that invokes the menu. The default element is a focusable `div`
 | `as` | Sin component | `div` | Renders a custom target with the owned attributes and handlers. |
 | `disabled` | `boolean` | `false` | Disables the custom menu and leaves the browser's native context menu available. |
 | `oncontextmenu` | Sin event handler | — | Runs before internal opening. Prevent default to suppress the custom menu. |
+| `onkeydown` | Sin event handler | — | Runs before shortcut handling. Prevent default to suppress Shift+F10 and the Context Menu key. |
 
-Keyboard invocation is provided by the browser's native `contextmenu` event. When that event does not contain pointer coordinates, Sinewy opens at the target's logical lower-start corner.
+Shift+F10 and the Context Menu key open at the target's logical lower-start corner. Sinewy handles those keys directly so invocation does not depend on whether a browser synthesizes a native `contextmenu` event. A consumer `onkeydown` handler runs first and can prevent the custom menu. Keyboard-origin `contextmenu` events use the same fallback point.
 
 Touch and pen invocation uses a stationary 700 millisecond long press at the initial pointer coordinates. Sinewy suppresses the iOS touch callout by default; a consumer-provided `-webkit-touch-callout` style can override that behavior.
 
@@ -143,3 +144,4 @@ Consumers using `as` must forward received attributes, event handlers, `dom`, an
 
 - Programmatic or controlled opening has no public contract yet.
 - The ephemeral point anchor is inserted into `document.body` when invoked and removed with the component; menu content itself remains in its original Sin ancestry and enters the top layer through the Popover API.
+- Positioning requires named CSS Anchor Positioning (`anchor-name`, `position-anchor`, and `position-area`). There is no JavaScript positioning fallback; browsers without that support, currently including Firefox, are not supported.

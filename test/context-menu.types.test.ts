@@ -17,7 +17,8 @@ ContextMenu({
 },
   ContextMenu.Trigger({
     disabled: false,
-    oncontextmenu: event => event.preventDefault()
+    oncontextmenu: event => event.preventDefault(),
+    onkeydown: event => event.key === 'F10' && event.preventDefault()
   }, 'Target'),
   ContextMenu.Content({ collisionStrategy: 'most-space' },
     ContextMenu.Item({ textValue: 'Rename' }, 'Rename'),

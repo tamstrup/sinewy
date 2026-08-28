@@ -133,6 +133,50 @@ t`context menu`(
       return [Math.round(target.bottom), Math.round(anchor.top)]
     })),
 
+    t`opens from Shift+F10 without browser contextmenu synthesis`(() => withMenu({
+      trigger: {
+        style: {
+          position: 'fixed',
+          left: '60px',
+          top: '50px',
+          width: '140px',
+          height: '40px'
+        }
+      }
+    }, async menu => {
+      menu.trigger.focus()
+      const event = key(menu.trigger, 'F10', { shiftKey: true })
+      await settle()
+
+      const target = menu.trigger.getBoundingClientRect()
+      const anchor = document.querySelector('[data-sinewy-context-anchor]').getBoundingClientRect()
+      t.is(true, event.defaultPrevented)
+      t.is(menu.items[0], document.activeElement)
+      t.is(Math.round(target.left), Math.round(anchor.left))
+      t.is(Math.round(target.bottom), Math.round(anchor.top))
+      return [true, menu.content.matches(':popover-open')]
+    })),
+
+    t`opens from the Context Menu key`(() => withMenu({}, async menu => {
+      const event = key(menu.trigger, 'ContextMenu')
+      await settle()
+
+      t.is(true, event.defaultPrevented)
+      t.is(menu.items[0], document.activeElement)
+      return [true, menu.content.matches(':popover-open')]
+    })),
+
+    t`honors prevented consumer keyboard handlers`(() => withMenu({
+      trigger: { onkeydown: event => event.preventDefault() }
+    }, async menu => {
+      const event = key(menu.trigger, 'F10', { shiftKey: true })
+      await settle()
+
+      t.is(true, event.defaultPrevented)
+      t.is(null, document.querySelector('[data-sinewy-context-anchor]'))
+      return [false, menu.content.matches(':popover-open')]
+    })),
+
     t`honors prevented consumer handlers`(() => withMenu({
       trigger: { oncontextmenu: event => event.preventDefault() }
     }, async menu => {
@@ -217,6 +261,36 @@ t`context menu`(
       }
 
       return [true, menu.content.matches(':popover-open')]
+    }))
+  ),
+
+  t`keyboard interaction`(
+    t`navigates, typeaheads, dismisses, and restores the target`(() => withMenu({}, async menu => {
+      menu.trigger.focus()
+      key(menu.trigger, 'F10', { shiftKey: true })
+      await settle()
+
+      key(document.activeElement, 'ArrowDown')
+      t.is(menu.items[1], document.activeElement)
+      key(document.activeElement, 'Home')
+      t.is(menu.items[0], document.activeElement)
+      key(document.activeElement, 'v')
+      t.is(menu.items[1], document.activeElement)
+      key(document.activeElement, 'Escape')
+      await settle()
+
+      t.is(false, menu.content.matches(':popover-open'))
+      return [menu.trigger, document.activeElement]
+    })),
+
+    t`Tab closes without forcing focus back to the target`(() => withMenu({}, async menu => {
+      key(menu.trigger, 'ContextMenu')
+      await settle()
+      key(document.activeElement, 'Tab')
+      await settle()
+
+      t.is(false, menu.content.matches(':popover-open'))
+      return [false, document.activeElement === menu.trigger]
     }))
   ),
 
@@ -322,7 +396,7 @@ function withMenu(options, run) {
       }
     },
       ContextMenu.Item({ onselect: options.onselect }, 'Rename'),
-      ContextMenu.Checkbox({ defaultChecked: true },
+      ContextMenu.Checkbox({ defaultChecked: true, textValue: 'Visible' },
         ContextMenu.Indicator('✓'),
         'Visible'
       )
@@ -437,12 +511,15 @@ function withDeepSubmenu(options, run) {
     })
 }
 
-function key(element, keyName) {
-  element.dispatchEvent(new KeyboardEvent('keydown', {
+function key(element, keyName, options = {}) {
+  const event = new KeyboardEvent('keydown', {
     key: keyName,
     bubbles: true,
-    cancelable: true
-  }))
+    cancelable: true,
+    ...options
+  })
+  element.dispatchEvent(event)
+  return event
 }
 
 function settle() {

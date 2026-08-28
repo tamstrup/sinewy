@@ -48,7 +48,7 @@ The theme adds an inherited `size="1|2|3"` menu scale with 12/14/16px item typog
 
 Content and subcontent accept `variant="solid|soft"`, `color`, and `highContrast`. Triggers accept `variant="solid|soft|outline|ghost"` plus the same color and contrast options. Items inherit the menu palette and variant but may use `color` or `highContrast` as semantic overrides. Available colors are `gray`, `accent`, `red`, `orange`, `amber`, `green`, `teal`, `cyan`, `blue`, `indigo`, `purple`, `pink`, and `crimson`; `accent` currently aliases indigo. The light/dark-aware palette is adapted from Radix Colors 3.0.0 under its MIT license, recorded in [`../../licenses/radix-colors.txt`](../../licenses/radix-colors.txt).
 
-These options become stable `data-*` styling hooks and are not forwarded as invalid DOM attributes. The facade also supplies the `shortcut` convenience, styled indicators, `.Shortcut`, and an SVG `.TriggerIcon`.
+These options become stable `data-*` styling hooks and are not forwarded as invalid DOM attributes. The facade also supplies the `shortcut` convenience, styled indicators, an automatic direction-aware submenu chevron, `.Shortcut`, and an SVG `.TriggerIcon`.
 
 Both the headless and themed modules have adjacent TypeScript declarations. The theme wraps each directly styled headless primitive in an explicit Sin component so call-site template extensions retain the intermediate theme class.
 
@@ -325,7 +325,7 @@ Creates a nested menu state scope without rendering a wrapper. It accepts `defau
 
 ### `Dropdown.SubTrigger(attrs?, ...children)`
 
-Renders the submenu trigger as a menu item with `aria-haspopup="menu"`, synchronized expanded state, and a native popover target. It accepts `as`, `disabled`, `textValue`, and ordinary item event attributes.
+Renders the submenu trigger as a menu item with `aria-haspopup="menu"`, synchronized expanded state, and a native popover target. It accepts `as`, `disabled`, `textValue`, and ordinary item event attributes. The themed facade appends a decorative chevron that follows the document direction; the headless primitive leaves visual affordances to the consumer.
 
 ### `Dropdown.SubContent(attrs?, ...children)`
 

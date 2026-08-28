@@ -79,7 +79,7 @@ The themed facade leaves `ContextMenu.Trigger` visually unstyled because it repr
 | item, checkbox, radio, subtrigger | `color` | theme color | An explicit value provides a semantic override. |
 | item, checkbox, radio, subtrigger | `shortcut` | Sin children | Renders a trailing themed `kbd`. |
 
-`ContextMenu.Shortcut` is also available for explicit composition. Theme values are rendered as data attributes and CSS custom properties; ordinary `style` values and tagged-template extensions continue to work.
+`ContextMenu.Shortcut` is also available for explicit composition, and themed submenu triggers receive the same automatic direction-aware chevron as Dropdown. Theme values are rendered as data attributes and CSS custom properties; ordinary `style` values and tagged-template extensions continue to work.
 
 ## API reference
 

@@ -39,6 +39,7 @@ t`context menu theme`(
     t.is('41px', checkStyle.paddingInlineStart)
     t.is('3', menu.subContent.dataset.size)
     t.is('solid', menu.subItem.dataset.variant)
+    t.is('true', menu.subTrigger.querySelector('svg').getAttribute('aria-hidden'))
     return ['42px', getComputedStyle(menu.subItem).minHeight]
   }, { size: '3', variant: 'solid', color: 'cyan' }))
 )
@@ -70,6 +71,7 @@ function withTheme(run, contentAttrs = { size: '2', variant: 'soft', color: 'ind
     content: contents[0],
     item: contents[0].querySelector('[role="menuitem"]'),
     checkbox: contents[0].querySelector('[role="menuitemcheckbox"]'),
+    subTrigger: contents[0].querySelector('[aria-haspopup="menu"]'),
     subContent: contents[1],
     subItem: contents[1].querySelector('[role="menuitem"]')
   }

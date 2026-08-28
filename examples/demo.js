@@ -496,10 +496,7 @@ const App = s(({}, [], { doc }) => {
 
               Separator(),
               Dropdown.Sub({ openDelay: 120, closeDelay: 320 },
-                SubTrigger({ textValue: 'Export' },
-                  s`span`('Export'),
-                  Shortcut('→')
-                ),
+                SubTrigger({ textValue: 'Export' }, s`span`('Export')),
                 Submenu({
                   align: 'start',
                   offset: 5,
@@ -586,7 +583,7 @@ const PlacementDemo = s(({ label, side, align, dir = 'ltr', nested = false }) =>
       Item({ onselect: () => {} }, Row('First action')),
       Item({ onselect: () => {} }, Row('Second action')),
       nested && Dropdown.Sub(
-        SubTrigger(Row(dir === 'rtl' ? 'قائمة فرعية' : 'Nested menu', dir === 'rtl' ? '←' : '→')),
+        SubTrigger(Row(dir === 'rtl' ? 'قائمة فرعية' : 'Nested menu')),
         Submenu({ offset: 5, data: { demoMenu: '' } },
           Item(Row(dir === 'rtl' ? 'الخيار الأول' : 'Nested action')),
           Item(Row(dir === 'rtl' ? 'الخيار الثاني' : 'Another action'))
@@ -786,11 +783,11 @@ const DeepMenuLab = s(() =>
         Menu({ offset: 7, data: { demoMenu: '', evaluationMenu: '' } },
           Item('Root action'),
           Dropdown.Sub(
-            SubTrigger({ textValue: 'First level' }, Row('First level', '→')),
+            SubTrigger({ textValue: 'First level' }, Row('First level')),
             Submenu({ offset: 5, data: { demoMenu: '', evaluationMenu: '' } },
               Item('First-level action'),
               Dropdown.Sub(
-                SubTrigger({ textValue: 'Second level' }, Row('Second level', '→')),
+                SubTrigger({ textValue: 'Second level' }, Row('Second level')),
                 Submenu({ offset: 5, data: { demoMenu: '', evaluationMenu: '' } },
                   Item('Deep action'),
                   Item('Another deep action')

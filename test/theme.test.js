@@ -132,6 +132,20 @@ t`dropdown theme`(
     return ['true', icon.getAttribute('aria-hidden')]
   })),
 
+  t`provides a directional submenu chevron`(() => withMenu([
+    Dropdown.Sub(
+      Dropdown.SubTrigger({ data: { test: 'subtrigger' } }, 'More'),
+      Dropdown.SubContent(Dropdown.Item('Nested'))
+    )
+  ], host => {
+    const icon = host.querySelector('[data-test="subtrigger"] svg')
+    t.is('0 0 14 14', icon.getAttribute('viewBox'))
+    t.is('M5.25 3.5 8.75 7l-3.5 3.5', icon.querySelector('path').getAttribute('d'))
+    t.is('false', icon.getAttribute('focusable'))
+    t.is('auto', getComputedStyle(icon).marginInlineStart)
+    return ['true', icon.getAttribute('aria-hidden')]
+  })),
+
   t`reserves an indicator gutter across a checkable menu`(() => withMenu([
     Dropdown.Item({ data: { test: 'plain' } }, 'Plain'),
     Dropdown.Group(

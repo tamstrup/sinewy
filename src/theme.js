@@ -399,6 +399,19 @@ const ShortcutText = s`kbd
   opacity 0.58
 `
 
+const SubmenuChevron = s`svg
+  width 14
+  height 14
+  display block
+  margin-inline-start auto
+  flex 0 0 14px
+  opacity 0.72
+
+  &:dir(rtl) {
+    transform rotate(180deg)
+  }
+`
+
 const Dropdown = s((attrs, children) => Headless(attrs, children))
 
 Dropdown.Trigger = s(({
@@ -435,7 +448,7 @@ Dropdown.Content = s(({
 Dropdown.Item = themedItem(ItemButton)
 Dropdown.Checkbox = themedItem(CheckboxButton)
 Dropdown.Radio = themedItem(RadioButton)
-Dropdown.SubTrigger = themedItem(SubTriggerButton)
+Dropdown.SubTrigger = themedItem(SubTriggerButton, submenuChevron)
 
 Dropdown.SubContent = s(({
   size,
@@ -488,7 +501,7 @@ ContextMenu.SubTrigger = Dropdown.SubTrigger
 ContextMenu.SubContent = Dropdown.SubContent
 ContextMenu.Shortcut = Dropdown.Shortcut
 
-function themedItem(Base) {
+function themedItem(Base, trailing) {
   return s(({
     size,
     color,
@@ -499,6 +512,7 @@ function themedItem(Base) {
     ...attrs
   }, children, context) => {
     const theme = resolveTheme(context, { size, highContrast })
+    const content = shortcut == null ? children : [...children, ShortcutText(shortcut)]
     return Base({
       ...attrs,
       style: color == null ? style : themeColorStyle(color, style),
@@ -508,7 +522,7 @@ function themedItem(Base) {
         color,
         highContrast: theme.highContrast
       })
-    }, shortcut == null ? children : [...children, ShortcutText(shortcut)])
+    }, trailing == null ? content : [...content, trailing()])
   })
 }
 
@@ -541,6 +555,23 @@ function Chevron(attrs) {
   },
     s`path`({
       d: 'M3.5 5.25 7 8.75l3.5-3.5',
+      stroke: 'currentColor',
+      strokeWidth: 1.5,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round'
+    })
+  )
+}
+
+function submenuChevron() {
+  return SubmenuChevron({
+    viewBox: '0 0 14 14',
+    fill: 'none',
+    focusable: 'false',
+    'aria-hidden': 'true'
+  },
+    s`path`({
+      d: 'M5.25 3.5 8.75 7l-3.5 3.5',
       stroke: 'currentColor',
       strokeWidth: 1.5,
       strokeLinecap: 'round',

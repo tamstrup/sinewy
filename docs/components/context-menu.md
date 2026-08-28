@@ -144,4 +144,4 @@ Consumers using `as` must forward received attributes, event handlers, `dom`, an
 
 - Programmatic or controlled opening has no public contract yet.
 - The ephemeral point anchor is inserted into `document.body` when invoked and removed with the component; menu content itself remains in its original Sin ancestry and enters the top layer through the Popover API.
-- Positioning requires named CSS Anchor Positioning (`anchor-name`, `position-anchor`, and `position-area`). There is no JavaScript positioning fallback; browsers without that support, currently including Firefox, are not supported.
+- Positioning requires named CSS Anchor Positioning (`anchor-name`, `position-anchor`, and `position-area`). There is no JavaScript positioning fallback for older browsers without that support.

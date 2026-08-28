@@ -1,5 +1,6 @@
 import './dropdown.test.js'
 import './context-menu.test.js'
+import './button.test.js'
 import './theme.test.js'
 import './context-menu-theme.test.js'
 import './dropdown.hydration.test.js'

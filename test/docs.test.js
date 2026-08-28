@@ -10,7 +10,7 @@ const components = path.join(root, 'docs', 'components')
 
 t`documentation markdown`(
   t`builds every component document`(async() => [
-    'context-menu,dropdown',
+    'button,context-menu,dropdown',
     (await buildDocuments()).map(document => document.slug).join(',')
   ]),
 

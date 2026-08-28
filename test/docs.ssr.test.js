@@ -5,8 +5,16 @@ import mount from '../docs/index.js'
 t`documentation ssr`(
   t`exposes component routes for static generation`(async() => {
     const result = await render('/')
+    t.is(true, result.links.has('/components/button'))
     t.is(true, result.links.has('/components/dropdown'))
     return [true, result.links.has('/components/context-menu')]
+  }),
+
+  t`renders the button document and live example`(async() => {
+    const result = await render('/components/button')
+    t.is('Button — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/button.md"'))
+    return [true, result.html.includes('>Save</button>')]
   }),
 
   t`renders dropdown markdown and its generated toc`(async() => {

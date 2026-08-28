@@ -1,5 +1,5 @@
 import s from 'sin'
-import Dropdown, { ContextMenu } from '../src/theme.js'
+import Dropdown, { Button, ContextMenu } from '../src/theme.js'
 import documents, { documentsBySlug } from './content.generated.js'
 
 s.title = 'Sinewy — Documentation'
@@ -804,6 +804,13 @@ const ContextTarget = ContextMenu.Trigger`
 `
 
 const componentDetails = {
+  button: {
+    status: 'Preview',
+    tags: ['Native control', 'Shared theme', 'Form-safe'],
+    summary: 'A compact themed native control with four variants and full button attribute forwarding.',
+    preview: ButtonPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
   'context-menu': {
     status: 'Preview',
     tags: ['Popover API', 'Point anchors', 'Headless + theme'],
@@ -919,6 +926,24 @@ function ComponentPage({ slug }, [], context) {
       )
     )
   ], context.route)
+}
+
+function ButtonPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('A native button with shared size, variant, color, and contrast styling. Tab to see its focus-visible treatment.'),
+    s`div`(
+      Example(
+        ThemeOptions(
+          Button({ variant: 'solid', color: 'accent' }, 'Save'),
+          Button({ variant: 'soft', color: 'cyan' }, 'Duplicate'),
+          Button({ variant: 'outline', color: 'green' }, 'Publish'),
+          Button({ variant: 'ghost', color: 'red' }, 'Delete')
+        )
+      ),
+      Code(`import { Button } from 'sinewy'\n\nButton({\n  size: '2',\n  variant: 'solid',\n  color: 'accent',\n  highContrast: false\n}, 'Save')`)
+    )
+  )
 }
 
 function DropdownPreview() {

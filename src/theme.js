@@ -1,7 +1,10 @@
 import s from 'sin'
 import Headless from './dropdown.js'
 import HeadlessContextMenu from './context-menu.js'
+import Button from './button.js'
+import { controlTheme } from './control-theme.js'
 import { themeColorStyle } from './theme-colors.js'
+import { themedData } from './theme-options.js'
 
 const $theme = Symbol('sinewy-theme')
 
@@ -145,106 +148,7 @@ const SubContentSurface = Headless.SubContent`
   }
 `
 
-const TriggerControl = Headless.Trigger`
-  min-height 36
-  display inline-flex
-  align-items center
-  justify-content center
-  gap 8
-  padding 0 11
-  border 1px solid transparent
-  border-radius 9
-  font-size 13
-  font-weight 750
-
-  &[data-size='1'] {
-    min-height 30
-    gap 6
-    padding 0 9
-    border-radius 7
-    font-size 12
-  }
-
-  &[data-size='3'] {
-    min-height 42
-    gap 9
-    padding 0 14
-    border-radius 11
-    font-size 14
-  }
-
-  &[data-variant='solid'] {
-    background $sinewy-accent-9
-    color $sinewy-accent-contrast
-  }
-
-  &[data-variant='solid']:hover,
-  &[data-variant='solid'][data-state='open'] {
-    background $sinewy-accent-10
-  }
-
-  &[data-variant='soft'] {
-    background $sinewy-accent-3
-    color $sinewy-accent-11
-  }
-
-  &[data-variant='soft']:hover,
-  &[data-variant='soft'][data-state='open'] {
-    background $sinewy-accent-4
-    color $sinewy-accent-12
-  }
-
-  &[data-variant='outline'] {
-    border-color $sinewy-accent-7
-    background $sinewy-panel
-    color $sinewy-accent-11
-  }
-
-  &[data-variant='outline']:hover,
-  &[data-variant='outline'][data-state='open'] {
-    border-color $sinewy-accent-8
-    background $sinewy-accent-2
-    color $sinewy-accent-12
-  }
-
-  &[data-variant='ghost'] {
-    background transparent
-    color $sinewy-accent-11
-  }
-
-  &[data-variant='ghost']:hover,
-  &[data-variant='ghost'][data-state='open'] {
-    background $sinewy-accent-3
-    color $sinewy-accent-12
-  }
-
-  &[data-high-contrast][data-variant='solid'] {
-    background $sinewy-accent-12
-    color $sinewy-accent-1
-  }
-
-  &[data-color='gray'][data-variant='solid'] {
-    background $sinewy-accent-12
-    color $sinewy-accent-1
-  }
-
-  &[data-high-contrast][data-variant='solid']:hover,
-  &[data-high-contrast][data-variant='solid'][data-state='open'],
-  &[data-color='gray'][data-variant='solid']:hover,
-  &[data-color='gray'][data-variant='solid'][data-state='open'] {
-    background $sinewy-extreme
-  }
-
-  &:focus-visible {
-    outline 3px solid color-mix(in srgb, $sinewy-accent-8 42%, transparent)
-    outline-offset 2px
-  }
-
-  &[data-disabled] {
-    cursor default
-    opacity 0.48
-  }
-`
+const TriggerControl = controlTheme(Headless.Trigger)
 
 const ItemControl = component => component`
   $dropdown-indicator-width 16px
@@ -580,15 +484,5 @@ function submenuChevron() {
   )
 }
 
-function themedData(data, values) {
-  return {
-    ...data,
-    ...Object.fromEntries(Object.entries(values).map(([name, value]) => [
-      name,
-      value == null ? null : typeof value === 'boolean' ? value ? '' : null : String(value)
-    ]))
-  }
-}
-
-export { ContextMenu, Dropdown }
+export { Button, ContextMenu, Dropdown }
 export default Dropdown

@@ -2,6 +2,65 @@
 
 const documents = [
   {
+    "title": "Button",
+    "description": "A themed native button control for common actions.",
+    "slug": "button",
+    "source": "docs/components/button.md",
+    "headings": [
+      {
+        "depth": 2,
+        "id": "overview",
+        "text": "Overview"
+      },
+      {
+        "depth": 2,
+        "id": "import",
+        "text": "Import"
+      },
+      {
+        "depth": 2,
+        "id": "basic-usage",
+        "text": "Basic usage"
+      },
+      {
+        "depth": 2,
+        "id": "styling",
+        "text": "Styling"
+      },
+      {
+        "depth": 2,
+        "id": "api-reference",
+        "text": "API reference"
+      },
+      {
+        "depth": 3,
+        "id": "buttonattrs-children",
+        "text": "Button(attrs?, ...children)"
+      },
+      {
+        "depth": 2,
+        "id": "accessibility",
+        "text": "Accessibility"
+      },
+      {
+        "depth": 2,
+        "id": "keyboard-and-focus-behavior",
+        "text": "Keyboard and focus behavior"
+      },
+      {
+        "depth": 2,
+        "id": "styling-hooks",
+        "text": "Styling hooks"
+      },
+      {
+        "depth": 2,
+        "id": "current-limits",
+        "text": "Current limits"
+      }
+    ],
+    "html": "<h2 id=\"overview\">Overview</h2>\n<p><code>Button</code> renders a native HTML <code>button</code> with Sinewy&#39;s reusable control theme. The browser supplies activation, keyboard, form, disabled, and focus semantics; Sinewy supplies size, variant, color, contrast, and interaction styling.</p>\n<p>The first release is intentionally one directly callable component. Icons are ordinary children. There is no <code>Button.Root</code>, <code>as</code>, <code>asChild</code>, loading state, icon part, or radius option.</p>\n<h2 id=\"import\">Import</h2>\n<p>The package root and focused module both export Button:</p>\n<pre><code class=\"language-js\">import { Button } from &#39;sinewy&#39;\nimport Button from &#39;sinewy/button&#39;\n</code></pre>\n<p>The themed facade also provides the same component as a named export:</p>\n<pre><code class=\"language-js\">import { Button } from &#39;sinewy/theme&#39;\n</code></pre>\n<h2 id=\"basic-usage\">Basic usage</h2>\n<pre><code class=\"language-js\">import { Button } from &#39;sinewy&#39;\n\nButton({\n  size: &#39;2&#39;,\n  variant: &#39;solid&#39;,\n  color: &#39;accent&#39;,\n  highContrast: false,\n  type: &#39;button&#39;\n}, &#39;Save&#39;)\n</code></pre>\n<p><code>type</code> defaults to <code>button</code>, preventing an otherwise implicit form submission. Set <code>type=&quot;submit&quot;</code> or <code>type=&quot;reset&quot;</code> when that native behavior is intended.</p>\n<h2 id=\"styling\">Styling</h2>\n<p>Button supports normal Sin style extension and forwards <code>style</code>, <code>data</code>, native attributes, DOM hooks, and events to the button element:</p>\n<pre><code class=\"language-js\">const WideButton = Button`\n  min-width 180\n`\n\nWideButton({ onclick: save }, &#39;Save changes&#39;)\n</code></pre>\n<p>The four variants are <code>solid</code>, <code>soft</code>, <code>outline</code>, and <code>ghost</code>. Colors are <code>gray</code>, <code>accent</code>, <code>red</code>, <code>orange</code>, <code>amber</code>, <code>green</code>, <code>teal</code>, <code>cyan</code>, <code>blue</code>, <code>indigo</code>, <code>purple</code>, <code>pink</code>, and <code>crimson</code>. The palette responds to inherited <code>color-scheme</code>, and <code>highContrast</code> strengthens foregrounds and solid endpoints.</p>\n<p>TypeScript consumers can reuse the component-neutral <code>ThemeSize</code>, <code>ThemeColor</code>, <code>ControlVariant</code>, <code>ThemeOptions</code>, and <code>ControlThemeOptions</code> exports when building related controls.</p>\n<h2 id=\"api-reference\">API reference</h2>\n<h3 id=\"buttonattrs-children\"><code>Button(attrs?, ...children)</code></h3>\n<table>\n<thead>\n<tr>\n<th>Attribute</th>\n<th>Type</th>\n<th>Default</th>\n<th>Behavior</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><code>size</code></td>\n<td><code>&#39;1&#39; | &#39;2&#39; | &#39;3&#39;</code></td>\n<td><code>&#39;2&#39;</code></td>\n<td>Controls height, spacing, radius, and font size.</td>\n</tr>\n<tr>\n<td><code>variant</code></td>\n<td><code>&#39;solid&#39; | &#39;soft&#39; | &#39;outline&#39; | &#39;ghost&#39;</code></td>\n<td><code>&#39;solid&#39;</code></td>\n<td>Selects the visual treatment.</td>\n</tr>\n<tr>\n<td><code>color</code></td>\n<td>theme color</td>\n<td><code>&#39;accent&#39;</code></td>\n<td>Selects the light/dark-aware palette.</td>\n</tr>\n<tr>\n<td><code>highContrast</code></td>\n<td><code>boolean</code></td>\n<td><code>false</code></td>\n<td>Uses stronger palette endpoints.</td>\n</tr>\n<tr>\n<td><code>type</code></td>\n<td><code>&#39;button&#39; | &#39;submit&#39; | &#39;reset&#39; | &#39;menu&#39;</code></td>\n<td><code>&#39;button&#39;</code></td>\n<td>Native button type.</td>\n</tr>\n<tr>\n<td><code>disabled</code></td>\n<td>native button attribute</td>\n<td><code>false</code></td>\n<td>Uses native disabled semantics and suppresses activation.</td>\n</tr>\n</tbody></table>\n<p>All other native button attributes and events are forwarded. Theme options become <code>data-size</code>, <code>data-variant</code>, <code>data-color</code>, and optional <code>data-high-contrast</code> hooks instead of leaking as invalid DOM attributes. Consumer <code>data</code> and <code>style</code> objects are preserved; explicit style values can override theme custom properties.</p>\n<h2 id=\"accessibility\">Accessibility</h2>\n<p>Button keeps the native button element and its built-in accessibility semantics. Supply visible text or an accessible name when using only an icon. Native <code>disabled</code> buttons do not receive focus or dispatch click events.</p>\n<h2 id=\"keyboard-and-focus-behavior\">Keyboard and focus behavior</h2>\n<table>\n<thead>\n<tr>\n<th>Input</th>\n<th>Behavior</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><code>Enter</code> or <code>Space</code></td>\n<td>Activates the native button.</td>\n</tr>\n<tr>\n<td><code>Tab</code></td>\n<td>Moves focus to an enabled button in normal document order.</td>\n</tr>\n<tr>\n<td>Pointer press</td>\n<td>Uses native pressed behavior plus the themed active treatment.</td>\n</tr>\n<tr>\n<td>Keyboard focus</td>\n<td>Shows the themed <code>:focus-visible</code> outline.</td>\n</tr>\n</tbody></table>\n<h2 id=\"styling-hooks\">Styling hooks</h2>\n<table>\n<thead>\n<tr>\n<th>Hook</th>\n<th>Meaning</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><code>data-size=&quot;1|2|3&quot;</code></td>\n<td>Resolved size.</td>\n</tr>\n<tr>\n<td><code>data-variant=&quot;solid|soft|outline|ghost&quot;</code></td>\n<td>Resolved variant.</td>\n</tr>\n<tr>\n<td><code>data-color</code></td>\n<td>Resolved theme color.</td>\n</tr>\n<tr>\n<td><code>data-high-contrast</code></td>\n<td>Present when high contrast is enabled.</td>\n</tr>\n<tr>\n<td><code>:hover</code>, <code>:active</code>, <code>:focus-visible</code>, <code>:disabled</code></td>\n<td>Native interaction states.</td>\n</tr>\n</tbody></table>\n<h2 id=\"current-limits\">Current limits</h2>\n<ul>\n<li>Button always renders a native <code>button</code>; composition options remain unreserved until a concrete semantic use case can render truthfully.</li>\n<li>Loading and icon-specific APIs are not included. Pass icons as children and manage application state with native attributes.</li>\n</ul>\n"
+  },
+  {
     "title": "Context Menu",
     "description": "A headless menu opened at a contextual pointer or keyboard invocation point.",
     "slug": "context-menu",

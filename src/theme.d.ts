@@ -1,4 +1,12 @@
 import s from 'sin'
+import type { Button as ButtonComponent } from './button.js'
+import type {
+  ControlThemeOptions,
+  ControlVariant,
+  ThemeColor,
+  ThemeOptions,
+  ThemeSize
+} from './theme-options.js'
 import type {
   DropdownCheckboxAttrs,
   DropdownContentAttrs,
@@ -28,47 +36,27 @@ import type {
   ContextMenuTriggerAttrs
 } from './context-menu.js'
 
-export type DropdownThemeSize = '1' | '2' | '3'
-export type DropdownThemeColor =
-  | 'gray'
-  | 'accent'
-  | 'red'
-  | 'orange'
-  | 'amber'
-  | 'green'
-  | 'teal'
-  | 'cyan'
-  | 'blue'
-  | 'indigo'
-  | 'purple'
-  | 'pink'
-  | 'crimson'
-export type DropdownThemeTriggerVariant = 'solid' | 'soft' | 'outline' | 'ghost'
+export type { ControlThemeOptions, ControlVariant, ThemeColor, ThemeOptions, ThemeSize } from './theme-options.js'
+export type { ButtonAttrs } from './button.js'
+
+export type DropdownThemeSize = ThemeSize
+export type DropdownThemeColor = ThemeColor
+export type DropdownThemeTriggerVariant = ControlVariant
 export type DropdownThemeContentVariant = 'solid' | 'soft'
 export type DropdownThemeVariant = DropdownThemeTriggerVariant
 
-export interface DropdownThemeOptions {
-  size?: DropdownThemeSize
-}
+export interface DropdownThemeOptions extends Pick<ThemeOptions, 'size'> {}
 
-export interface DropdownThemeTriggerAttrs extends DropdownTriggerAttrs, DropdownThemeOptions {
-  variant?: DropdownThemeTriggerVariant
-  color?: DropdownThemeColor
-  highContrast?: boolean
-}
+export interface DropdownThemeTriggerAttrs extends DropdownTriggerAttrs, ControlThemeOptions {}
 
-export interface DropdownThemeContentOptions extends DropdownThemeOptions {
+export interface DropdownThemeContentOptions extends ThemeOptions {
   variant?: DropdownThemeContentVariant
-  color?: DropdownThemeColor
-  highContrast?: boolean
 }
 
 export type DropdownThemeContentAttrs = DropdownContentAttrs & DropdownThemeContentOptions
 export type DropdownThemeSubContentAttrs = DropdownSubContentAttrs & DropdownThemeContentOptions
 
-export interface DropdownThemeItemOptions extends DropdownThemeOptions {
-  color?: DropdownThemeColor
-  highContrast?: boolean
+export interface DropdownThemeItemOptions extends ThemeOptions {
   shortcut?: s.Children
 }
 
@@ -121,6 +109,7 @@ export type ContextMenuTheme = s.Component<ContextMenuRootAttrs, s.Children[]> &
 
 declare const Dropdown: DropdownTheme
 declare const ContextMenu: ContextMenuTheme
+declare const Button: ButtonComponent
 
-export { ContextMenu, Dropdown }
+export { Button, ContextMenu, Dropdown }
 export default Dropdown

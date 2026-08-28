@@ -1,4 +1,7 @@
 export { default as Dropdown } from './dropdown.js'
 export { default as ContextMenu } from './context-menu.js'
+export { default as Button } from './button.js'
 export type * from './dropdown.js'
 export type * from './context-menu.js'
+export type * from './button.js'
+export type { ControlThemeOptions, ControlVariant, ThemeColor, ThemeOptions, ThemeSize } from './theme-options.js'

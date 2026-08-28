@@ -1,5 +1,5 @@
 import s from 'sin'
-import Dropdown, { AlertDialog, Button, ContextMenu, Dialog, Toggle } from '../src/theme.js'
+import Dropdown, { AlertDialog, Button, ContextMenu, Dialog, Switch, Toggle } from '../src/theme.js'
 import documents, { documentsBySlug } from './content.generated.js'
 
 s.title = 'Sinewy — Documentation'
@@ -810,6 +810,16 @@ const DialogActions = s`div
   margin-top 24
 `
 
+const SwitchLabel = s`label
+  display inline-flex
+  align-items center
+  gap 9
+  color #343532
+  font-size 13
+  font-weight 680
+  cursor pointer
+`
+
 const componentDetails = {
   'alert-dialog': {
     status: 'Preview',
@@ -837,6 +847,13 @@ const componentDetails = {
     tags: ['Native dialog', 'Modal top layer', 'Controlled state'],
     summary: 'A native modal dialog with accessible semantic parts and shared Sinewy theming.',
     preview: DialogPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
+  switch: {
+    status: 'Preview',
+    tags: ['Native checkbox', 'Form control', 'Shared theme'],
+    summary: 'A native checkbox switch with real form behavior and controlled, uncontrolled, and live state.',
+    preview: SwitchPreview,
     previewHeadings: [{ id: 'live-example', text: 'Live example' }]
   },
   'context-menu': {
@@ -1037,6 +1054,27 @@ function AlertDialogPreview() {
         )
       ),
       Code(`import { AlertDialog } from 'sinewy'\n\nAlertDialog(\n  AlertDialog.Trigger('Delete account'),\n  AlertDialog.Content(\n    AlertDialog.Title('Delete account?'),\n    AlertDialog.Description('This cannot be undone.'),\n    AlertDialog.Close({ autofocus: true }, 'Cancel'),\n    AlertDialog.Close({ variant: 'solid', color: 'red' }, 'Delete')\n  )\n)`)
+    )
+  )
+}
+
+const SwitchExample = s(() => {
+  const notifications = s.live(true)
+
+  return () => ThemeOptions(
+    SwitchLabel(Switch({ bind: notifications }), 'Notifications'),
+    SwitchLabel(Switch({ defaultChecked: true, color: 'green' }), 'Auto-save'),
+    SwitchLabel(Switch({ color: 'crimson', highContrast: true }), 'Public profile')
+  )
+})
+
+function SwitchPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('Each themed track is still a native labelled checkbox, including keyboard, form, focus, and reset behavior.'),
+    s`div`(
+      Example(SwitchExample()),
+      Code(`import s from 'sin'\nimport { Switch } from 'sinewy'\n\nconst notifications = s.live(true)\n\ns\`label\`(\n  Switch({\n    bind: notifications,\n    color: 'accent'\n  }),\n  'Notifications'\n)`)
     )
   )
 }

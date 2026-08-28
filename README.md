@@ -6,8 +6,8 @@ Sinewy is an independent component library built with Sin and modern browser
 primitives. It is maintained separately from Sin.js and is not an official
 Sin.js project.
 
-The current preview contains themed native Button, Toggle, Dialog, and Alert
-Dialog controls plus headless dropdown and context-menu components with
+The current preview contains themed native Button, Toggle, Switch, Dialog, and
+Alert Dialog controls plus headless dropdown and context-menu components with
 optional themed facades. Menus target browsers with the Popover API and named
 CSS Anchor Positioning; there is currently no JavaScript positioning fallback.
 
@@ -73,6 +73,7 @@ import {
   ContextMenu,
   Dialog,
   Dropdown,
+  Switch,
   Toggle
 } from 'sinewy'
 
@@ -80,6 +81,7 @@ import ThemedDropdown, {
   AlertDialog as ThemedAlertDialog,
   ContextMenu as ThemedContextMenu,
   Dialog as ThemedDialog,
+  Switch as ThemedSwitch,
   Toggle as ThemedToggle
 } from 'sinewy/theme'
 ```
@@ -87,6 +89,7 @@ import ThemedDropdown, {
 The public contracts and their current platform limits are documented in
 [`docs/components/button.md`](docs/components/button.md),
 [`docs/components/toggle.md`](docs/components/toggle.md),
+[`docs/components/switch.md`](docs/components/switch.md),
 [`docs/components/dialog.md`](docs/components/dialog.md),
 [`docs/components/alert-dialog.md`](docs/components/alert-dialog.md),
 [`docs/components/dropdown.md`](docs/components/dropdown.md), and

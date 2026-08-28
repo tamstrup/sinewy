@@ -3,6 +3,7 @@ import type { Button as ButtonComponent } from './button.js'
 import type { Toggle as ToggleComponent } from './toggle.js'
 import type { Dialog as DialogComponent } from './dialog.js'
 import type { AlertDialog as AlertDialogComponent } from './alert-dialog.js'
+import type { Switch as SwitchComponent } from './switch.js'
 import type {
   ControlThemeOptions,
   ControlVariant,
@@ -54,6 +55,7 @@ export type {
   AlertDialogRootAttrs,
   AlertDialogTriggerAttrs
 } from './alert-dialog.js'
+export type { SwitchAttrs } from './switch.js'
 
 export type DropdownThemeSize = ThemeSize
 export type DropdownThemeColor = ThemeColor
@@ -129,6 +131,7 @@ declare const Button: ButtonComponent
 declare const Toggle: ToggleComponent
 declare const Dialog: DialogComponent
 declare const AlertDialog: AlertDialogComponent
+declare const Switch: SwitchComponent
 
-export { AlertDialog, Button, ContextMenu, Dialog, Dropdown, Toggle }
+export { AlertDialog, Button, ContextMenu, Dialog, Dropdown, Switch, Toggle }
 export default Dropdown

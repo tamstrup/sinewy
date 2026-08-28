@@ -10,7 +10,8 @@ t`documentation ssr`(
     t.is(true, result.links.has('/components/context-menu'))
     t.is(true, result.links.has('/components/toggle'))
     t.is(true, result.links.has('/components/dialog'))
-    return [true, result.links.has('/components/alert-dialog')]
+    t.is(true, result.links.has('/components/alert-dialog'))
+    return [true, result.links.has('/components/switch')]
   }),
 
   t`renders the toggle document and live example`(async() => {
@@ -32,6 +33,13 @@ t`documentation ssr`(
     t.is('Alert Dialog — Sinewy', result.title)
     t.is(true, result.html.includes('data-source="docs/components/alert-dialog.md"'))
     return [true, result.html.includes('role="alertdialog"')]
+  }),
+
+  t`renders the switch document and live example`(async() => {
+    const result = await render('/components/switch')
+    t.is('Switch — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/switch.md"'))
+    return [true, result.html.includes('role="switch"')]
   }),
 
   t`renders the button document and live example`(async() => {

@@ -7,7 +7,31 @@ t`documentation ssr`(
     const result = await render('/')
     t.is(true, result.links.has('/components/button'))
     t.is(true, result.links.has('/components/dropdown'))
-    return [true, result.links.has('/components/context-menu')]
+    t.is(true, result.links.has('/components/context-menu'))
+    t.is(true, result.links.has('/components/toggle'))
+    t.is(true, result.links.has('/components/dialog'))
+    return [true, result.links.has('/components/alert-dialog')]
+  }),
+
+  t`renders the toggle document and live example`(async() => {
+    const result = await render('/components/toggle')
+    t.is('Toggle — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/toggle.md"'))
+    return [true, result.html.includes('aria-pressed="false"')]
+  }),
+
+  t`renders the dialog document and live example`(async() => {
+    const result = await render('/components/dialog')
+    t.is('Dialog — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/dialog.md"'))
+    return [true, result.html.includes('<dialog')]
+  }),
+
+  t`renders the alert dialog document and live example`(async() => {
+    const result = await render('/components/alert-dialog')
+    t.is('Alert Dialog — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/alert-dialog.md"'))
+    return [true, result.html.includes('role="alertdialog"')]
   }),
 
   t`renders the button document and live example`(async() => {

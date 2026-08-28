@@ -1,7 +1,7 @@
 {
   "lock": false,
   "deploy": {
-    "build": "test -f +build/index.html && test -f +build/index.js && test -f +build/components/button/index.html && test -f +build/components/dropdown/index.html && test -f +build/components/context-menu/index.html",
+    "build": "test -f +build/index.html && test -f +build/index.js && test -f +build/components/alert-dialog/index.html && test -f +build/components/button/index.html && test -f +build/components/context-menu/index.html && test -f +build/components/dialog/index.html && test -f +build/components/dropdown/index.html && test -f +build/components/toggle/index.html",
     "runtime": {
       "type": "static",
       "cwd": "./+build"

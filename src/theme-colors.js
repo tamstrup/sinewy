@@ -86,11 +86,9 @@ function themeColorStyle(color, style) {
 
   variables['--sinewy-accent-contrast'] = contrasts[name] || 'white'
   variables['--sinewy-panel'] = 'light-dark(#fff, #191919)'
-  variables['--sinewy-neutral-1'] = lightDark(palettes.gray[0])
-  variables['--sinewy-neutral-6'] = lightDark(palettes.gray[5])
-  variables['--sinewy-neutral-9'] = lightDark(palettes.gray[8])
-  variables['--sinewy-neutral-11'] = lightDark(palettes.gray[10])
-  variables['--sinewy-neutral-12'] = lightDark(palettes.gray[11])
+  ;[1, 2, 3, 4, 6, 7, 8, 9, 11, 12].forEach(step => {
+    variables[`--sinewy-neutral-${step}`] = lightDark(palettes.gray[step - 1])
+  })
   variables['--sinewy-extreme'] = 'light-dark(#000, #fff)'
 
   return {

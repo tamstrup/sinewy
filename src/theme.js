@@ -2,6 +2,9 @@ import s from 'sin'
 import Headless from './dropdown.js'
 import HeadlessContextMenu from './context-menu.js'
 import Button from './button.js'
+import Toggle from './toggle.js'
+import Dialog from './dialog.js'
+import AlertDialog from './alert-dialog.js'
 import { controlTheme } from './control-theme.js'
 import { themeColorStyle } from './theme-colors.js'
 import { themedData } from './theme-options.js'
@@ -484,5 +487,5 @@ function submenuChevron() {
   )
 }
 
-export { Button, ContextMenu, Dropdown }
+export { AlertDialog, Button, ContextMenu, Dialog, Dropdown, Toggle }
 export default Dropdown

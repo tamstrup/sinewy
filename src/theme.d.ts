@@ -1,5 +1,8 @@
 import s from 'sin'
 import type { Button as ButtonComponent } from './button.js'
+import type { Toggle as ToggleComponent } from './toggle.js'
+import type { Dialog as DialogComponent } from './dialog.js'
+import type { AlertDialog as AlertDialogComponent } from './alert-dialog.js'
 import type {
   ControlThemeOptions,
   ControlVariant,
@@ -38,6 +41,19 @@ import type {
 
 export type { ControlThemeOptions, ControlVariant, ThemeColor, ThemeOptions, ThemeSize } from './theme-options.js'
 export type { ButtonAttrs } from './button.js'
+export type { ToggleAttrs } from './toggle.js'
+export type {
+  DialogCloseAttrs,
+  DialogContentAttrs,
+  DialogRootAttrs,
+  DialogTriggerAttrs
+} from './dialog.js'
+export type {
+  AlertDialogCloseAttrs,
+  AlertDialogContentAttrs,
+  AlertDialogRootAttrs,
+  AlertDialogTriggerAttrs
+} from './alert-dialog.js'
 
 export type DropdownThemeSize = ThemeSize
 export type DropdownThemeColor = ThemeColor
@@ -110,6 +126,9 @@ export type ContextMenuTheme = s.Component<ContextMenuRootAttrs, s.Children[]> &
 declare const Dropdown: DropdownTheme
 declare const ContextMenu: ContextMenuTheme
 declare const Button: ButtonComponent
+declare const Toggle: ToggleComponent
+declare const Dialog: DialogComponent
+declare const AlertDialog: AlertDialogComponent
 
-export { Button, ContextMenu, Dropdown }
+export { AlertDialog, Button, ContextMenu, Dialog, Dropdown, Toggle }
 export default Dropdown

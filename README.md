@@ -6,10 +6,10 @@ Sinewy is an independent component library built with Sin and modern browser
 primitives. It is maintained separately from Sin.js and is not an official
 Sin.js project.
 
-The current preview contains a themed native Button plus headless dropdown and
-context-menu components with optional themed facades. Menus target browsers
-with the Popover API and named CSS Anchor Positioning; there is currently no
-JavaScript positioning fallback.
+The current preview contains themed native Button, Toggle, Dialog, and Alert
+Dialog controls plus headless dropdown and context-menu components with
+optional themed facades. Menus target browsers with the Popover API and named
+CSS Anchor Positioning; there is currently no JavaScript positioning fallback.
 
 ## Local setup
 
@@ -67,12 +67,28 @@ npm test
 ## Imports
 
 ```js
-import { Button, ContextMenu, Dropdown } from 'sinewy'
-import ThemedDropdown, { ContextMenu as ThemedContextMenu } from 'sinewy/theme'
+import {
+  AlertDialog,
+  Button,
+  ContextMenu,
+  Dialog,
+  Dropdown,
+  Toggle
+} from 'sinewy'
+
+import ThemedDropdown, {
+  AlertDialog as ThemedAlertDialog,
+  ContextMenu as ThemedContextMenu,
+  Dialog as ThemedDialog,
+  Toggle as ThemedToggle
+} from 'sinewy/theme'
 ```
 
 The public contracts and their current platform limits are documented in
 [`docs/components/button.md`](docs/components/button.md),
+[`docs/components/toggle.md`](docs/components/toggle.md),
+[`docs/components/dialog.md`](docs/components/dialog.md),
+[`docs/components/alert-dialog.md`](docs/components/alert-dialog.md),
 [`docs/components/dropdown.md`](docs/components/dropdown.md), and
 [`docs/components/context-menu.md`](docs/components/context-menu.md).
 

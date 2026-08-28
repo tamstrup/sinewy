@@ -130,6 +130,53 @@ function controlTheme(component) {
       border-color $sinewy-accent-8
     }
 
+    &[data-state='off'][data-variant='solid'] {
+      background $sinewy-neutral-3
+      color $sinewy-neutral-11
+    }
+
+    &[data-state='off'][data-variant='soft'] {
+      background $sinewy-neutral-3
+      color $sinewy-neutral-11
+    }
+
+    &[data-state='off'][data-variant='solid']:hover:not(:disabled) {
+      background $sinewy-neutral-4
+      color $sinewy-neutral-12
+    }
+
+    &[data-state='off'][data-variant='soft']:hover:not(:disabled) {
+      background $sinewy-neutral-4
+      color $sinewy-neutral-12
+    }
+
+    &[data-state='off'][data-variant='outline'] {
+      border-color $sinewy-neutral-7
+      background $sinewy-panel
+      color $sinewy-neutral-11
+    }
+
+    &[data-state='off'][data-variant='outline']:hover:not(:disabled) {
+      border-color $sinewy-neutral-8
+      background $sinewy-neutral-2
+      color $sinewy-neutral-12
+    }
+
+    &[data-state='off'][data-variant='ghost'] {
+      background transparent
+      color $sinewy-neutral-11
+    }
+
+    &[data-state='off'][data-variant='ghost']:hover:not(:disabled) {
+      background $sinewy-neutral-3
+      color $sinewy-neutral-12
+    }
+
+    &[data-state='on'][data-variant='ghost'] {
+      background $sinewy-accent-3
+      color $sinewy-accent-12
+    }
+
     &:active:not(:disabled):not([data-disabled]) {
       transform translateY(1px)
     }

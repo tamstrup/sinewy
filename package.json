@@ -21,6 +21,18 @@
       "types": "./src/button.d.ts",
       "import": "./src/button.js"
     },
+    "./toggle": {
+      "types": "./src/toggle.d.ts",
+      "import": "./src/toggle.js"
+    },
+    "./dialog": {
+      "types": "./src/dialog.d.ts",
+      "import": "./src/dialog.js"
+    },
+    "./alert-dialog": {
+      "types": "./src/alert-dialog.d.ts",
+      "import": "./src/alert-dialog.js"
+    },
     "./theme": {
       "types": "./src/theme.d.ts",
       "import": "./src/theme.js"
@@ -43,8 +55,8 @@
     "test": "npm run test:browser && npm run test:ssr && npm run test:types && npm run test:docs",
     "test:browser": "sin test test/index.js --headless --ci",
     "test:docs": "npm run docs:content && node test/docs.test.js && node test/docs.ssr.test.js",
-    "test:ssr": "node test/dropdown.ssr.test.js && node test/context-menu.ssr.test.js && node test/button.ssr.test.js",
-    "test:types": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM --skipLibCheck test/dropdown.types.test.ts test/context-menu.types.test.ts test/button.types.test.ts"
+    "test:ssr": "node test/dropdown.ssr.test.js && node test/context-menu.ssr.test.js && node test/button.ssr.test.js && node test/toggle.ssr.test.js && node test/dialog.ssr.test.js && node test/alert-dialog.ssr.test.js",
+    "test:types": "tsc --noEmit --strict --module NodeNext --moduleResolution NodeNext --target ES2022 --lib ES2022,DOM --skipLibCheck test/dropdown.types.test.ts test/context-menu.types.test.ts test/button.types.test.ts test/toggle.types.test.ts test/dialog.types.test.ts test/alert-dialog.types.test.ts"
   },
   "dependencies": {
     "sin": "file:../sin"

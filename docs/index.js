@@ -1,5 +1,5 @@
 import s from 'sin'
-import Dropdown, { Button, ContextMenu } from '../src/theme.js'
+import Dropdown, { AlertDialog, Button, ContextMenu, Dialog, Toggle } from '../src/theme.js'
 import documents, { documentsBySlug } from './content.generated.js'
 
 s.title = 'Sinewy — Documentation'
@@ -803,12 +803,40 @@ const ContextTarget = ContextMenu.Trigger`
   }
 `
 
+const DialogActions = s`div
+  display flex
+  justify-content flex-end
+  gap 8
+  margin-top 24
+`
+
 const componentDetails = {
+  'alert-dialog': {
+    status: 'Preview',
+    tags: ['Native dialog', 'Alert semantics', 'Dialog specialization'],
+    summary: 'An urgent-decision specialization of Dialog that enforces the native alertdialog role.',
+    preview: AlertDialogPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
   button: {
     status: 'Preview',
     tags: ['Native control', 'Shared theme', 'Form-safe'],
     summary: 'A compact themed native control with four variants and full button attribute forwarding.',
     preview: ButtonPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
+  toggle: {
+    status: 'Preview',
+    tags: ['Native control', 'Pressed state', 'Shared theme'],
+    summary: 'A native two-state button with controlled, uncontrolled, and live binding contracts.',
+    preview: TogglePreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
+  dialog: {
+    status: 'Preview',
+    tags: ['Native dialog', 'Modal top layer', 'Controlled state'],
+    summary: 'A native modal dialog with accessible semantic parts and shared Sinewy theming.',
+    preview: DialogPreview,
     previewHeadings: [{ id: 'live-example', text: 'Live example' }]
   },
   'context-menu': {
@@ -942,6 +970,73 @@ function ButtonPreview() {
         )
       ),
       Code(`import { Button } from 'sinewy'\n\nButton({\n  size: '2',\n  variant: 'solid',\n  color: 'accent',\n  highContrast: false\n}, 'Save')`)
+    )
+  )
+}
+
+const ToggleExample = s(() => {
+  const pressed = s.live(false)
+
+  return () => ThemeOptions(
+    Toggle({ bind: pressed, variant: 'soft' }, pressed() ? 'Bold on' : 'Bold'),
+    Toggle({ defaultPressed: true, variant: 'outline', color: 'green' }, 'Pinned'),
+    Toggle({ variant: 'ghost', color: 'crimson', 'aria-label': 'Mute audio' }, '♪')
+  )
+})
+
+function TogglePreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('Activate a toggle to see its persistent pressed state. The same control theme becomes neutral while off and colored while on.'),
+    s`div`(
+      Example(ToggleExample()),
+      Code(`import s from 'sin'\nimport { Toggle } from 'sinewy'\n\nconst bold = s.live(false)\n\nToggle({\n  bind: bold,\n  size: '2',\n  variant: 'soft',\n  color: 'accent'\n}, 'Bold')`)
+    )
+  )
+}
+
+function DialogPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('Open the native modal to see top-layer focus containment, the themed backdrop, and semantic title and description relationships.'),
+    s`div`(
+      Example(
+        Dialog(
+          Dialog.Trigger({ variant: 'solid' }, 'Edit profile'),
+          Dialog.Content(
+            Dialog.Title('Edit profile'),
+            Dialog.Description('Change the public details shown on your account.'),
+            DialogActions(
+              Dialog.Close('Cancel'),
+              Dialog.Close({ variant: 'solid', color: 'accent' }, 'Save changes')
+            )
+          )
+        )
+      ),
+      Code(`import { Dialog } from 'sinewy'\n\nDialog(\n  Dialog.Trigger('Edit profile'),\n  Dialog.Content(\n    Dialog.Title('Edit profile'),\n    Dialog.Description('Change your public details.'),\n    Dialog.Close('Cancel'),\n    Dialog.Close({ variant: 'solid' }, 'Save changes')\n  )\n)`)
+    )
+  )
+}
+
+function AlertDialogPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('The alert specialization keeps Dialog behavior while announcing an urgent decision and initially focusing the safest choice.'),
+    s`div`(
+      Example(
+        AlertDialog(
+          AlertDialog.Trigger({ variant: 'outline', color: 'red' }, 'Delete account'),
+          AlertDialog.Content({ color: 'red' },
+            AlertDialog.Title('Delete account?'),
+            AlertDialog.Description('This action permanently removes the account and its saved data.'),
+            DialogActions(
+              AlertDialog.Close({ autofocus: true }, 'Cancel'),
+              AlertDialog.Close({ variant: 'solid', color: 'red' }, 'Delete')
+            )
+          )
+        )
+      ),
+      Code(`import { AlertDialog } from 'sinewy'\n\nAlertDialog(\n  AlertDialog.Trigger('Delete account'),\n  AlertDialog.Content(\n    AlertDialog.Title('Delete account?'),\n    AlertDialog.Description('This cannot be undone.'),\n    AlertDialog.Close({ autofocus: true }, 'Cancel'),\n    AlertDialog.Close({ variant: 'solid', color: 'red' }, 'Delete')\n  )\n)`)
     )
   )
 }

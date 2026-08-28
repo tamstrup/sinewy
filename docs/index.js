@@ -589,9 +589,7 @@ const Markdown = s`div
   }
 
   p,
-  li,
-  td,
-  th {
+  li {
     color #656660
     font-size 14
     line-height 1.68
@@ -648,6 +646,9 @@ const Markdown = s`div
     min-width 120
     padding 9 11
     border-bottom 1px solid #e5e2da
+    color #656660
+    font-size 14
+    line-height 1.68
     text-align left
     vertical-align top
   }

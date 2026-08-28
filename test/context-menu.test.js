@@ -2,7 +2,7 @@ import s from 'sin'
 import t from 'sin/test'
 import ContextMenu from '../src/context-menu.js'
 
-t.timeout = 2000
+t.timeout = 3000
 
 t`context menu`(
   t`structure`(
@@ -61,6 +61,56 @@ t`context menu`(
       await settle()
 
       return [true, menu.content.matches(':popover-open')]
+    })),
+
+    t`opens a stationary touch long press at its initial point`(() => withMenu({}, async menu => {
+      menu.trigger.dispatchEvent(pointerEvent('pointerdown', {
+        clientX: 135,
+        clientY: 95,
+        pointerId: 2,
+        pointerType: 'touch'
+      }))
+      await wait(725)
+
+      t.is(false, menu.content.matches(':popover-open'))
+      document.dispatchEvent(pointerEvent('pointerup', {
+        clientX: 135,
+        clientY: 95,
+        pointerId: 2,
+        pointerType: 'touch'
+      }))
+      await settle()
+
+      const anchor = document.querySelector('[data-sinewy-context-anchor]').getBoundingClientRect()
+      t.is(135, Math.round(anchor.left))
+      t.is(95, Math.round(anchor.top))
+      return [true, menu.content.matches(':popover-open')]
+    })),
+
+    t`cancels touch long press after pointer movement`(() => withMenu({}, async menu => {
+      menu.trigger.dispatchEvent(pointerEvent('pointerdown', {
+        clientX: 80,
+        clientY: 70,
+        pointerId: 3,
+        pointerType: 'touch'
+      }))
+      document.dispatchEvent(pointerEvent('pointermove', {
+        clientX: 81,
+        clientY: 70,
+        pointerId: 3,
+        pointerType: 'touch'
+      }))
+      await wait(725)
+      document.dispatchEvent(pointerEvent('pointerup', {
+        clientX: 81,
+        clientY: 70,
+        pointerId: 3,
+        pointerType: 'touch'
+      }))
+      await settle()
+
+      t.is(null, document.querySelector('[data-sinewy-context-anchor]'))
+      return [false, menu.content.matches(':popover-open')]
     })),
 
     t`uses the target corner for keyboard-origin events`(() => withMenu({
@@ -221,6 +271,16 @@ function contextEvent(options = {}) {
   })
 }
 
+function pointerEvent(type, options = {}) {
+  return new PointerEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    button: 0,
+    buttons: type === 'pointerup' ? 0 : 1,
+    ...options
+  })
+}
+
 function withSubmenu(onselect, run) {
   const host = document.createElement('div')
   document.body.append(host)
@@ -257,4 +317,8 @@ function withSubmenu(onselect, run) {
 
 function settle() {
   return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }

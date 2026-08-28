@@ -13,6 +13,7 @@ t`context menu ssr`(
     t.is(true, html.includes('id="sinewy-context-menu-1-trigger"'))
     t.is(true, html.includes('aria-controls="sinewy-context-menu-1-content"'))
     t.is(true, html.includes('aria-labelledby="sinewy-context-menu-1-trigger"'))
+    t.is(true, html.includes('-webkit-touch-callout:none'))
     return [false, html.includes('data-sinewy-context-anchor')]
   }),
 

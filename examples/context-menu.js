@@ -39,6 +39,8 @@ const Item = ContextMenu.Item`
   border-radius 7
   background transparent
   color #302a4f
+  font-size 14
+  line-height 20px
   text-align left
 
   &[data-highlighted] {
@@ -54,7 +56,7 @@ const Separator = ContextMenu.Separator`
 `
 
 const App = () => ContextMenu(
-  Target('Right-click here, or focus this area and press Shift+F10.'),
+  Target('Right-click, press and hold, or focus this area and press Shift+F10.'),
   Content(
     Item({ onselect: () => console.log('Rename') }, 'Rename'),
     Item({ onselect: () => console.log('Duplicate') }, 'Duplicate'),

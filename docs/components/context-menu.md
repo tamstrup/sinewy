@@ -5,9 +5,9 @@ description: A headless menu opened at a contextual pointer or keyboard invocati
 
 ## Overview
 
-`ContextMenu` is a headless contextual menu for Sin.js. It opens from the native `contextmenu` event, positions its content at the invocation point, and reuses Sinewy's tested menu navigation, selection, checkbox, radio, and submenu behavior.
+`ContextMenu` is a headless contextual menu for Sin.js. It opens from the native `contextmenu` event or a stationary touch or pen long press, positions its content at the invocation point, and reuses Sinewy's tested menu navigation, selection, checkbox, radio, and submenu behavior.
 
-The first slice supports right-click and keyboard-origin context-menu events. Touch long-press behavior remains a planned addition.
+A non-mouse press is recognized after 700 milliseconds. Movement, cancellation, or an earlier release aborts it; once recognized, the menu opens immediately after release so the same pointer gesture cannot trigger native popover light-dismiss.
 
 ## Import
 
@@ -25,7 +25,7 @@ import ContextMenu from 'sinewy/context-menu'
 
 ```js
 ContextMenu(
-  ContextMenu.Trigger('Right-click here'),
+  ContextMenu.Trigger('Right-click or press and hold here'),
   ContextMenu.Content(
     ContextMenu.Item({ onselect: rename }, 'Rename'),
     ContextMenu.Item({ onselect: duplicate }, 'Duplicate'),
@@ -88,6 +88,8 @@ Renders the area that invokes the menu. The default element is a focusable `div`
 
 Keyboard invocation is provided by the browser's native `contextmenu` event. When that event does not contain pointer coordinates, Sinewy opens at the target's logical lower-start corner.
 
+Touch and pen invocation uses a stationary 700 millisecond long press at the initial pointer coordinates. Sinewy suppresses the iOS touch callout by default; a consumer-provided `-webkit-touch-callout` style can override that behavior.
+
 ### `ContextMenu.Content(attrs?, ...children)`
 
 Renders a `popover="auto"` menu positioned against an internal zero-sized point anchor. It accepts the same placement and collision attributes as `Dropdown.Content`.
@@ -118,7 +120,6 @@ Consumers using `as` must forward received attributes, event handlers, `dom`, an
 
 ## Current limits
 
-- Touch long-press invocation is not implemented yet.
 - Programmatic or controlled opening has no public contract yet.
 - The ephemeral point anchor is inserted into `document.body` when invoked and removed with the component; menu content itself remains in its original Sin ancestry and enters the top layer through the Popover API.
 - The component is currently headless; a themed facade will follow after interaction behavior is stable.

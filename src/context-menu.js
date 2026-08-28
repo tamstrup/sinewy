@@ -3,6 +3,7 @@ import Dropdown from './dropdown.js'
 import { $menu } from './menu-context.js'
 
 const $ids = Symbol('sinewy-context-menu-ids')
+const longPressDuration = 700
 const itemSelector = [
   '[role="menuitem"]',
   '[role="menuitemcheckbox"]',
@@ -38,6 +39,7 @@ const ContextMenu = s(({ id }, [], context) => {
     pointerDown: undefined,
     pointerCleanup: undefined,
     pendingOpen: undefined,
+    longPressTimer: undefined,
     onbeforeopenchange: undefined,
     onopenchange: undefined
   }
@@ -50,6 +52,7 @@ const ContextMenu = s(({ id }, [], context) => {
     cancelAnimationFrame(state.reconcileFrame)
     state.pointerCleanup && state.pointerCleanup()
     state.pendingOpen && state.pendingOpen()
+    clearLongPress(state)
     state.anchor && state.anchor.remove()
   })
 
@@ -87,6 +90,7 @@ ContextMenu.Trigger = s(({
     'aria-controls': state.contentId,
     'aria-expanded': String(state.renderOpen),
     'aria-disabled': String(disabled),
+    style: triggerStyle(attrs.style, disabled),
     data: {
       ...attrs.data,
       disabled: disabled ? '' : null,
@@ -98,6 +102,7 @@ ContextMenu.Trigger = s(({
     ]),
     oncontextmenu: (event, element, elementAttrs, elementContext) => {
       invokeHandler(oncontextmenu, event, element, elementAttrs, elementContext)
+      clearLongPress(state)
       if (disabled || event.defaultPrevented || !state.content)
         return
 
@@ -224,27 +229,75 @@ function trackPointer(state, event) {
   const doc = event.currentTarget.ownerDocument
   const pointer = state.pointerDown = {
     button: event.button,
-    pointerId: event.pointerId
+    pointerId: event.pointerId,
+    pointerType: event.pointerType,
+    x: event.clientX,
+    y: event.clientY
   }
+  const nonMouse = pointer.pointerType && pointer.pointerType !== 'mouse'
   const clear = event => {
     if (event.pointerId !== pointer.pointerId)
       return
 
     doc.removeEventListener('pointerup', clear, true)
     doc.removeEventListener('pointercancel', clear, true)
+    doc.removeEventListener('pointermove', move, true)
+    clearLongPress(state)
     state.pointerDown === pointer && (state.pointerDown = undefined)
     state.pointerCleanup === cleanup && (state.pointerCleanup = undefined)
+  }
+  const move = event => {
+    if (nonMouse && event.pointerId === pointer.pointerId)
+      clearLongPress(state)
   }
   const cleanup = () => {
     doc.removeEventListener('pointerup', clear, true)
     doc.removeEventListener('pointercancel', clear, true)
+    doc.removeEventListener('pointermove', move, true)
+    clearLongPress(state)
     state.pointerDown === pointer && (state.pointerDown = undefined)
     state.pointerCleanup === cleanup && (state.pointerCleanup = undefined)
   }
 
   doc.addEventListener('pointerup', clear, true)
   doc.addEventListener('pointercancel', clear, true)
+  doc.addEventListener('pointermove', move, true)
   state.pointerCleanup = cleanup
+
+  if (nonMouse && event.currentTarget.getAttribute('aria-disabled') !== 'true')
+    startLongPress(state, event.currentTarget, pointer)
+}
+
+function startLongPress(state, trigger, pointer) {
+  clearLongPress(state)
+  if (state.content && state.content.matches(':popover-open'))
+    state.content.hidePopover()
+
+  state.longPressTimer = setTimeout(() => {
+    state.longPressTimer = undefined
+    if (state.pointerDown !== pointer || !state.content)
+      return
+
+    moveAnchor(state, trigger.ownerDocument, pointer.x, pointer.y)
+    state.openFocus = 'first'
+    state.restoreFocus = true
+    state.pendingOpen && state.pendingOpen()
+    openAfterRelease(state, trigger, pointer)
+  }, longPressDuration)
+}
+
+function clearLongPress(state) {
+  clearTimeout(state.longPressTimer)
+  state.longPressTimer = undefined
+}
+
+function triggerStyle(style, disabled) {
+  if (disabled)
+    return style
+
+  return style && typeof style === 'object'
+    ? { '-webkit-touch-callout': 'none', ...style }
+    : '-webkit-touch-callout:none;' + (style || '')
 }
 
 function createAnchor(state, doc) {

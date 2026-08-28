@@ -816,6 +816,8 @@ const ContextItem = ContextMenu.Item`
   border-radius 6
   background transparent
   color #302a4f
+  font-size 14
+  line-height 20px
   text-align left
 
   &[data-highlighted] {
@@ -986,7 +988,7 @@ function DropdownPreview() {
 function ContextMenuPreview() {
   return s`section#live-example`(
     s`h2`('Live example'),
-    s`p`('Right-click the target, or focus it and press Shift+F10.'),
+    s`p`('Right-click or press and hold the target, or focus it and press Shift+F10.'),
     s`div`(
       Example(
         ContextMenu(

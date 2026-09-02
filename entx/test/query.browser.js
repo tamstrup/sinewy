@@ -20,7 +20,7 @@ t`query workspace`(
       t.is(4, host.querySelectorAll('details').length)
       t.is(true, button(host, 'Run query').disabled)
       t.is('', editor(host).state.doc.toString())
-      t.is(true, host.textContent.includes('SQL is not executed'))
+      t.is(true, host.querySelector('[data-query-demo]').title.includes('SQL is not executed'))
       return [true, !!host.querySelector('aside#accounts-sidebar')]
     })
   ),
@@ -47,6 +47,36 @@ t`query workspace`(
     )
     return [true, result.options.some((x) => x.label === 'amount')]
   }),
+  t`single-line toolbar leads the page and includes the editable query title`(() =>
+    fixture(async (host) => {
+      host.style.cssText = 'position:fixed;top:0;left:0;width:1280px;height:720px;overflow:hidden'
+      host.firstElementChild.style.height = '720px'
+      await settle()
+      const page = host.querySelector('main > section')
+      const toolbar = host.querySelector('[data-query-toolbar]')
+      const name = host.querySelector('[aria-label="Query name"]')
+      t.is(toolbar, page.firstElementChild)
+      t.is(0, page.querySelectorAll('h1').length)
+      t.is(true, toolbar.contains(name))
+      const center = (element) => {
+        const rect = element.getBoundingClientRect()
+        return rect.top + rect.height / 2
+      }
+      for (const label of ['Run query', 'Save', 'Edit', 'Ask AI']) {
+        check(
+          Math.abs(center(name) - center(button(host, label))) < 1,
+          label + ' shares toolbar line',
+        )
+      }
+      t.is(true, toolbar.scrollWidth <= toolbar.clientWidth + 1)
+      setSql(host, 'select * from accounts;')
+      input(name, 'My report')
+      await settle()
+      button(host, 'Save').click()
+      await settle()
+      return ['My report', JSON.parse(localStorage.getItem(QUERY_STORAGE_KEY))[0].name]
+    })
+  ),
   t`actual editor completes lowercase SQL without rewriting existing text`(() =>
     fixture(async (host) => {
       setSql(host, 'sel')

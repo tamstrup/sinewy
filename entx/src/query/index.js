@@ -18,16 +18,7 @@ const Page = s`section
   display flex
   flex-direction column
   overflow hidden
-  h1 { margin 0; font-size 22; font-weight 720; letter-spacing -.6px }
   p { margin 6px 0 0; color #7b7b84; font-size 12; line-height 1.6 }
-`
-const Header = s`header
-  display flex
-  align-items center
-  justify-content space-between
-  gap 16
-  margin-bottom 12
-  flex-shrink 0
 `
 const Badge = s`span
   color #766b9d
@@ -46,31 +37,46 @@ const Toolbar = s`div
   flex-shrink 0
 `
 const Name = s`input
-  min-width 150
+  min-width 0
+  width 0
   flex 1
-  height 34
+  height 30
   padding 0 9
-  border 1px solid #dedee5
+  border 1px solid transparent
   border-radius 6
-  background white
+  background transparent
   font-size 12
+  font-weight 600
   color #35353d
+  &:hover { border-color #dedee5; background white }
   &:focus { outline 2px solid #afa7ee; outline-offset 1 }
+`
+const NameField = s`div
+  display flex
+  align-items center
+  flex 1
+  min-width 130
+`
+const Unsaved = s`span
+  width 6
+  height 6
+  flex-shrink 0
+  margin 0 6px
+  border-radius 50%
+  background #a4946b
 `
 const Actionbar = s`div
   display flex
   align-items center
-  flex-wrap wrap
+  flex-wrap nowrap
+  min-width 0
+  overflow-x auto
   gap 6
-  padding 8px 0
-  border-top 1px solid #e6e6eb
+  padding 3px 2px 12px
+  margin-bottom 12
   border-bottom 1px solid #e6e6eb
   flex-shrink 0
-`
-const Hint = s`span
-  color #93939c
-  font-size 10
-  margin 0 8px
+  > button { flex-shrink 0; white-space nowrap }
 `
 const Prompt = s`textarea
   display block
@@ -456,7 +462,7 @@ export default s((_attrs, _children, context) => {
   return () =>
     Page(
       {
-        'aria-labelledby': 'query-title',
+        'aria-label': t('query'),
         dom: () => {
           try {
             saved = readQueries(localStorage)
@@ -477,36 +483,34 @@ export default s((_attrs, _children, context) => {
           }
         },
       },
-      Header(
-        s`div`(s`h1#query-title`(t('query')), s`p`(t('querySubtitle'))),
-        Badge(t('queryMockBadge')),
-      ),
-      Toolbar(
+      Actionbar(
+        { role: 'group', 'aria-label': t('queryActions'), data: { queryToolbar: true } },
         CustomSelect({
           'aria-label': t('querySavedQueries'),
           placeholder: t('querySavedQueries'),
           value: workspace.id,
           size: '1',
           color: 'gray',
-          style: { width: '220px' },
+          style: { width: 'clamp(130px, 16vw, 180px)', flexShrink: '0' },
           onvaluechange: (id) => choose(saved.find((q) => q.id === id)),
         }, saved.map((q) => CustomSelect.Option({ key: q.id, value: q.id }, q.name))),
-        Name({
-          'aria-label': t('queryName'),
-          placeholder: t('queryName'),
-          maxLength: 80,
-          value: workspace.name,
-          dom: (element) => {
-            nameElement = element
-          },
-          oninput: (event) => {
-            workspace.name = event.target.value
-            notice = ''
-          },
-        }),
-      ),
-      Actionbar(
-        { role: 'group', 'aria-label': t('queryActions') },
+        NameField(
+          Name({
+            'aria-label': t('queryName'),
+            placeholder: t('queryName'),
+            maxLength: 80,
+            value: workspace.name,
+            dom: (element) => {
+              nameElement = element
+            },
+            oninput: (event) => {
+              workspace.name = event.target.value
+              notice = ''
+            },
+          }),
+          dirty() &&
+            Unsaved({ role: 'img', 'aria-label': t('queryUnsaved'), title: t('queryUnsaved') }),
+        ),
         Button(
           {
             size: '1',
@@ -514,12 +518,13 @@ export default s((_attrs, _children, context) => {
             variant: 'solid',
             highContrast: true,
             disabled: busy || !grid || !workspace.sql.trim(),
+            title: '⌘ / Ctrl ↵',
+            'aria-keyshortcuts': 'Meta+Enter Control+Enter',
             onclick: run,
           },
           busy && Busy({ 'aria-hidden': 'true' }),
           t(busy ? 'queryRunning' : 'queryRun'),
         ),
-        Hint('⌘ / Ctrl ↵'),
         action({ onclick: save, disabled: !workspace.sql.trim() || storageFailed }, t('querySave')),
         Dropdown(
           Dropdown.Trigger(
@@ -565,12 +570,11 @@ export default s((_attrs, _children, context) => {
             }, t('queryDelete')),
           ),
         ),
-        dirty() && Hint(t('queryUnsaved')),
         aiDialog(),
       ),
-      Status(
+      (error || notice) && Status(
         { role: error ? 'alert' : 'status', data: { error: !!error } },
-        t(error || notice || 'queryMockExplanation'),
+        t(error || notice),
       ),
       SplitPanel(
         {
@@ -624,6 +628,12 @@ export default s((_attrs, _children, context) => {
           { style: { display: 'flex', flexDirection: 'column', paddingTop: '10px' } },
           ResultHeading(
             s`strong`(t('queryResults')),
+            s`span`({
+              data: { queryDemo: true },
+              title: t('queryMockExplanation'),
+              'aria-label': t('queryMockExplanation'),
+              style: { marginRight: 'auto', fontSize: '10px' },
+            }, t('queryMockData')),
             s`span`(
               busy
                 ? t('queryRunning')
@@ -642,10 +652,6 @@ export default s((_attrs, _children, context) => {
               mountRuntime()
             },
           }),
-          s`p
-        font-size 10
-        flex-shrink 0
-      `(t('queryGroupingHint')),
         ),
       ),
       AlertDialog(

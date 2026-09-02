@@ -77,8 +77,10 @@ focus it and use Up/Down, to resize them. The Query page fits the window; the ed
 and grid scroll internally. Split positions survive route navigation, but reset on reload. Resizing
 does not recreate the editor or grid.
 
-Run and Save live in the query toolbar. **Edit** offers SQL focus, rename, new, delete, and an
-**Example queries** submenu. Loading an example preserves unsaved SQL unless you confirm
+The Query page begins with a single-line toolbar containing saved-query selection, an inline
+editable name, Run, Save, Edit, and Ask AI. There is no page heading or introductory copy; a compact
+Mock data label identifies the prototype results. **Edit** offers SQL focus, rename, new, delete,
+and an **Example queries** submenu. Loading an example preserves unsaved SQL unless you confirm
 replacement.
 
 **Ask AI** demonstrates a future question-to-SQL workflow in a Sinewy Dialog: enter a question or

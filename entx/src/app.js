@@ -574,7 +574,7 @@ const MenuDots = s`span
 `
 
 const Legs = s`div
-  padding 0 46px 10px 162px
+  padding 0 46px 10px 172px
 `
 
 const Leg = s`div

@@ -1,5 +1,6 @@
 import './dropdown.test.js'
 import './context-menu.test.js'
+import './combobox.test.js'
 import './button.test.js'
 import './toggle.test.js'
 import './dialog.test.js'

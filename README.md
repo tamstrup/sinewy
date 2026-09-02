@@ -7,9 +7,10 @@ primitives. It is maintained separately from Sin.js and is not an official
 Sin.js project.
 
 The current preview contains themed native Button, Toggle, Switch, Select,
-Checkbox, Radio, Dialog, and Alert Dialog controls plus headless dropdown and context-menu components with
-optional themed facades. Menus target browsers with the Popover API and named
-CSS Anchor Positioning; there is currently no JavaScript positioning fallback.
+Checkbox, Radio, Dialog, and Alert Dialog controls plus headless combobox,
+dropdown, and context-menu components with optional themed facades. Menus target
+browsers with the Popover API and named CSS Anchor Positioning; there is
+currently no JavaScript positioning fallback.
 
 ## Local setup
 
@@ -70,6 +71,7 @@ npm test
 import {
   AlertDialog,
   Button,
+  Combobox,
   ContextMenu,
   Checkbox,
   Dialog,
@@ -101,6 +103,7 @@ The public contracts and their current platform limits are documented in
 [`docs/components/radio.md`](docs/components/radio.md),
 [`docs/components/dialog.md`](docs/components/dialog.md),
 [`docs/components/alert-dialog.md`](docs/components/alert-dialog.md),
+[`docs/components/combobox.md`](docs/components/combobox.md),
 [`docs/components/dropdown.md`](docs/components/dropdown.md), and
 [`docs/components/context-menu.md`](docs/components/context-menu.md).
 

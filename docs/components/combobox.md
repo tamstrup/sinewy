@@ -5,7 +5,7 @@ description: An accessible searchable single- or multiple-selection control for 
 
 ## Overview
 
-`Combobox` is a headless searchable selection component. Typing narrows its list of options while focus stays in the text input. Single selection displays the chosen option as input text; multiple selection displays chosen values as removable pills inside the control.
+`Combobox` is a searchable selection component with a headless primitive and an optional themed facade. Typing narrows its list of options while focus stays in the text input. Single selection displays the chosen option as input text; multiple selection displays chosen values as removable pills inside the control.
 
 The component owns selection, filtering, active-option state, keyboard behavior, and ARIA relationships. Consumers own labels, option data, and visual styling. Values are strings so selection identity is stable across redraws and can be submitted or persisted without an object-identity contract.
 
@@ -13,6 +13,7 @@ The component owns selection, filtering, active-option state, keyboard behavior,
 
 ```js
 import { Combobox } from 'sinewy'
+import { Combobox as ThemedCombobox } from 'sinewy/theme'
 ```
 
 `sinewy/combobox` also exposes the focused module with default and named exports.
@@ -42,9 +43,32 @@ const AccountPicker = () => Combobox({ multiple: true, bind: accounts },
 
 In single-selection mode, omit `multiple` and `Combobox.Pills`. Use only one state mode: `defaultValue` for uncontrolled state, `value` plus `onvaluechange` for controlled state, or `bind` for Sin-native two-way live state.
 
+## Themed facade
+
+The named `Combobox` export from `sinewy/theme` preserves the headless part structure and behavior while adding a positioned root, field surface, pills, listbox, option states, and inherited theme colors:
+
+```js
+import { Combobox } from 'sinewy/theme'
+
+Combobox({ size: '2', color: 'indigo' },
+  s`label`({ for: 'account' }, 'Account'),
+  Combobox.Control(
+    Combobox.Input({ id: 'account', placeholder: 'Find an account' })
+  ),
+  Combobox.Content(
+    Combobox.Item({ value: 'assets:bank', textValue: 'Assets:Bank' }, 'Assets:Bank'),
+    Combobox.Item({ value: 'expenses:office', textValue: 'Expenses:Office' }, 'Expenses:Office')
+  )
+)
+```
+
+The themed root accepts `size="1|2|3"`, `color`, and `highContrast`, plus normal root `style` and `data` values. It deliberately has one field treatment rather than the action-oriented `solid`, `soft`, `outline`, and `ghost` variants used by Button.
+
+Unlike the headless root, the themed root renders a positioned wrapper. Its listbox is placed immediately below the control and inherits the root's light/dark-aware palette. All themed parts still support normal Sin style extension.
+
 ## Styling
 
-Each visible part is a normal Sin component and accepts call-site style extensions:
+Each headless or themed visible part is a normal Sin component and accepts call-site style extensions:
 
 ```js
 const Control = Combobox.Control`
@@ -142,4 +166,4 @@ The component supplies the ARIA combobox, listbox, and option relationships and 
 
 - The headless component does not position or style its listbox.
 - Values are strings; richer records remain consumer-owned option data.
-- The listbox is rendered in place rather than in a portal or browser top layer.
+- The listbox is rendered in place rather than in a portal or browser top layer. The themed listbox is absolutely positioned inside its root and can be clipped by an ancestor with restrictive overflow.

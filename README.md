@@ -84,6 +84,7 @@ import {
 
 import ThemedDropdown, {
   AlertDialog as ThemedAlertDialog,
+  Combobox as ThemedCombobox,
   ContextMenu as ThemedContextMenu,
   Checkbox as ThemedCheckbox,
   Dialog as ThemedDialog,

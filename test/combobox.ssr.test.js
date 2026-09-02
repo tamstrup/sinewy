@@ -2,6 +2,7 @@ import s from 'sin'
 import t from 'sin/test'
 import ssr from 'sin/ssr'
 import { Combobox } from '../src/index.js'
+import { Combobox as ThemedCombobox } from '../src/theme.js'
 
 t`combobox ssr`(
   t`renders deterministic accessible relationships`(async() => {
@@ -32,6 +33,19 @@ t`combobox ssr`(
 
     t.is(true, html.includes('aria-multiselectable="true"'))
     return [2, occurrences(html, 'data-sinewy-combobox-pill=""')]
+  }),
+
+  t`renders the themed wrapper and inherited part metadata`(async() => {
+    const html = await toHtml(() => ThemedCombobox({ size: '3', color: 'cyan', highContrast: true },
+      ThemedCombobox.Control(ThemedCombobox.Input({ 'aria-label': 'Account' })),
+      ThemedCombobox.Content(
+        ThemedCombobox.Item({ value: 'assets' }, 'Assets')
+      )
+    ))
+
+    t.is(true, html.includes('data-color="cyan"'))
+    t.is(true, html.includes('data-high-contrast=""'))
+    return [true, html.includes('role="combobox"') && html.includes('data-size="3"')]
   })
 )
 

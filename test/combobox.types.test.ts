@@ -1,6 +1,7 @@
 import s from 'sin'
 import { Combobox } from '../src/index.js'
 import FocusedCombobox from '../src/combobox.js'
+import { Combobox as ThemedCombobox } from '../src/theme.js'
 
 const selected = s.live<string | null>(null)
 const selectedMany = s.live<string[]>([])
@@ -51,6 +52,23 @@ FocusedCombobox(
   FocusedCombobox.Content(FocusedCombobox.Item({ value: 'cash' }, 'Cash'))
 )
 
+ThemedCombobox({
+  multiple: true,
+  bind: selectedMany,
+  size: '3',
+  color: 'cyan',
+  highContrast: true,
+  style: { width: '24rem' }
+},
+  ThemedCombobox.Control(
+    ThemedCombobox.Pills({ removelabel: (_, text) => `Remove ${text}` }),
+    ThemedCombobox.Input({ placeholder: 'Accounts' })
+  ),
+  ThemedCombobox.Content(
+    ThemedCombobox.Item({ value: 'assets' }, 'Assets')
+  )
+)
+
 // @ts-expect-error multiple selection requires an array binding
 Combobox({ multiple: true, bind: selected })
 
@@ -62,3 +80,9 @@ Combobox.Item({ value: 42 }, 'Invalid')
 
 // @ts-expect-error component identifiers are PascalCase
 Combobox.input()
+
+// @ts-expect-error combobox fields have one visual treatment rather than button variants
+ThemedCombobox({ variant: 'solid' })
+
+// @ts-expect-error invalid themed size
+ThemedCombobox({ size: '4' })

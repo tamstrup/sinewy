@@ -14,7 +14,8 @@ t`documentation ssr`(
     t.is(true, result.links.has('/components/switch'))
     t.is(true, result.links.has('/components/select'))
     t.is(true, result.links.has('/components/checkbox'))
-    return [true, result.links.has('/components/radio')]
+    t.is(true, result.links.has('/components/radio'))
+    return [true, result.links.has('/components/combobox')]
   }),
 
   t`renders the toggle document and live example`(async() => {
@@ -71,6 +72,14 @@ t`documentation ssr`(
     t.is('Button — Sinewy', result.title)
     t.is(true, result.html.includes('data-source="docs/components/button.md"'))
     return [true, result.html.includes('>Save</button>')]
+  }),
+
+  t`renders the combobox document and both themed examples`(async() => {
+    const result = await render('/components/combobox')
+    t.is('Combobox — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/combobox.md"'))
+    t.is(true, result.html.includes('Single account'))
+    return [true, result.html.includes('Multiple accounts')]
   }),
 
   t`renders dropdown markdown and its generated toc`(async() => {

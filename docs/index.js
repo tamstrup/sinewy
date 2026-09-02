@@ -1,5 +1,5 @@
 import s from 'sin'
-import Dropdown, { AlertDialog, Button, Checkbox, ContextMenu, Dialog, Radio, Select, Switch, Toggle } from '../src/theme.js'
+import Dropdown, { AlertDialog, Button, Checkbox, Combobox, ContextMenu, Dialog, Radio, Select, Switch, Toggle } from '../src/theme.js'
 import documents, { documentsBySlug } from './content.generated.js'
 
 s.title = 'Sinewy — Documentation'
@@ -820,6 +820,36 @@ const ChoiceLabel = s`label
   cursor pointer
 `
 
+const ComboboxDemoGrid = s`div
+  width 100%
+  display grid
+  grid-template-columns repeat(2, minmax(0, 1fr))
+  align-items start
+  gap 26
+
+  @media (max-width: 720px) {
+    grid-template-columns 1fr
+  }
+`
+
+const ComboboxDemoField = s`div
+  min-width 0
+  display grid
+  gap 8
+
+  > label {
+    color #555650
+    font-size 12
+    font-weight 720
+  }
+
+  > p {
+    color #85857f
+    font-size 11
+    line-height 1.45
+  }
+`
+
 const componentDetails = {
   'alert-dialog': {
     status: 'Preview',
@@ -868,6 +898,13 @@ const componentDetails = {
     tags: ['Native checkbox', 'Array binding', 'Fieldset group'],
     summary: 'A native checkbox with boolean state and optional array-valued fieldset grouping.',
     preview: CheckboxPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
+  combobox: {
+    status: 'Preview',
+    tags: ['Searchable', 'Single + multiple', 'Headless + theme'],
+    summary: 'A searchable single- or multiple-value field with accessible option and pill navigation.',
+    preview: ComboboxPreview,
     previewHeadings: [{ id: 'live-example', text: 'Live example' }]
   },
   radio: {
@@ -1169,6 +1206,31 @@ function RadioPreview() {
   )
 }
 
+function ComboboxPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('Type to narrow the account list. The multiple field keeps selections as pills that can be reached with Backspace or arrow keys and removed with Backspace or Delete.'),
+    s`div`(
+      Example(ComboboxExample()),
+      Code(`import s from 'sin'
+import { Combobox } from 'sinewy/theme'
+
+const account = s.live(null)
+
+Combobox({ bind: account, color: 'indigo' },
+  s\`label\`({ for: 'account' }, 'Account'),
+  Combobox.Control(
+    Combobox.Input({ id: 'account', placeholder: 'Find an account' })
+  ),
+  Combobox.Content(
+    Combobox.Item({ value: 'assets:bank', textValue: 'Assets:Bank' }, 'Assets:Bank'),
+    Combobox.Item({ value: 'expenses:office', textValue: 'Expenses:Office' }, 'Expenses:Office')
+  )
+)`)
+    )
+  )
+}
+
 function DropdownPreview() {
   return [
     s`section#live-example`(
@@ -1251,6 +1313,50 @@ const DropdownExample = s(() => {
     )
   )
 })
+
+const ComboboxExample = s(() => {
+  const account = s.live('assets:bank')
+  const accounts = s.live(['assets:bank', 'expenses:office'])
+
+  return () => ComboboxDemoGrid(
+    ComboboxDemoField(
+      s`label`({ for: 'single-account' }, 'Single account'),
+      Combobox({ id: 'single-account-picker', bind: account, color: 'indigo' },
+        Combobox.Control(
+          Combobox.Input({ id: 'single-account', placeholder: 'Find an account' })
+        ),
+        Combobox.Content(accountItems())
+      ),
+      s`p`('The selected account is displayed as editable text.')
+    ),
+    ComboboxDemoField(
+      s`label`({ for: 'multiple-accounts' }, 'Multiple accounts'),
+      Combobox({
+        id: 'multiple-accounts-picker',
+        multiple: true,
+        bind: accounts,
+        color: 'cyan'
+      },
+      Combobox.Control(
+        Combobox.Pills(),
+        Combobox.Input({ id: 'multiple-accounts', placeholder: 'Add an account' })
+      ),
+      Combobox.Content(accountItems())
+      ),
+      s`p`('Backspace at the start of the input selects the last pill.')
+    )
+  )
+})
+
+function accountItems() {
+  return [
+    ['assets:bank', 'Assets:Bank'],
+    ['assets:vat', 'Assets:VAT receivable'],
+    ['expenses:office', 'Expenses:Office'],
+    ['expenses:software', 'Expenses:Software'],
+    ['income:consulting', 'Income:Consulting']
+  ].map(([value, label]) => Combobox.Item({ value, textValue: label }, label))
+}
 
 function ThemePreview({ label, size = '2', variant = 'solid', color, highContrast = false, dark = false }) {
   return ThemeOption({ data: { dark: dark || null } },

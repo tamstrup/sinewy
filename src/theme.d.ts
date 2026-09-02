@@ -8,6 +8,14 @@ import type { Select as SelectComponent } from './select.js'
 import type { Checkbox as CheckboxComponent } from './checkbox.js'
 import type { Radio as RadioComponent } from './radio.js'
 import type {
+  ComboboxContentAttrs,
+  ComboboxControlAttrs,
+  ComboboxInputAttrs,
+  ComboboxItemAttrs,
+  ComboboxPillsAttrs,
+  ComboboxRootAttrs
+} from './combobox.js'
+import type {
   ControlThemeOptions,
   ControlVariant,
   ThemeColor,
@@ -62,6 +70,26 @@ export type { SwitchAttrs } from './switch.js'
 export type { SelectAttrs } from './select.js'
 export type { CheckboxAttrs, CheckboxGroupAttrs } from './checkbox.js'
 export type { RadioAttrs, RadioGroupAttrs } from './radio.js'
+
+export interface ComboboxThemeOptions extends ThemeOptions {
+  variant?: never
+}
+
+export type ComboboxThemeRootAttrs<Multiple extends boolean = false> =
+  ComboboxRootAttrs<Multiple> & ComboboxThemeOptions
+
+export type ComboboxTheme = {
+  <Multiple extends boolean = false>(
+    attrs: ComboboxThemeRootAttrs<Multiple> & Record<string, unknown>,
+    ...children: s.Children[]
+  ): ReturnType<s.Component<HTMLDivElement, ComboboxThemeRootAttrs<Multiple>, s.Children[]>>
+  (...children: s.Children[]): ReturnType<s.Component<HTMLDivElement, ComboboxThemeRootAttrs, s.Children[]>>
+  Control: s.Component<HTMLDivElement, ComboboxControlAttrs, s.Children[]>
+  Pills: s.Component<HTMLSpanElement, ComboboxPillsAttrs, []>
+  Input: s.Component<HTMLInputElement, ComboboxInputAttrs, []>
+  Content: s.Component<HTMLDivElement, ComboboxContentAttrs, s.Children[]>
+  Item: s.Component<HTMLDivElement, ComboboxItemAttrs, s.Children[]>
+}
 
 export type DropdownThemeSize = ThemeSize
 export type DropdownThemeColor = ThemeColor
@@ -141,6 +169,7 @@ declare const Switch: SwitchComponent
 declare const Select: SelectComponent
 declare const Checkbox: CheckboxComponent
 declare const Radio: RadioComponent
+declare const Combobox: ComboboxTheme
 
-export { AlertDialog, Button, Checkbox, ContextMenu, Dialog, Dropdown, Radio, Select, Switch, Toggle }
+export { AlertDialog, Button, Checkbox, Combobox, ContextMenu, Dialog, Dropdown, Radio, Select, Switch, Toggle }
 export default Dropdown

@@ -16,7 +16,16 @@ t`documentation ssr`(
     t.is(true, result.links.has('/components/custom-select'))
     t.is(true, result.links.has('/components/checkbox'))
     t.is(true, result.links.has('/components/radio'))
+    t.is(true, result.links.has('/components/split-panel'))
     return [true, result.links.has('/components/combobox')]
+  }),
+
+  t`renders the split panel document and nested live example`(async() => {
+    const result = await render('/components/split-panel')
+    t.is('Split Panel — Sinewy', result.title)
+    t.is(true, result.html.includes('data-source="docs/components/split-panel.md"'))
+    t.is(true, result.html.includes('aria-orientation="horizontal"'))
+    return [true, result.html.includes('aria-orientation="vertical"')]
   }),
 
   t`renders the toggle document and live example`(async() => {

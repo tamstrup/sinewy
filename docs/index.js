@@ -1,4 +1,5 @@
 import s from 'sin'
+import { SplitPanel } from '../src/theme.js'
 import Dropdown, { AlertDialog, Button, Checkbox, Combobox, ContextMenu, CustomSelect, Dialog, NativeSelect, Radio, Select, Switch, Toggle } from '../src/theme.js'
 import documents, { documentsBySlug } from './content.generated.js'
 
@@ -851,6 +852,13 @@ const ComboboxDemoField = s`div
 `
 
 const componentDetails = {
+  'split-panel': {
+    status: 'Preview',
+    tags: ['Resizable layout', 'Pointer + keyboard', 'Headless + theme'],
+    summary: 'Two panes with constrained sizing, snapping, keyboard access, and optional fixed-size primary panes.',
+    preview: SplitPanelPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
   'alert-dialog': {
     status: 'Preview',
     tags: ['Native dialog', 'Alert semantics', 'Dialog specialization'],
@@ -1166,6 +1174,25 @@ function SelectPreview() {
     s`div`(
       Example(SelectExample()),
       Code(`import s from 'sin'\nimport { Select } from 'sinewy'\n\nconst produce = s.live('pear')\n\nSelect({ bind: produce, name: 'produce' },\n  Select.Group({ label: 'Fruit' },\n    Select.Option({ value: 'apple' }, 'Apple'),\n    Select.Option({ value: 'pear' }, 'Pear')\n  )\n)`)
+    )
+  )
+}
+
+function SplitPanelPreview() {
+  const content = text => s`div padding 20`(text)
+  return s`section`(
+    s`h2#live-example`('Live example'),
+    s`p`('Drag either divider, or focus it and use arrow keys. Enter minimizes and restores the pane.'),
+    SplitPanel({ primary: 'start', defaultPositionInPixels: 200, color: 'indigo', style: { height: '320px', width: '100%', '--min': '100px', '--max': 'calc(100% - 200px)', '--divider-width': '2px' } },
+      SplitPanel.Start({ style: { overflow: 'auto' } }, content('Navigation — fixed pixel width')),
+      SplitPanel.Divider({ 'aria-label': 'Navigation' }),
+      SplitPanel.End(
+        SplitPanel({ orientation: 'vertical', snap: '50%', style: { height: '100%', '--min': '60px', '--max': 'calc(100% - 60px)' } },
+          SplitPanel.Start(content('Editor — proportional height')),
+          SplitPanel.Divider({ 'aria-label': 'Editor' }),
+          SplitPanel.End(content('Results'))
+        )
+      )
     )
   )
 }

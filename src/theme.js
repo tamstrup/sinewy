@@ -1,4 +1,5 @@
 import s from 'sin'
+export { default as SplitPanel } from './split-panel-theme.js'
 import Headless from './dropdown.js'
 import HeadlessContextMenu from './context-menu.js'
 import Button from './button.js'

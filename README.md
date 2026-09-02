@@ -9,7 +9,7 @@ Sin.js project.
 The current preview includes a consistently themed, non-searchable CustomSelect,
 as well as themed native Button, Toggle, Switch, Select (also NativeSelect),
 Checkbox, Radio, Dialog, and Alert Dialog controls plus headless combobox,
-dropdown, and context-menu components with optional themed facades. Menus target
+dropdown, context-menu, and resizable SplitPanel components with optional themed facades. Menus target
 browsers with the Popover API and named CSS Anchor Positioning; there is
 currently no JavaScript positioning fallback.
 

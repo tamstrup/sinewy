@@ -1,4 +1,5 @@
 import s from 'sin'
+export { default as SplitPanel } from './split-panel-theme.js'
 export { default as NativeSelect } from './native-select.js'
 export { default as CustomSelect } from './custom-select.js'
 export type { CustomSelectAttrs, CustomSelectOptionAttrs, CustomSelectGroupAttrs } from './custom-select.js'

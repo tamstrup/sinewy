@@ -44,6 +44,7 @@ s.css`
   }
 
   * { box-sizing border-box }
+  #sintools { display none }
 
   body {
     min-width 960

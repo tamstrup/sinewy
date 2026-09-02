@@ -7,6 +7,43 @@ t.timeout = 5000
 
 t`transaction workspace`(
   ...['drafts', 'ledger'].flatMap((tab) =>
+    ['en', 'da'].map((language) =>
+      t`toolbar buttons retain comfortable spacing in ${tab} with ${language} labels`(() =>
+        fixture(
+          async (host) => {
+            const create = button(
+              host,
+              language === 'en' ? 'New transaction' : 'Ny transaktion',
+              true,
+            )
+            const filter = button(host, language === 'en' ? 'Filter' : 'Filtrér', true)
+            for (const control of [create, filter]) {
+              const style = getComputedStyle(control)
+              t.is(32, control.getBoundingClientRect().height)
+              t.is('10px', style.paddingLeft)
+              t.is('10px', style.paddingRight)
+              const hint = control.querySelector('kbd').getBoundingClientRect()
+              t.is(true, hint.top - control.getBoundingClientRect().top >= 6)
+              t.is('button', control.type)
+              t.is('gray', control.dataset.color)
+            }
+            filter.click()
+            await settle()
+            t.is(true, !!host.querySelector('[data-filter-text]'))
+            t.is(32, filter.getBoundingClientRect().height)
+            return [
+              28,
+              host.querySelector('[aria-controls="accounts-sidebar"]').getBoundingClientRect()
+                .height,
+            ]
+          },
+          { language, locale: language === 'en' ? 'en-GB' : 'da-DK', commodity: 'DKK' },
+          `/transactions/${tab}`,
+        )
+      )
+    )
+  ),
+  ...['drafts', 'ledger'].flatMap((tab) =>
     ['mouse', 'keyboard'].map((method) =>
       t`new transaction focuses its description from ${tab} via ${method}`(() =>
         fixture(async (host) => {

@@ -385,8 +385,7 @@ const Toolbar = s`div
   gap 7
 `
 
-const Button = ButtonBase`
-  min-height 32
+const ButtonSurface = ButtonBase`
   display inline-flex
   align-items center
   justify-content center
@@ -407,6 +406,11 @@ const Button = ButtonBase`
   &[data-primary='true']:hover { background #303035 }
   &:disabled { opacity 0.44; cursor default }
 `
+
+// Override the compact adapter's inline minimum, not just its lower-priority CSS.
+const Button = s((attrs, children) =>
+  ButtonSurface({ ...attrs, style: { minHeight: '32px', ...attrs.style } }, children)
+)
 
 const Key = s`kbd
   min-width 17

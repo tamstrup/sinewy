@@ -22,6 +22,8 @@ will be decided later.
   Both scroll the selection into view. The two-key sequences use a 1.2-second window; holding `g`
   does not count as pressing it twice. Shortcuts do not run while typing in an editor or dialog.
 - `Enter` collapses or expands the selected transaction.
+- `h` collapses the selected transaction; `l` expands it. Repeated presses keep the requested state;
+  `g l` still opens the Ledger.
 
 ## Transaction workflow
 
@@ -39,6 +41,14 @@ editable, linked opposing draft while preserving the original transaction.
 Live Balance uses the same filtered transaction set in both tabs, independent of their lifecycle.
 “Include drafts” is off by default. When enabled, combined amounts affected by drafts are purple;
 there is no separate pending amount. Transactions remain expanded by default.
+
+The top-left panel button hides or shows the accounts sidebar on every page. Its visibility is
+remembered locally; hiding it preserves balances, tree expansion, draft inclusion, and filter state.
+The main area uses the freed space without resetting transaction edits.
+
+The sticky top bar, document background, and `theme-color` metadata share `#fcfcfd`. The opaque
+header supports Safari's sticky-header color sampling; metadata also supports browsers that use an
+explicit theme color. The application canvas retains its slightly darker background.
 
 Only user preferences and the tab preference are persisted. Transaction edits and posting still
 reset on reload; this is not yet a durable accounting backend. The static build generates both tab

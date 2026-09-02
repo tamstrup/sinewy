@@ -60,7 +60,7 @@ export function parseAmount(raw, locale) {
 }
 
 export const PREFERENCES_KEY = 'entx.preferences.v1'
-export const defaults = { language: 'da', locale: 'da-DK', commodity: 'DKK' }
+export const defaults = { language: 'da', locale: 'da-DK', commodity: 'DKK', sidebarVisible: true }
 
 export function normalizePreferences(value) {
   return {
@@ -69,6 +69,9 @@ export function normalizePreferences(value) {
     commodity: ['DKK', 'EUR', 'USD', 'GBP'].includes(value?.commodity)
       ? value.commodity
       : defaults.commodity,
+    sidebarVisible: typeof value?.sidebarVisible === 'boolean'
+      ? value.sidebarVisible
+      : defaults.sidebarVisible,
   }
 }
 

@@ -110,5 +110,8 @@ Deno.test('preference loading validates untrusted, missing or unavailable storag
     language: 'en',
     locale: 'da-DK',
     commodity: 'EUR',
+    sidebarVisible: true,
   })
+  equal(normalizePreferences({ sidebarVisible: false }), { ...defaults, sidebarVisible: false })
+  equal(normalizePreferences({ sidebarVisible: 'false' }), defaults)
 })

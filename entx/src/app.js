@@ -15,6 +15,14 @@ import {
   transactionTotals,
 } from './model.js'
 
+export const TOPBAR_COLOR = '#fcfcfd'
+
+const SIDEBAR_ICON = `data:image/svg+xml,${
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none"><rect x="2.75" y="3.75" width="14.5" height="12.5" rx="2" stroke="#66666c" stroke-width="1.5"/><path d="M7.25 4v12" stroke="#66666c" stroke-width="1.5"/></svg>',
+  )
+}`
+
 const CHEVRON_ICON = `data:image/svg+xml,${
   encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"><path d="m6 4 4 4-4 4" stroke="#77777e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -27,7 +35,7 @@ s.css`
   :root {
     color-scheme light
     font-family Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
-    background #f7f7f8
+    background ${TOPBAR_COLOR}
     color #1d1d20
     font-synthesis none
     text-rendering optimizeLegibility
@@ -39,7 +47,7 @@ s.css`
     min-width 960
     min-height 100svh
     margin 0
-    background #f7f7f8
+    background ${TOPBAR_COLOR}
   }
 
   button, input, select { font inherit }
@@ -51,6 +59,7 @@ const Shell = s`div
   min-height 100svh
   display grid
   grid-template-rows 52px minmax(0, 1fr)
+  background #f7f7f8
 `
 
 const Topbar = s`header
@@ -61,8 +70,33 @@ const Topbar = s`header
   grid-template-columns 264px minmax(0, 1fr) auto
   align-items center
   border-bottom 1px solid #e6e6e8
-  background rgb(252 252 253 / 0.92)
-  backdrop-filter blur(14px)
+  background ${TOPBAR_COLOR}
+
+  &[data-sidebar-visible='false'] { grid-template-columns auto minmax(0, 1fr) auto }
+`
+
+const TopbarStart = s`div
+  height 100%
+  display flex
+  align-items center
+  gap 10
+  padding 0 18
+`
+
+const SidebarToggle = s`button
+  width 28
+  height 28
+  display inline-grid
+  place-items center
+  padding 0
+  border 0
+  border-radius 5
+  background transparent
+  cursor pointer
+
+  img { width 20; height 20 }
+  &:hover { background #ededf0 }
+  &:focus-visible { outline 2px solid #968eeb; outline-offset 2 }
 `
 
 const Brand = s`button
@@ -70,7 +104,7 @@ const Brand = s`button
   display flex
   align-items center
   gap 10
-  padding 0 18
+  padding 0
   border 0
   background transparent
   cursor pointer
@@ -141,6 +175,8 @@ const Workspace = s`div
   min-height 0
   display grid
   grid-template-columns 264px minmax(0, 1fr)
+
+  &[data-sidebar-visible='false'] { grid-template-columns minmax(0, 1fr) }
 `
 
 const Sidebar = s`aside
@@ -151,6 +187,8 @@ const Sidebar = s`aside
   flex-direction column
   border-right 1px solid #e6e6e8
   background #fafafa
+
+  &[hidden] { display none }
 `
 
 const SidebarHeader = s`header
@@ -1083,6 +1121,10 @@ const App = s((_attrs, _children, context) => {
     } else if (event.key === 'k' || event.key === 'ArrowUp') {
       event.preventDefault()
       moveSelection(-1)
+    } else if ((event.key === 'h' || event.key === 'l') && selectedId) {
+      event.preventDefault()
+      event.key === 'h' ? collapsed.add(selectedId) : collapsed.delete(selectedId)
+      selectTransaction(selectedId)
     } else if (event.key === 'Enter' && selectedId) {
       event.preventDefault()
       collapsed.has(selectedId) ? collapsed.delete(selectedId) : collapsed.add(selectedId)
@@ -1092,10 +1134,21 @@ const App = s((_attrs, _children, context) => {
 
   const topbar = () =>
     Topbar(
-      Brand(
-        { onclick: () => navigateTab(lastTab), 'aria-label': t('goTransactions') },
-        Mark('E'),
-        Wordmark('ENTX'),
+      { data: { sidebarVisible: i18n.preferences().sidebarVisible } },
+      TopbarStart(
+        SidebarToggle({
+          type: 'button',
+          'aria-label': t(i18n.preferences().sidebarVisible ? 'hideSidebar' : 'showSidebar'),
+          title: t(i18n.preferences().sidebarVisible ? 'hideSidebar' : 'showSidebar'),
+          'aria-expanded': String(i18n.preferences().sidebarVisible),
+          'aria-controls': 'accounts-sidebar',
+          onclick: () => i18n.update({ sidebarVisible: !i18n.preferences().sidebarVisible }),
+        }, s`img`({ src: SIDEBAR_ICON, alt: '', 'aria-hidden': 'true' })),
+        Brand(
+          { onclick: () => navigateTab(lastTab), 'aria-label': t('goTransactions') },
+          Mark('E'),
+          Wordmark('ENTX'),
+        ),
       ),
       Nav(
         { 'aria-label': t('mainNavigation') },
@@ -1124,6 +1177,11 @@ const App = s((_attrs, _children, context) => {
     const balances = accountBalances(includeDrafts ? [...committed, ...drafts] : committed, tree)
 
     return Sidebar(
+      {
+        id: 'accounts-sidebar',
+        hidden: !i18n.preferences().sidebarVisible,
+        'aria-label': t('liveBalance'),
+      },
       SidebarHeader(
         SidebarTitleRow(
           SidebarTitle(t('liveBalance')),
@@ -1691,6 +1749,8 @@ const App = s((_attrs, _children, context) => {
         s`span`(Key('g d'), t('drafts')),
         s`span`(Key('g l'), t('ledger')),
         s`span`(Key('J'), Key('K'), t('navigate')),
+        s`span`(Key('h'), t('collapse')),
+        s`span`(Key('l'), t('expand')),
         s`span`(Key('g g'), t('firstTransaction')),
         s`span`(Key('⇧ G'), t('lastTransaction')),
         s`span`(Key('↵'), t('collapseExpand')),
@@ -1795,6 +1855,7 @@ const App = s((_attrs, _children, context) => {
       },
       topbar(),
       Workspace(
+        { data: { sidebarVisible: i18n.preferences().sidebarVisible } },
         sidebar(filterTransactions(transactions, filters)),
         Main(route({
           '/': () => transactionsView(visible()),

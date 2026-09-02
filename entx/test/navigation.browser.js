@@ -370,6 +370,182 @@ t`Vim boundary shortcuts`(
   ),
 )
 
+t`sidebar and browser appearance`(
+  t`the opaque sticky topbar matches the document background`(() =>
+    fixture((host) => {
+      const topbar = host.firstElementChild.querySelector(':scope > header')
+      t.is('sticky', getComputedStyle(topbar).position)
+      t.is('rgb(252, 252, 253)', getComputedStyle(topbar).backgroundColor)
+      t.is(
+        getComputedStyle(topbar).backgroundColor,
+        getComputedStyle(document.documentElement).backgroundColor,
+      )
+      return [
+        getComputedStyle(topbar).backgroundColor,
+        getComputedStyle(document.body).backgroundColor,
+      ]
+    })
+  ),
+  t`hiding the sidebar frees space without resetting draft edits or sidebar state`(() =>
+    fixture(async (host) => {
+      const sidebar = host.querySelector('aside')
+      const main = host.querySelector('main')
+      const width = main.getBoundingClientRect().width
+      const description = host.querySelector('[data-description]')
+      input(description, 'Keep this draft')
+      input(host.querySelector('[data-amount]'), '123.')
+      host.querySelector('[role="switch"]').click()
+      host.querySelector('button[aria-label="Collapse Assets"]').click()
+      await settle()
+      const balances = sidebar.textContent
+      const toggle = host.querySelector('button[aria-controls="accounts-sidebar"]')
+      t.is('true', toggle.getAttribute('aria-expanded'))
+      t.is('Hide accounts sidebar', toggle.getAttribute('aria-label'))
+      t.is(true, toggle.querySelector('img').src.startsWith('data:image/svg+xml,'))
+      toggle.focus({ preventScroll: true })
+      toggle.click()
+      await settle()
+      t.is(toggle, document.activeElement)
+      t.is('false', toggle.getAttribute('aria-expanded'))
+      t.is('Show accounts sidebar', toggle.getAttribute('aria-label'))
+      t.is('none', getComputedStyle(sidebar).display)
+      t.is(true, main.getBoundingClientRect().width >= width + 263)
+      t.is(main, host.querySelector('main'))
+      t.is(description, host.querySelector('[data-description]'))
+      t.is('Keep this draft', description.value)
+      t.is('123.', host.querySelector('[data-amount]').value)
+      t.is(false, JSON.parse(localStorage.getItem(PREFERENCES_KEY)).sidebarVisible)
+      toggle.click()
+      await settle()
+      t.is('flex', getComputedStyle(sidebar).display)
+      t.is(width, main.getBoundingClientRect().width)
+      t.is(balances, sidebar.textContent)
+      t.is(true, host.querySelector('[role="switch"]').checked)
+      t.is(
+        'false',
+        host.querySelector('button[aria-label="Expand Assets"]').getAttribute('aria-expanded'),
+      )
+      return [true, JSON.parse(localStorage.getItem(PREFERENCES_KEY)).sidebarVisible]
+    })
+  ),
+  t`sidebar visibility is shared across all pages and its control translates`(() =>
+    fixture(async (host) => {
+      const toggle = () => host.querySelector('button[aria-controls="accounts-sidebar"]')
+      toggle().click()
+      await settle()
+      for (const path of ['/accounts', '/files', '/settings']) {
+        host.querySelector(`a[href="${path}"]`).click()
+        await settle()
+        if (path === '/settings') {
+          await until(() => host.querySelector('[data-preference="language"]'))
+        }
+        t.is('none', getComputedStyle(host.querySelector('aside')).display)
+        t.is('false', toggle().getAttribute('aria-expanded'))
+      }
+      change(host.querySelector('[data-preference="language"]'), 'da')
+      await settle()
+      t.is('Vis kontosidepanel', toggle().getAttribute('aria-label'))
+      toggle().click()
+      await settle()
+      t.is('Skjul kontosidepanel', toggle().getAttribute('aria-label'))
+      return ['flex', getComputedStyle(host.querySelector('aside')).display]
+    })
+  ),
+  t`saved sidebar visibility restores on a direct Settings visit`(() =>
+    fixture(
+      async (host) => {
+        await until(() => host.querySelector('[data-preference="language"]'))
+        t.is('none', getComputedStyle(host.querySelector('aside')).display)
+        return [
+          'false',
+          host.querySelector('button[aria-controls="accounts-sidebar"]').getAttribute(
+            'aria-expanded',
+          ),
+        ]
+      },
+      { language: 'en', locale: 'en-GB', commodity: 'DKK', sidebarVisible: false },
+      '/settings',
+    )
+  ),
+)
+
+t`Vim expand and collapse`(
+  ...['drafts', 'ledger'].map((tab) =>
+    t`h collapses and l expands the selected ${tab} transaction idempotently`(() =>
+      fixture(async (host) => {
+        if (tab === 'ledger') {
+          host.querySelector('#tab-ledger').click()
+          await settle()
+        }
+        const panel = host.querySelector('[role="tabpanel"]')
+        const rows = [...host.querySelectorAll('article')]
+        const toggle = () => rows[0].querySelector('button[aria-expanded]')
+        panel.focus({ preventScroll: true })
+        key(panel, 'h')
+        await settle()
+        t.is('false', toggle().getAttribute('aria-expanded'))
+        key(panel, 'h', { repeat: true })
+        await settle()
+        t.is('false', toggle().getAttribute('aria-expanded'))
+        if (rows[1]) {
+          t.is('true', rows[1].querySelector('button[aria-expanded]').getAttribute('aria-expanded'))
+        }
+        key(panel, 'l')
+        await settle()
+        t.is('true', toggle().getAttribute('aria-expanded'))
+        key(panel, 'l', { repeat: true })
+        await settle()
+        t.is('true', toggle().getAttribute('aria-expanded'))
+        return [panel, document.activeElement]
+      })
+    )
+  ),
+  t`h and l ignore editors, menus, and posting review`(() =>
+    fixture(async (host) => {
+      const row = host.querySelector('article')
+      const toggle = () => row.querySelector('button[aria-expanded]')
+      const description = row.querySelector('[data-description]')
+      description.focus()
+      key(description, 'h')
+      key(description, 'l')
+      await settle()
+      t.is('true', toggle().getAttribute('aria-expanded'))
+      row.querySelector('button[aria-label="Actions for Train to client workshop"]').click()
+      await settle()
+      key(host.querySelector('[role="menu"]'), 'h')
+      key(host.querySelector('[role="menu"]'), 'l')
+      await settle()
+      t.is('true', toggle().getAttribute('aria-expanded'))
+      key(host.querySelector('[role="menu"]'), 'Escape')
+      await settle()
+      input(row.querySelectorAll('[data-amount]')[1], '384')
+      await settle()
+      button(row, 'Post').click()
+      await settle()
+      key(host.querySelector('dialog'), 'h')
+      key(host.querySelector('dialog'), 'l')
+      await settle()
+      return ['true', toggle().getAttribute('aria-expanded')]
+    })
+  ),
+  t`g l still changes workspace instead of expanding a collapsed draft`(() =>
+    fixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      key(panel, 'h')
+      key(panel, 'g')
+      key(panel, 'l')
+      await settle()
+      t.is('/transactions/ledger', location.pathname)
+      host.querySelector('#tab-drafts').click()
+      await settle()
+      return [
+        'false',
+        host.querySelector('article button[aria-expanded]').getAttribute('aria-expanded'),
+      ]
+    })
+  ),
+)
+
 function scrollingFixture(run) {
   return fixture(async (host) => {
     // An isolated viewport keeps scrolling deterministic without disturbing the runner's app.

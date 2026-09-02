@@ -9,7 +9,7 @@ will be decided later.
 
 ## Prototype shortcuts
 
-- `G D` opens Drafts; `G L` opens Ledger.
+- `g d` opens Drafts; `g l` opens Ledger.
 - Left/Right (or Home/End) on the tablist switches tabs and moves focus.
 - `N` creates a draft and opens it in Drafts, clearing filters so it is visible.
 - Cmd/Ctrl+Enter reviews the checked drafts in the current view before posting.
@@ -18,6 +18,9 @@ will be decided later.
 - `J`/`K` or arrow keys move the selected transaction and scroll it into view with minimal movement,
   keeping clear of the sticky top bar. Oversized transactions reveal their header. Scrolling waits
   for Sin's redraw promise; rapid key repeats use only the latest selection, without moving focus.
+- `g g` selects the first transaction in the current filtered view; `G` (Shift+G) selects the last.
+  Both scroll the selection into view. The two-key sequences use a 1.2-second window; holding `g`
+  does not count as pressing it twice. Shortcuts do not run while typing in an editor or dialog.
 - `Enter` collapses or expands the selected transaction.
 
 ## Transaction workflow

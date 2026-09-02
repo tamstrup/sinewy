@@ -229,6 +229,147 @@ t`selection scrolling`(
   ),
 )
 
+t`Vim boundary shortcuts`(
+  t`Shift+G and gg select and reveal the last and first transactions without moving focus`(() =>
+    scrollingFixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      const rows = [...host.querySelectorAll('article')]
+      panel.focus({ preventScroll: true })
+      key(panel, 'G', { shiftKey: true })
+      await settle()
+      t.is('true', rows.at(-1).dataset.selected)
+      assertVisible(host, rows.at(-1))
+      t.is(panel, document.activeElement)
+      key(panel, 'g')
+      await settle()
+      t.is('true', rows.at(-1).dataset.selected)
+      key(panel, 'g')
+      await settle()
+      t.is('true', rows[0].dataset.selected)
+      assertVisible(host, rows[0])
+      return [panel, document.activeElement]
+    })
+  ),
+  t`boundary shortcuts work in Drafts and ignore editor input`(() =>
+    fixture(async (host) => {
+      button(host, 'New transaction', true).click()
+      await settle()
+      const rows = [...host.querySelectorAll('article')]
+      const panel = host.querySelector('[role="tabpanel"]')
+      panel.focus({ preventScroll: true })
+      key(panel, 'G', { shiftKey: true })
+      await settle()
+      t.is('true', rows.at(-1).dataset.selected)
+      const description = rows.at(-1).querySelector('[data-description]')
+      description.focus()
+      key(description, 'g')
+      key(description, 'g')
+      await settle()
+      t.is('true', rows.at(-1).dataset.selected)
+      t.is(description, document.activeElement)
+      panel.focus({ preventScroll: true })
+      key(panel, 'g')
+      key(panel, 'g')
+      await settle()
+      t.is('true', rows[0].dataset.selected)
+      const firstDescription = rows[0].querySelector('[data-description]')
+      firstDescription.focus()
+      key(firstDescription, 'G', { shiftKey: true })
+      await settle()
+      return ['true', rows[0].dataset.selected]
+    })
+  ),
+  t`boundary shortcuts respect filters and safely ignore an empty view`(() =>
+    scrollingFixture(async (host) => {
+      button(host, 'Filter', true).click()
+      await settle()
+      input(host.querySelector('[data-filter-text]'), 'invoice')
+      await settle()
+      const rows = [...host.querySelectorAll('article')]
+      t.is(2, rows.length)
+      const panel = host.querySelector('[role="tabpanel"]')
+      key(panel, 'G', { shiftKey: true })
+      await settle()
+      t.is('true', rows[1].dataset.selected)
+      key(panel, 'g')
+      key(panel, 'g')
+      await settle()
+      t.is('true', rows[0].dataset.selected)
+      input(host.querySelector('[data-filter-text]'), 'no matching transactions')
+      await settle()
+      key(panel, 'G', { shiftKey: true })
+      key(panel, 'g')
+      key(panel, 'g')
+      await settle()
+      return [0, host.querySelectorAll('article').length]
+    })
+  ),
+  t`g d and g l still navigate between workspaces`(() =>
+    fixture(async (host) => {
+      key(host.querySelector('[role="tabpanel"]'), 'g')
+      key(host.querySelector('[role="tabpanel"]'), 'l')
+      await settle()
+      t.is('/transactions/ledger', location.pathname)
+      key(host.querySelector('[role="tabpanel"]'), 'g')
+      key(host.querySelector('[role="tabpanel"]'), 'g')
+      key(host.querySelector('[role="tabpanel"]'), 'g')
+      key(host.querySelector('[role="tabpanel"]'), 'd')
+      await settle()
+      return ['/transactions/drafts', location.pathname]
+    })
+  ),
+  t`held, expired, or interrupted g sequences do not jump to the first transaction`(() =>
+    scrollingFixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      const last = host.querySelector('article:last-child')
+      key(panel, 'G', { shiftKey: true })
+      await settle()
+      key(panel, 'g')
+      key(panel, 'g', { repeat: true })
+      await settle()
+      t.is('true', last.dataset.selected)
+      key(panel, 'Escape')
+      key(panel, 'g')
+      await settle()
+      t.is('true', last.dataset.selected)
+      key(panel, 'Escape')
+      const now = Date.now
+      try {
+        let clock = now()
+        Date.now = () => clock
+        key(panel, 'g')
+        clock += 1201
+        key(panel, 'g')
+      } finally {
+        Date.now = now
+      }
+      await settle()
+      t.is('true', last.dataset.selected)
+      key(panel, 'Escape')
+      key(panel, 'g')
+      key(panel, 'x')
+      key(panel, 'g')
+      await settle()
+      return ['true', last.dataset.selected]
+    })
+  ),
+  t`modified keys and focused controls retain their native behavior`(() =>
+    scrollingFixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      const first = host.querySelector('article')
+      key(panel, 'G', { shiftKey: true, ctrlKey: true })
+      key(panel, 'G', { shiftKey: true, metaKey: true })
+      key(panel, 'G', { shiftKey: true, altKey: true })
+      const filter = button(host, 'Filter', true)
+      filter.focus({ preventScroll: true })
+      key(filter, 'G', { shiftKey: true })
+      await settle()
+      t.is('true', first.dataset.selected)
+      return [filter, document.activeElement]
+    })
+  ),
+)
+
 function scrollingFixture(run) {
   return fixture(async (host) => {
     // An isolated viewport keeps scrolling deterministic without disturbing the runner's app.

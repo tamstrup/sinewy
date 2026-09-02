@@ -977,13 +977,9 @@ const App = s((_attrs, _children, context) => {
     }
   }
 
-  const moveSelection = (direction) => {
-    const rows = visible()
-    if (!rows.length) return
-    const current = rows.findIndex(({ id }) => id === selectedId)
-    const next = current < 0 ? 0 : Math.min(rows.length - 1, Math.max(0, current + direction))
-    selectedId = rows[next].id
-    const id = selectedId
+  const selectTransaction = (id) => {
+    if (!id) return
+    selectedId = id
     const tab = activeTab()
     const request = ++selectionScrollRequest
     // Sin resolves this shared promise after the batched DOM update, including dom hooks.
@@ -1004,10 +1000,21 @@ const App = s((_attrs, _children, context) => {
     })
   }
 
+  const moveSelection = (direction) => {
+    const rows = visible()
+    if (!rows.length) return
+    const current = rows.findIndex(({ id }) => id === selectedId)
+    const next = current < 0 ? 0 : Math.min(rows.length - 1, Math.max(0, current + direction))
+    selectTransaction(rows[next].id)
+  }
+
   const onkeydown = (event) => {
     if (
       reviewIds.length || event.defaultPrevented || event.target.closest('dialog, [role="menu"]')
-    ) return
+    ) {
+      goPressedAt = 0
+      return
+    }
     const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) ||
       event.target.isContentEditable
 
@@ -1022,32 +1029,45 @@ const App = s((_attrs, _children, context) => {
     }
 
     if (event.key === 'Escape' && filtersOpen) {
+      goPressedAt = 0
       filtersOpen = false
       s.redraw()
       return
     }
-    if (typing || event.metaKey || event.ctrlKey || event.altKey) return
-
-    if (event.key === 'g') {
-      goPressedAt = Date.now()
+    if (typing || event.metaKey || event.ctrlKey || event.altKey) {
+      goPressedAt = 0
       return
     }
-    if (goPressedAt && Date.now() - goPressedAt < 1200 && ['d', 'l'].includes(event.key)) {
+
+    const canNavigate = activeArea() === 'transactions' &&
+      !event.target.closest('button, a, [role="tablist"]')
+    const goPending = goPressedAt && Date.now() - goPressedAt < 1200
+
+    if (event.key === 'g') {
       event.preventDefault()
-      goPressedAt = 0
-      navigateTab(event.key === 'd' ? 'drafts' : 'ledger')
+      if (event.repeat) return
+      if (goPending) {
+        goPressedAt = 0
+        if (canNavigate) selectTransaction(visible()[0]?.id)
+      } else goPressedAt = Date.now()
       return
     }
     goPressedAt = 0
+    if (goPending && ['d', 'l'].includes(event.key)) {
+      event.preventDefault()
+      navigateTab(event.key === 'd' ? 'drafts' : 'ledger')
+      return
+    }
 
     if (event.key === 'n') {
       event.preventDefault()
       addDraft()
       s.redraw()
-    } else if (
-      activeArea() !== 'transactions' || event.target.closest('button, a, [role="tablist"]')
-    ) {
+    } else if (!canNavigate) {
       return
+    } else if (event.key === 'G') {
+      event.preventDefault()
+      selectTransaction(visible().at(-1)?.id)
     } else if (event.key === 'f') {
       event.preventDefault()
       filtersOpen = !filtersOpen
@@ -1668,9 +1688,11 @@ const App = s((_attrs, _children, context) => {
         ),
       ),
       KeyboardHint(
-        s`span`(Key('G D'), t('drafts')),
-        s`span`(Key('G L'), t('ledger')),
+        s`span`(Key('g d'), t('drafts')),
+        s`span`(Key('g l'), t('ledger')),
         s`span`(Key('J'), Key('K'), t('navigate')),
+        s`span`(Key('g g'), t('firstTransaction')),
+        s`span`(Key('⇧ G'), t('lastTransaction')),
         s`span`(Key('↵'), t('collapseExpand')),
         s`span`(Key('/'), t('search')),
         s`span`(Key('N'), t('newTransaction')),

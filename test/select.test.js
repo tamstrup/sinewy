@@ -116,6 +116,22 @@ t`select`(
       rule.style.outlineOffset === '2px')]
   })),
 
+  ...['1', '2', '3'].flatMap(size => ['ltr', 'rtl'].map(dir =>
+    t`insets the size ${size} native chevron from the ${dir} trailing edge`(() => withSelect({ attrs: {
+      size,
+      dir,
+      defaultValue: 'pear'
+    } }, select => {
+      const style = getComputedStyle(select)
+      const icon = getComputedStyle(select, '::picker-icon')
+      t.is('base-select', style.appearance)
+      t.is({ 1: '8px', 2: '10px', 3: '12px' }[size], style.paddingInlineStart)
+      t.is(style.paddingInlineStart, style.paddingInlineEnd)
+      t.is('4px', icon.marginInlineEnd)
+      return ['4px', dir === 'rtl' ? icon.marginLeft : icon.marginRight]
+    }))
+  )),
+
   t`progressively matches the shared menu surface and item styling`(() => withSelect({ attrs: {
     defaultValue: 'pear',
     color: 'cyan',

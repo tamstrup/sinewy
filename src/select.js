@@ -101,6 +101,7 @@ const SelectControl = s`select
 
     &::picker-icon {
       margin-inline-start auto
+      margin-inline-end 4px
       color $sinewy-accent-11
       transition transform 120ms ease
     }

@@ -171,9 +171,9 @@ const ContentSurface = Headless.Content`
   width 100%
   max-height min(280px, calc(100vh - 24px))
   display grid
-  position absolute
-  inset-block-start calc(100% + 6px)
-  inset-inline 0
+  position fixed
+  inset auto
+  margin 0
   gap 2
   padding 5
   overflow auto
@@ -201,7 +201,7 @@ const ContentSurface = Headless.Content`
   }
 `
 
-const ItemSurface = Headless.Item`
+const ItemBox = Headless.Item`
   width 100%
   min-height 34
   display grid
@@ -220,8 +220,7 @@ const ItemSurface = Headless.Item`
     display none
   }
 
-  &::after {
-    content '✓'
+  > [data-selection-indicator] {
     color $sinewy-accent-11
     font-size 12
     font-weight 900
@@ -234,7 +233,7 @@ const ItemSurface = Headless.Item`
     font-weight 650
   }
 
-  &[data-selected]::after {
+  &[data-selected] > [data-selection-indicator] {
     opacity 1
   }
 
@@ -243,7 +242,7 @@ const ItemSurface = Headless.Item`
     color $sinewy-accent-contrast
   }
 
-  &[data-highlighted]::after {
+  &[data-highlighted] > [data-selection-indicator] {
     color currentColor
   }
 
@@ -273,6 +272,14 @@ const ItemSurface = Headless.Item`
     line-height 22px
   }
 `
+
+const ItemSurface = s((attrs, children) => ItemBox({
+  ...attrs,
+  'aria-label': attrs['aria-label'] ?? attrs.textValue
+},
+  s`span`(children),
+  s`span`({ 'aria-hidden': 'true', data: { selectionIndicator: '' } }, '✓')
+))
 
 const Combobox = s(({
   id,
@@ -329,5 +336,5 @@ function themedPart(Surface) {
   })
 }
 
-export { Combobox }
+export { Combobox, ContentSurface, ItemSurface }
 export default Combobox

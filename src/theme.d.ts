@@ -1,4 +1,7 @@
 import s from 'sin'
+export { default as NativeSelect } from './native-select.js'
+export { default as CustomSelect } from './custom-select.js'
+export type { CustomSelectAttrs, CustomSelectOptionAttrs, CustomSelectGroupAttrs } from './custom-select.js'
 import type { Button as ButtonComponent } from './button.js'
 import type { Toggle as ToggleComponent } from './toggle.js'
 import type { Dialog as DialogComponent } from './dialog.js'

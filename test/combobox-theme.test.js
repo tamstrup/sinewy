@@ -32,7 +32,8 @@ t`combobox theme`(
 
     const highlighted = items.find(item => item.hasAttribute('data-highlighted'))
     t.is(false, content.hidden)
-    t.is('absolute', getComputedStyle(content).position)
+    t.is(true, content.matches(':popover-open'))
+    t.is('fixed', getComputedStyle(content).position)
     t.is('rgb(62, 99, 221)', getComputedStyle(highlighted).backgroundColor)
     return ['rgb(255, 255, 255)', getComputedStyle(highlighted).color]
   })),

@@ -5,6 +5,8 @@ description: An accessible searchable single- or multiple-selection control for 
 
 ## Overview
 
+For selection without a search field, use [CustomSelect](./custom-select.md). It shares the selection foundation and themed options but exposes a separate, non-editable control.
+
 `Combobox` is a searchable selection component with a headless primitive and an optional themed facade. Typing narrows its list of options while focus stays in the text input. Single selection displays the chosen option as input text; multiple selection displays chosen values as removable pills inside the control.
 
 The component owns selection, filtering, active-option state, keyboard behavior, and ARIA relationships. Consumers own labels, option data, and visual styling. Values are strings so selection identity is stable across redraws and can be submitted or persisted without an object-identity contract.
@@ -64,7 +66,7 @@ Combobox({ size: '2', color: 'indigo' },
 
 The themed root accepts `size="1|2|3"`, `color`, and `highContrast`, plus normal root `style` and `data` values. It deliberately has one field treatment rather than the action-oriented `solid`, `soft`, `outline`, and `ghost` variants used by Button.
 
-Unlike the headless root, the themed root renders a positioned wrapper. Its listbox is placed immediately below the control and inherits the root's light/dark-aware palette. All themed parts still support normal Sin style extension.
+Unlike the headless root, the themed root renders a positioned wrapper. Its listbox inherits the root's light/dark-aware palette. Both versions place the listbox in the browser's popover top layer, aligned with the control and flipped above it when space below is limited. Resize and scroll keep the list aligned. All themed parts still support normal Sin style extension.
 
 ## Styling
 
@@ -164,6 +166,6 @@ The component supplies the ARIA combobox, listbox, and option relationships and 
 
 ## Current limits
 
-- The headless component does not position or style its listbox.
+- The headless component positions its listbox but does not theme it. Popover API and ResizeObserver support are required.
 - Values are strings; richer records remain consumer-owned option data.
-- The listbox is rendered in place rather than in a portal or browser top layer. The themed listbox is absolutely positioned inside its root and can be clipped by an ancestor with restrictive overflow.
+- The listbox stays in its DOM context for inherited styles while the browser renders it in the top layer, outside ancestor overflow clipping.

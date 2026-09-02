@@ -13,6 +13,7 @@ t`documentation ssr`(
     t.is(true, result.links.has('/components/alert-dialog'))
     t.is(true, result.links.has('/components/switch'))
     t.is(true, result.links.has('/components/select'))
+    t.is(true, result.links.has('/components/custom-select'))
     t.is(true, result.links.has('/components/checkbox'))
     t.is(true, result.links.has('/components/radio'))
     return [true, result.links.has('/components/combobox')]
@@ -51,6 +52,14 @@ t`documentation ssr`(
     t.is('Select — Sinewy', result.title)
     t.is(true, result.html.includes('data-source="docs/components/select.md"'))
     return [true, result.html.includes('<optgroup')]
+  }),
+
+  t`renders custom selection and its native comparison`(async() => {
+    const result = await render('/components/custom-select')
+    t.is('Custom Select — Sinewy', result.title)
+    t.is(true, result.html.includes('role="combobox"'))
+    t.is(true, result.html.includes('Native picker'))
+    return [true, result.html.includes('data-source="docs/components/custom-select.md"')]
   }),
 
   t`renders the checkbox document and live example`(async() => {

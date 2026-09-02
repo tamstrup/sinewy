@@ -1,5 +1,5 @@
 import s from 'sin'
-import Dropdown, { AlertDialog, Button, Checkbox, Combobox, ContextMenu, Dialog, Radio, Select, Switch, Toggle } from '../src/theme.js'
+import Dropdown, { AlertDialog, Button, Checkbox, Combobox, ContextMenu, CustomSelect, Dialog, NativeSelect, Radio, Select, Switch, Toggle } from '../src/theme.js'
 import documents, { documentsBySlug } from './content.generated.js'
 
 s.title = 'Sinewy — Documentation'
@@ -886,6 +886,13 @@ const componentDetails = {
     preview: SwitchPreview,
     previewHeadings: [{ id: 'live-example', text: 'Live example' }]
   },
+  'custom-select': {
+    status: 'Preview',
+    tags: ['No search field', 'Top-layer listbox', 'Form control'],
+    summary: 'Consistently styled single selection with grouped options, typeahead, and native form integration.',
+    preview: CustomSelectPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
   select: {
     status: 'Preview',
     tags: ['Native select', 'Optgroup', 'Shared theme'],
@@ -1154,12 +1161,85 @@ const SelectExample = s(() => {
 function SelectPreview() {
   return s`section#live-example`(
     s`h2`('Live example'),
-    s`p`('Supporting browsers render the native picker with Sinewy’s menu surface, grouped options, selection gutter, and theme colors. Customizable picker styling requires Safari 27 or later; Safari 26 and earlier show the regular platform-native picker.'),
+    s`p`('For a consistently themed picker across supported browsers, try ', s`a`({ href: '/components/custom-select' }, 'Custom Select'), '. This native Select remains unchanged and is also exported as NativeSelect.'),
+    s`p`('Supporting browsers render the native picker with Sinewy’s menu surface, grouped options, selection gutter, and theme colors. Browsers without customizable select support keep their platform-native picker.'),
     s`div`(
       Example(SelectExample()),
       Code(`import s from 'sin'\nimport { Select } from 'sinewy'\n\nconst produce = s.live('pear')\n\nSelect({ bind: produce, name: 'produce' },\n  Select.Group({ label: 'Fruit' },\n    Select.Option({ value: 'apple' }, 'Apple'),\n    Select.Option({ value: 'pear' }, 'Pear')\n  )\n)`)
     )
   )
+}
+
+function CustomSelectPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('Choose from a consistently styled list without a search field. Both pickers below share the same value; the native picker remains available when platform behavior is preferred.'),
+    Example(CustomSelectExample()),
+    Code(`import s from 'sin'
+import { CustomSelect } from 'sinewy'
+
+const produce = s.live('pear')
+
+CustomSelect({ bind: produce, name: 'produce', 'aria-label': 'Produce' },
+  CustomSelect.Group({ label: 'Fruit' },
+    CustomSelect.Option({ value: 'apple' }, 'Apple'),
+    CustomSelect.Option({ value: 'pear' }, 'Pear')
+  ),
+  CustomSelect.Option({ value: 'carrot' }, 'Carrot')
+)`)
+  )
+}
+
+const CustomSelectExample = s(() => {
+  const produce = s.live('pear')
+  let submitted = 'Choose a value, then submit or reset.'
+  return () => s`div display grid; gap 24`(
+    ComboboxDemoGrid(
+      ComboboxDemoField(
+        s`label`({ for: 'custom-produce' }, 'Custom picker'),
+        CustomSelect({ id: 'custom-produce', bind: produce, defaultValue: 'pear', color: 'cyan' }, produceOptions(CustomSelect)),
+        s`p`('No search input. Type a letter to jump to an option.')
+      ),
+      ComboboxDemoField(
+        s`label`({ for: 'native-produce' }, 'Native picker'),
+        NativeSelect({ id: 'native-produce', bind: produce, color: 'cyan' }, produceOptions(NativeSelect)),
+        s`p`('The same selection, using the platform picker.')
+      )
+    ),
+    s`div display flex; gap 12; flex-wrap wrap`(['1', '2', '3'].map(size =>
+      CustomSelect({ size, defaultValue: 'pear', 'aria-label': 'Size ' + size, style: { width: '140px' } }, produceOptions(CustomSelect))
+    )),
+    s`form display grid; gap 12`({
+      onsubmit: event => {
+        event.preventDefault()
+        submitted = 'Submitted: ' + new FormData(event.currentTarget).get('delivery')
+      },
+      onreset: () => submitted = 'Reset: choose a delivery method.'
+    },
+      s`label`({ for: 'delivery-method' }, 'Delivery method (required)'),
+      CustomSelect({ id: 'delivery-method', name: 'delivery', required: true, placeholder: 'Choose delivery', color: 'indigo' },
+        CustomSelect.Option({ value: 'standard' }, 'Standard delivery'),
+        CustomSelect.Option({ value: 'express' }, 'Express delivery'),
+        CustomSelect.Option({ value: 'collection', disabled: true }, 'Collection — unavailable')
+      ),
+      s`div display flex; gap 8`(Button({ type: 'submit' }, 'Submit'), Button({ type: 'reset', variant: 'outline' }, 'Reset')),
+      s`p`({ role: 'status' }, submitted)
+    )
+  )
+})
+
+function produceOptions(Component) {
+  return [
+    Component.Group({ label: 'Fruit' },
+      Component.Option({ value: 'apple' }, 'Apple'),
+      Component.Option({ value: 'pear' }, 'Pear'),
+      Component.Option({ value: 'orange', disabled: true }, 'Orange — unavailable')
+    ),
+    Component.Group({ label: 'Vegetables' },
+      Component.Option({ value: 'carrot' }, 'Carrot'),
+      Component.Option({ value: 'broccoli' }, 'Broccoli')
+    )
+  ]
 }
 
 const CheckboxExample = s(() => {

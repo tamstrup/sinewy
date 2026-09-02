@@ -5,6 +5,8 @@ description: A themed native single-value select with option and optgroup helper
 
 ## Overview
 
+Need a consistently styled picker without a search field? Use [CustomSelect](./custom-select.md). This page documents the native control, still exported as `Select` and now also available as `NativeSelect` from `sinewy`, `sinewy/theme`, or `sinewy/native-select`. Existing imports and behavior are unchanged.
+
 `Select` renders a native `select`. The browser supplies its popup, keyboard navigation, focus behavior, validation, form submission, and disabled semantics; Sinewy supplies sizing, color-aware interaction styling, controlled state, and live binding.
 
 In browsers with customizable Select support, Sinewy progressively enhances the native picker with the same surface, option sizing, selection gutter, group typography, shadow, and interaction colors used by Dropdown and ContextMenu. Other browsers keep their platform picker and the existing themed closed control.

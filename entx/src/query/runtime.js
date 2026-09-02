@@ -35,7 +35,7 @@ export function createSqlEditor(element, { value, label, hint, onchange, onrun }
         history(),
         drawSelection(),
         highlightActiveLine(),
-        sql({ dialect: PostgreSQL, schema: schemas, upperCaseKeywords: true }),
+        sql({ dialect: PostgreSQL, schema: schemas, upperCaseKeywords: false }),
         autocompletion(),
         syntaxHighlighting(HighlightStyle.define([
           { tag: tags.keyword, color: '#7255c5', fontWeight: '550' },
@@ -74,7 +74,13 @@ export function createSqlEditor(element, { value, label, hint, onchange, onrun }
           if (update.docChanged) onchange(update.state.doc.toString())
         }),
         EditorView.theme({
-          '&': { height: '220px', fontSize: '13px', backgroundColor: '#fff', color: '#35353f' },
+          '&': {
+            height: '100%',
+            minHeight: '0',
+            fontSize: '13px',
+            backgroundColor: '#fff',
+            color: '#35353f',
+          },
           '&.cm-focused': { outline: 'none' },
           '.cm-scroller': {
             overflow: 'auto',

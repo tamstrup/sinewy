@@ -52,7 +52,10 @@ there is no separate pending amount. Transactions remain expanded by default.
 
 The top-left panel button hides or shows the accounts sidebar on every page. Its visibility is
 remembered locally; hiding it preserves balances, tree expansion, draft inclusion, and filter state.
-The main area uses the freed space without resetting transaction edits.
+The main area uses the freed space without resetting transaction edits. Drag the Sinewy SplitPanel
+divider to resize the sidebar. Its width is retained while navigating and hiding/showing the
+sidebar, and remains fixed when the window is resized. Divider arrow keys resize in 1% steps (Shift:
+10%); Home/End move to its limits.
 
 The sticky top bar, document background, and `theme-color` metadata share `#fcfcfd`. The opaque
 header supports Safari's sticky-header color sampling; metadata also supports browsers that use an
@@ -67,7 +70,12 @@ generates both tab routes for direct navigation.
 The lazy `/query` page combines CodeMirror SQL editing with AG Grid Enterprise, styled to match
 ENTX. It starts with an empty editor and grid. Four sample views (`ledger_entries`, `transactions`,
 `accounts`, and `documents`) provide table/column autocomplete, visible schemas, and example SQL.
-Cmd+Enter, Ctrl+Enter, or **Run query** show a loading state and return a fixed sample dataset.
+Cmd+Enter, Ctrl+Enter, or **Run query** show a loading state and return a fixed sample dataset. SQL
+completions and examples use lowercase keywords and identifiers; existing SQL is never rewritten. A
+Sinewy SplitPanel separates the editor above from the results below. Drag the horizontal divider, or
+focus it and use Up/Down, to resize them. The Query page fits the window; the editor, schema list,
+and grid scroll internally. Split positions survive route navigation, but reset on reload. Resizing
+does not recreate the editor or grid.
 
 **SQL is not executed.** The first recognized `FROM` view selects the fixture; projections,
 conditions, joins, ordering, and aggregation in SQL are ignored. Unknown queries fall back to ledger

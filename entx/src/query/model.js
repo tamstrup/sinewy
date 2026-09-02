@@ -19,10 +19,10 @@ export const schemas = {
 }
 export const examples = {
   ledger_entries:
-    "SELECT date, description, account, account_type, amount, commodity\nFROM ledger_entries\nWHERE status = 'committed'\nORDER BY date DESC;",
-  transactions: 'SELECT *\nFROM transactions\nORDER BY date DESC;',
-  accounts: 'SELECT account, account_type, commodity, balance\nFROM accounts\nORDER BY account;',
-  documents: 'SELECT *\nFROM documents\nORDER BY date DESC;',
+    "select date, description, account, account_type, amount, commodity\nfrom ledger_entries\nwhere status = 'committed'\norder by date desc;",
+  transactions: 'select *\nfrom transactions\norder by date desc;',
+  accounts: 'select account, account_type, commodity, balance\nfrom accounts\norder by account;',
+  documents: 'select *\nfrom documents\norder by date desc;',
 }
 
 // Fixed demo snapshots, independent of edits in the transaction workspace.

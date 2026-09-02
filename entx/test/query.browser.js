@@ -47,6 +47,91 @@ t`query workspace`(
     )
     return [true, result.options.some((x) => x.label === 'amount')]
   }),
+  t`actual editor completes lowercase SQL without rewriting existing text`(() =>
+    fixture(async (host) => {
+      setSql(host, 'sel')
+      await settle()
+      const view = editor(host)
+      const sources = view.state.languageDataAt('autocomplete', 3)
+      const results = await Promise.all(
+        sources.filter((x) => typeof x === 'function').map((source) =>
+          source(new CompletionContext(view.state, 3, true))
+        ),
+      )
+      const options = results.flatMap((x) => x?.options || [])
+      t.is(true, options.some((x) => x.label === 'select'))
+      t.is(false, options.some((x) => x.label === 'SELECT'))
+      setSql(host, 'SELECT "MixedCase" FROM accounts;')
+      await settle()
+      return ['SELECT "MixedCase" FROM accounts;', view.state.doc.toString()]
+    })
+  ),
+  t`nested split resizing preserves editor and grid, with internal scrolling only`(() =>
+    fixture(async (host) => {
+      // Give both panes resizing room independently of Chrome's tiny default test window.
+      host.style.cssText =
+        'position:fixed;top:0;left:0;width:1280px;height:720px;overflow:hidden;z-index:1000'
+      host.firstElementChild.style.height = '720px'
+      await settle()
+      const view = editor(host)
+      const grid = host.querySelector('.ag-root')
+      const sidebar = host.querySelector('#entx-workspace > [data-split-divider]')
+      const query = host.querySelector('#query-split > [data-split-divider]')
+      const pane = host.querySelector('#query-split > [data-split-start]')
+      const width = host.querySelector('#accounts-sidebar').getBoundingClientRect().width
+      const height = pane.getBoundingClientRect().height
+      sidebar.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }),
+      )
+      query.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'ArrowDown',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      )
+      await settle()
+      check(
+        host.querySelector('#accounts-sidebar').getBoundingClientRect().width < width,
+        'sidebar shrinks',
+      )
+      check(pane.getBoundingClientRect().height > height, 'editor pane grows')
+      t.is(view, editor(host))
+      t.is(grid, host.querySelector('.ag-root'))
+      setSql(host, 'select * from ledger_entries;\n' + '-- more SQL\n'.repeat(100))
+      await settle()
+      button(host, 'Run query').click()
+      await until(() => host.querySelectorAll('.ag-row').length > 0)
+      const main = host.querySelector('main')
+      const scroller = host.querySelector('.cm-scroller')
+      check(
+        main.scrollHeight <= main.clientHeight + 1,
+        `main overflow: ${main.scrollHeight}/${main.clientHeight}`,
+      )
+      check(scroller.scrollHeight > scroller.clientHeight, 'editor scrolls internally')
+      check(
+        host.querySelector('[data-query-grid]').getBoundingClientRect().bottom <=
+          host.getBoundingClientRect().bottom,
+        'grid fits workspace',
+      )
+      const resizedWidth = host.querySelector('#accounts-sidebar').getBoundingClientRect().width
+      const mainWidth = main.getBoundingClientRect().width
+      host.querySelector('[aria-label="Hide accounts sidebar"]').click()
+      await settle()
+      t.is(true, main.getBoundingClientRect().width > mainWidth)
+      host.querySelector('[aria-label="Show accounts sidebar"]').click()
+      await settle()
+      t.is(
+        true,
+        Math.abs(
+          resizedWidth - host.querySelector('#accounts-sidebar').getBoundingClientRect().width,
+        ) < 1,
+      )
+      t.is(view, editor(host))
+      return [grid, host.querySelector('.ag-root')]
+    })
+  ),
   ...['mouse', 'ctrl', 'meta'].map((method) =>
     t`runs mocked results with a loader using ${method}`(() =>
       fixture(async (host) => {
@@ -245,6 +330,9 @@ t`query workspace`(
 
 function button(host, name) {
   return [...host.querySelectorAll('button')].find((x) => x.textContent === name)
+}
+function check(value, message) {
+  if (!value) throw new Error(message)
 }
 function input(element, value) {
   element.value = value

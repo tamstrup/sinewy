@@ -1,5 +1,5 @@
 import s from 'sin'
-import { AlertDialog, Button, CustomSelect } from 'sinewy/theme'
+import { AlertDialog, Button, CustomSelect, SplitPanel } from 'sinewy/theme'
 import {
   createQueryWorkspace,
   examples,
@@ -12,6 +12,11 @@ import {
 
 const Page = s`section
   min-width 0
+  min-height 0
+  height 100%
+  display flex
+  flex-direction column
+  overflow hidden
   h1 { margin 0; font-size 22; font-weight 720; letter-spacing -.6px }
   p { margin 6px 0 0; color #7b7b84; font-size 12; line-height 1.6 }
 `
@@ -20,7 +25,8 @@ const Header = s`header
   align-items center
   justify-content space-between
   gap 16
-  margin-bottom 20
+  margin-bottom 12
+  flex-shrink 0
 `
 const Badge = s`span
   color #766b9d
@@ -35,7 +41,8 @@ const Toolbar = s`div
   align-items center
   flex-wrap wrap
   gap 8
-  margin-bottom 14
+  margin-bottom 10
+  flex-shrink 0
 `
 const Name = s`input
   min-width 150
@@ -50,14 +57,19 @@ const Name = s`input
   &:focus { outline 2px solid #afa7ee; outline-offset 1 }
 `
 const EditorLayout = s`div
+  flex 1
+  min-height 0
   display grid
-  grid-template-columns minmax(0, 1fr) 230px
+  grid-template-columns minmax(0, 1fr) 180px
+  grid-template-rows minmax(0, 1fr)
   gap 16
-  margin-bottom 14
-  @media (max-width: 1150px) { grid-template-columns minmax(0, 1fr) }
+  @media (max-width: 1150px) { grid-template-columns minmax(0, 1fr) 130px; gap 10 }
 `
 const EditorBox = s`div
   min-width 0
+  min-height 0
+  display flex
+  flex-direction column
   overflow hidden
   border 1px solid #dfdfe6
   border-radius 8
@@ -69,6 +81,7 @@ const EditorHeader = s`div
   align-items center
   justify-content space-between
   height 34
+  flex-shrink 0
   padding 0 12
   border-bottom 1px solid #eeeeF2
   color #87878f
@@ -76,10 +89,12 @@ const EditorHeader = s`div
   strong { font-weight 650; letter-spacing 1px }
 `
 const EditorHost = s`div
-  min-height 220
+  flex 1
+  min-height 0
+  overflow hidden
 `
 const Schema = s`aside
-  height 255
+  min-height 0
   overflow auto
   padding 2px 0
   color #696973
@@ -94,7 +109,8 @@ const ResultHeading = s`div
   justify-content space-between
   align-items center
   gap 12
-  margin 22px 0 10px
+  margin 0 0 8px
+  flex-shrink 0
   font-size 11
   color #83838c
   strong { font-size 11; font-weight 650; letter-spacing .7px; text-transform uppercase; color #61616b }
@@ -102,10 +118,14 @@ const ResultHeading = s`div
 const GridHost = s`div
   width 100%
   min-width 0
-  height max(340px, calc(100svh - 535px))
+  min-height 0
+  flex 1
+  overflow hidden
 `
 const Status = s`p
   min-height 20
+  flex-shrink 0
+  margin-bottom 10px !important
   &[data-error='true'] { color #a23d47 }
 `
 const Busy = s`span
@@ -313,99 +333,131 @@ export default s((_attrs, _children, context) => {
           onclick: () => confirmation = { kind: 'delete', action: deleteSaved },
         }, t('queryDelete')),
       ),
-      EditorLayout(
-        EditorBox(
-          EditorHeader(s`strong`('SQL'), s`span`(t('queryCompletionHint'))),
-          EditorHost({
-            dom: (element) => {
-              editorElement = element
-              mountRuntime()
-            },
-          }),
-        ),
-        Schema(
-          { 'aria-label': t('queryAvailableViews') },
-          s`h2`(t('queryAvailableViews')),
-          Object.entries(schemas).map(([table, fields]) =>
-            s`details`(
-              { key: table },
-              s`summary`(table),
-              fields.map((field) => s`code`(field)),
-              Button({
-                size: '1',
-                color: 'gray',
-                variant: 'ghost',
-                onclick: () => {
-                  const apply = () => {
-                    editor?.setValue(examples[table])
-                    editor?.focus()
-                    redraw()
-                  }
-                  if (dirty()) confirmation = { kind: 'discard', action: apply }
-                  else apply()
-                },
-              }, t('queryUseExample')),
-            )
-          ),
-        ),
-      ),
-      Toolbar(
-        Button(
-          {
-            size: '1',
-            color: 'gray',
-            variant: 'solid',
-            highContrast: true,
-            disabled: busy || !grid || !workspace.sql.trim(),
-            onclick: run,
-          },
-          busy && Busy({ 'aria-hidden': 'true' }),
-          t(busy ? 'queryRunning' : 'queryRun'),
-        ),
-        s`span
-          color #93939c
-          font-size 11
-        `('⌘ / Ctrl ↵'),
-        !workspace.sql &&
-          Button({
-            size: '1',
-            color: 'indigo',
-            variant: 'ghost',
-            disabled: !editor,
-            onclick: () => editor?.setValue(examples.ledger_entries),
-          }, t('queryStartExample')),
-        dirty() && s`span
-          color #9b8d67
-          font-size 11
-        `(t('queryUnsaved')),
-      ),
       Status(
         { role: error ? 'alert' : 'status', data: { error: !!error } },
         t(error || notice || 'queryMockExplanation'),
       ),
-      ResultHeading(
-        s`strong`(t('queryResults')),
-        s`span`(
-          busy
-            ? t('queryRunning')
-            : workspace.result
-            ? t('queryRowCount', { count: workspace.result.rows.length })
-            : t('queryNotRun'),
-          resultSql && resultSql !== workspace.sql ? ` · ${t('queryStale')}` : '',
+      SplitPanel(
+        {
+          id: 'query-split',
+          orientation: 'vertical',
+          defaultPosition: workspace.splitPosition ?? 45,
+          style: {
+            flex: '1',
+            minHeight: '0',
+            '--min': '110px',
+            '--max': 'calc(100% - 160px)',
+            '--divider-width': '1px',
+          },
+          onreposition: ({ position }, event) => {
+            workspace.splitPosition = position
+            if (event) event.redraw = false
+          },
+        },
+        SplitPanel.Start(
+          {
+            style: { display: 'flex', flexDirection: 'column', gap: '10px', paddingBottom: '10px' },
+          },
+          EditorLayout(
+            EditorBox(
+              EditorHeader(s`strong`('SQL'), s`span`(t('queryCompletionHint'))),
+              EditorHost({
+                dom: (element) => {
+                  editorElement = element
+                  mountRuntime()
+                },
+              }),
+            ),
+            Schema(
+              { 'aria-label': t('queryAvailableViews') },
+              s`h2`(t('queryAvailableViews')),
+              Object.entries(schemas).map(([table, fields]) =>
+                s`details`(
+                  { key: table },
+                  s`summary`(table),
+                  fields.map((field) => s`code`(field)),
+                  Button({
+                    size: '1',
+                    color: 'gray',
+                    variant: 'ghost',
+                    onclick: () => {
+                      const apply = () => {
+                        editor?.setValue(examples[table])
+                        editor?.focus()
+                        redraw()
+                      }
+                      if (dirty()) confirmation = { kind: 'discard', action: apply }
+                      else apply()
+                    },
+                  }, t('queryUseExample')),
+                )
+              ),
+            ),
+          ),
+          Toolbar(
+            { style: { marginBottom: '0' } },
+            Button(
+              {
+                size: '1',
+                color: 'gray',
+                variant: 'solid',
+                highContrast: true,
+                disabled: busy || !grid || !workspace.sql.trim(),
+                onclick: run,
+              },
+              busy && Busy({ 'aria-hidden': 'true' }),
+              t(busy ? 'queryRunning' : 'queryRun'),
+            ),
+            s`span
+          color #93939c
+          font-size 11
+        `('⌘ / Ctrl ↵'),
+            !workspace.sql &&
+              Button({
+                size: '1',
+                color: 'indigo',
+                variant: 'ghost',
+                disabled: !editor,
+                onclick: () => editor?.setValue(examples.ledger_entries),
+              }, t('queryStartExample')),
+            dirty() && s`span
+          color #9b8d67
+          font-size 11
+        `(t('queryUnsaved')),
+          ),
+        ),
+        SplitPanel.Divider({
+          'aria-label': t('resizeQueryEditor'),
+          style: { background: '#e0dfe7' },
+        }),
+        SplitPanel.End(
+          { style: { display: 'flex', flexDirection: 'column', paddingTop: '10px' } },
+          ResultHeading(
+            s`strong`(t('queryResults')),
+            s`span`(
+              busy
+                ? t('queryRunning')
+                : workspace.result
+                ? t('queryRowCount', { count: workspace.result.rows.length })
+                : t('queryNotRun'),
+              resultSql && resultSql !== workspace.sql ? ` · ${t('queryStale')}` : '',
+            ),
+          ),
+          GridHost({
+            'aria-label': t('queryResults'),
+            'aria-busy': String(busy),
+            data: { queryGrid: true },
+            dom: (element) => {
+              gridElement = element
+              mountRuntime()
+            },
+          }),
+          s`p
+        font-size 10
+        flex-shrink 0
+      `(t('queryGroupingHint')),
         ),
       ),
-      GridHost({
-        'aria-label': t('queryResults'),
-        'aria-busy': String(busy),
-        data: { queryGrid: true },
-        dom: (element) => {
-          gridElement = element
-          mountRuntime()
-        },
-      }),
-      s`p
-        font-size 10
-      `(t('queryGroupingHint')),
       AlertDialog(
         {
           id: 'query-confirm',

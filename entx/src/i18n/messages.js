@@ -3,6 +3,8 @@ import { formatNumber } from './format.js'
 const plurals = new Map()
 
 export const en = {
+  resizeAccounts: 'Accounts sidebar',
+  resizeQueryEditor: 'SQL editor',
   query: 'Query',
   querySubtitle: 'Explore accounting data with SQL and build your own reports.',
   queryMockBadge: 'Mock data · Enterprise evaluation',
@@ -12,7 +14,7 @@ export const en = {
   querySave: 'Save',
   queryDelete: 'Delete',
   queryEditor: 'SQL query editor',
-  queryEditorHint: 'Write a SELECT query, or load an example to get started…',
+  queryEditorHint: 'Write a select query, or load an example to get started…',
   queryCompletionHint: 'Ctrl Space · autocomplete',
   queryAvailableViews: 'Example views',
   queryUseExample: 'Use example',
@@ -175,6 +177,8 @@ export const en = {
 }
 
 export const da = {
+  resizeAccounts: 'Kontosidepanel',
+  resizeQueryEditor: 'SQL-editor',
   query: 'Forespørgsler',
   querySubtitle: 'Udforsk regnskabsdata med SQL og byg dine egne rapporter.',
   queryMockBadge: 'Eksempeldata · Enterprise-evaluering',
@@ -184,7 +188,7 @@ export const da = {
   querySave: 'Gem',
   queryDelete: 'Slet',
   queryEditor: 'SQL-editor',
-  queryEditorHint: 'Skriv en SELECT-forespørgsel, eller indlæs et eksempel…',
+  queryEditorHint: 'Skriv en select-forespørgsel, eller indlæs et eksempel…',
   queryCompletionHint: 'Ctrl Space · autofuldførelse',
   queryAvailableViews: 'Eksempelvisninger',
   queryUseExample: 'Brug eksempel',

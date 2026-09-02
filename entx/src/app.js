@@ -1,5 +1,5 @@
 import s from 'sin'
-import Dropdown, { AlertDialog } from 'sinewy/theme'
+import Dropdown, { AlertDialog, SplitPanel } from 'sinewy/theme'
 import { ButtonBase, Checkbox, DraftSwitch, Select } from './controls.js'
 import AccountPicker from './account-picker.js'
 import { createI18n } from './i18n/index.js'
@@ -62,6 +62,7 @@ const Shell = s`div
   display grid
   grid-template-rows 52px minmax(0, 1fr)
   background #f7f7f8
+  &[data-area='query'] { height 100svh; overflow hidden }
 `
 
 const Topbar = s`header
@@ -69,7 +70,7 @@ const Topbar = s`header
   z-index 20
   top 0
   display grid
-  grid-template-columns 264px minmax(0, 1fr) auto
+  grid-template-columns calc(var(--sidebar-width, 264px) + 1px) minmax(0, 1fr) auto
   align-items center
   border-bottom 1px solid #e6e6e8
   background ${TOPBAR_COLOR}
@@ -173,12 +174,14 @@ const SyncDot = s`span
   box-shadow 0 0 0 3px #e6f5ee
 `
 
-const Workspace = s`div
+const Workspace = SplitPanel`
   min-height 0
-  display grid
-  grid-template-columns 264px minmax(0, 1fr)
+  min-width 0
 
-  &[data-sidebar-visible='false'] { grid-template-columns minmax(0, 1fr) }
+  &[data-sidebar-visible='false'] { grid-template-columns 0px 0px minmax(0, 1fr) !important }
+  &[data-sidebar-visible='false'] > [data-split-start] { display none }
+  &[data-sidebar-visible='false'] > [data-split-divider] { display none }
+  &[data-sidebar-visible='false'] > [data-split-end] { grid-column 3 }
 `
 
 const Sidebar = s`aside
@@ -187,7 +190,6 @@ const Sidebar = s`aside
   height calc(100svh - 52px)
   display flex
   flex-direction column
-  border-right 1px solid #e6e6e8
   background #fafafa
 
   &[hidden] { display none }
@@ -344,6 +346,12 @@ const SidebarFooter = s`footer
 const Main = s`main
   min-width 0
   padding 24px clamp(24px, 4vw, 56px) 64px
+  &[data-area='query'] {
+    height 100%
+    min-height 0
+    overflow hidden
+    padding 18px 24px
+  }
 `
 
 const MainHeader = s`header
@@ -848,6 +856,7 @@ const App = s((_attrs, _children, context) => {
   // Raw, unfinished amounts survive navigation without changing their input locale.
   const amountEdits = new Map()
   let shell
+  let sidebarWidth = 264
   let transactions = structuredClone(initialTransactions)
   const accountNames = () =>
     [
@@ -1026,7 +1035,7 @@ const App = s((_attrs, _children, context) => {
 
   const onkeydown = (event) => {
     if (
-      reviewIds.length || event.defaultPrevented ||
+      reviewIds.length || event.defaultPrevented || event.target.closest('[role="separator"]') ||
       event.target.closest('dialog, [role="menu"], [data-query-grid]')
     ) {
       goPressedAt = 0
@@ -1806,6 +1815,8 @@ const App = s((_attrs, _children, context) => {
 
     return Shell(
       {
+        data: { area: activeArea() },
+        style: { '--sidebar-width': sidebarWidth + 'px' },
         dom: (element) => {
           shell = element
           i18n.load()
@@ -1833,18 +1844,45 @@ const App = s((_attrs, _children, context) => {
       },
       topbar(),
       Workspace(
-        { data: { sidebarVisible: i18n.preferences().sidebarVisible } },
-        sidebar(filterTransactions(transactions, filters)),
-        Main(route({
-          '/': () => transactionsView(visible()),
-          '/transactions': () => transactionsView(visible()),
-          '/transactions/drafts': () => transactionsView(visible()),
-          '/transactions/ledger': () => transactionsView(visible()),
-          '/accounts': placeholder,
-          '/files': placeholder,
-          '/settings': () => import('./settings.js'),
-          '/query': () => import('./query/index.js'),
-        })),
+        {
+          id: 'entx-workspace',
+          primary: 'start',
+          defaultPositionInPixels: sidebarWidth,
+          disabled: !i18n.preferences().sidebarVisible,
+          data: { sidebarVisible: i18n.preferences().sidebarVisible },
+          style: {
+            '--min': '190px',
+            '--max': 'min(440px, calc(100% - 480px))',
+            '--divider-width': '1px',
+          },
+          onreposition: ({ positionInPixels }, event) => {
+            if (!i18n.preferences().sidebarVisible) return
+            sidebarWidth = positionInPixels
+            shell?.style.setProperty('--sidebar-width', positionInPixels + 'px')
+            if (event) event.redraw = false
+          },
+        },
+        SplitPanel.Start(
+          { style: { overflow: 'visible' } },
+          sidebar(filterTransactions(transactions, filters)),
+        ),
+        SplitPanel.Divider({ 'aria-label': t('resizeAccounts'), style: { background: '#e6e6e8' } }),
+        SplitPanel.End(
+          { style: { overflow: activeArea() === 'query' ? 'hidden' : 'visible' } },
+          Main(
+            { data: { area: activeArea() } },
+            route({
+              '/': () => transactionsView(visible()),
+              '/transactions': () => transactionsView(visible()),
+              '/transactions/drafts': () => transactionsView(visible()),
+              '/transactions/ledger': () => transactionsView(visible()),
+              '/accounts': placeholder,
+              '/files': placeholder,
+              '/settings': () => import('./settings.js'),
+              '/query': () => import('./query/index.js'),
+            }),
+          ),
+        ),
       ),
       postingReview(),
     )

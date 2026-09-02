@@ -77,6 +77,17 @@ focus it and use Up/Down, to resize them. The Query page fits the window; the ed
 and grid scroll internally. Split positions survive route navigation, but reset on reload. Resizing
 does not recreate the editor or grid.
 
+Run and Save live in the query toolbar. **Edit** offers SQL focus, rename, new, delete, and an
+**Example queries** submenu. Loading an example preserves unsaved SQL unless you confirm
+replacement.
+
+**Ask AI** demonstrates a future question-to-SQL workflow in a Sinewy Dialog: enter a question or
+choose a suggestion, generate a preview, then explicitly insert it. This is a local, template-based
+simulation with a short progress state, not an AI service. English/Danish expense, income, balance,
+and document topics are recognized; unsupported topics show a disclosed generic fallback. Nothing is
+sent to an external service. Unsaved edits are protected, insertion never runs or saves SQL, and
+closing the dialog or changing the prompt cancels pending generation.
+
 **SQL is not executed.** The first recognized `FROM` view selects the fixture; projections,
 conditions, joins, ordering, and aggregation in SQL are ignored. Unknown queries fall back to ledger
 entries. Samples are independent of edits on the Transactions page. Numeric/date display uses the

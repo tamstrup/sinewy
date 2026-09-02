@@ -161,6 +161,108 @@ t`query workspace`(
       })
     )
   ),
+  t`toolbar editing actions and examples submenu preserve focus and unsaved SQL`(() =>
+    fixture(async (host) => {
+      await menuAction(host, 'Rename query')
+      t.is(host.querySelector('[aria-label="Query name"]'), document.activeElement)
+      await menuAction(host, 'Edit SQL')
+      t.is(host.querySelector('.cm-content'), document.activeElement)
+      button(host, 'Edit').click()
+      await settle()
+      menuItem(host, 'Example queries').click()
+      await settle()
+      menuItem(host, 'Account balances').click()
+      await settle()
+      t.is(true, editor(host).state.doc.toString().includes('from accounts'))
+      button(host, 'Edit').click()
+      await settle()
+      menuItem(host, 'Example queries').click()
+      await settle()
+      menuItem(host, 'All transactions').click()
+      await settle()
+      button(host.querySelector('dialog[open]'), 'Cancel').click()
+      await settle()
+      return [true, editor(host).state.doc.toString().includes('from accounts')]
+    })
+  ),
+  t`AI demo previews SQL before insertion and does not execute automatically`(() =>
+    fixture(async (host) => {
+      button(host, 'Ask AI').click()
+      await settle()
+      const dialog = host.querySelector('#query-ai-content')
+      const prompt = dialog.querySelector('textarea')
+      t.is(prompt, document.activeElement)
+      t.is(true, dialog.textContent.includes('No AI service is connected'))
+      input(prompt, 'Expenses by month in 2027')
+      await settle()
+      prompt.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          ctrlKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      )
+      await settle()
+      t.is(true, dialog.textContent.includes('Drafting a query'))
+      t.is('false', host.querySelector('[data-query-grid]').getAttribute('aria-busy'))
+      await until(() => dialog.querySelector('pre'))
+      t.is('', editor(host).state.doc.toString())
+      t.is(true, dialog.querySelector('pre').textContent.includes('2027-01-01'))
+      button(dialog, 'Insert query').click()
+      await settle()
+      t.is(false, dialog.open)
+      t.is(true, editor(host).state.doc.toString().includes('group by month, commodity'))
+      return [0, host.querySelectorAll('.ag-row').length]
+    })
+  ),
+  t`AI insertion protects unsaved changes and cancellation leaves the editor untouched`(() =>
+    fixture(async (host) => {
+      setSql(host, 'select 42 as original;')
+      await settle()
+      button(host, 'Ask AI').click()
+      await settle()
+      const dialog = host.querySelector('#query-ai-content')
+      button(dialog, 'Show account balances').click()
+      await settle()
+      button(dialog, 'Generate SQL').click()
+      await until(() => dialog.querySelector('pre'))
+      button(dialog, 'Insert query').click()
+      await settle()
+      const confirmation = host.querySelector('dialog[open][role="alertdialog"]')
+      t.is(true, !!confirmation)
+      button(confirmation, 'Cancel').click()
+      await settle()
+      t.is('select 42 as original;', editor(host).state.doc.toString())
+      button(host, 'Ask AI').click()
+      await settle()
+      button(dialog, 'Insert query').click()
+      await settle()
+      button(host.querySelector('dialog[open][role="alertdialog"]'), 'Discard changes').click()
+      await settle()
+      return [true, editor(host).state.doc.toString().includes('from accounts')]
+    })
+  ),
+  t`closing AI cancels pending generation and restores trigger focus`(() =>
+    fixture(async (host) => {
+      button(host, 'Ask AI').focus()
+      button(host, 'Ask AI').click()
+      await settle()
+      const dialog = host.querySelector('#query-ai-content')
+      button(dialog, 'Income by month in 2026').click()
+      await settle()
+      button(dialog, 'Generate SQL').click()
+      await settle()
+      button(dialog, 'Cancel').click()
+      await settle()
+      t.is(button(host, 'Ask AI'), document.activeElement)
+      await new Promise((resolve) => setTimeout(resolve, 950))
+      button(host, 'Ask AI').click()
+      await settle()
+      t.is(null, dialog.querySelector('pre'))
+      return ['', editor(host).state.doc.toString()]
+    })
+  ),
   t`save, rename, load, and delete preserve SQL and use Sinewy confirmations`(() =>
     fixture(async (host) => {
       setSql(host, 'SELECT * FROM accounts;')
@@ -175,7 +277,7 @@ t`query workspace`(
       await settle()
       t.is(id, JSON.parse(localStorage.getItem(QUERY_STORAGE_KEY))[0].id)
       t.is('Renamed report', JSON.parse(localStorage.getItem(QUERY_STORAGE_KEY))[0].name)
-      button(host, 'New').click()
+      await menuAction(host, 'New')
       await settle()
       t.is('', editor(host).state.doc.toString())
       host.querySelector('button[aria-label="Saved queries…"]').click()
@@ -186,13 +288,13 @@ t`query workspace`(
       option.click()
       await settle()
       t.is('SELECT * FROM accounts;', editor(host).state.doc.toString())
-      button(host, 'Delete').click()
+      await menuAction(host, 'Delete')
       await settle()
       t.is(true, !!host.querySelector('dialog[open][role="alertdialog"]'))
       button(host.querySelector('dialog[open]'), 'Cancel').click()
       await settle()
       t.is(1, JSON.parse(localStorage.getItem(QUERY_STORAGE_KEY)).length)
-      button(host, 'Delete').click()
+      await menuAction(host, 'Delete')
       await settle()
       button(host.querySelector('dialog[open]'), 'Delete').click()
       await settle()
@@ -283,7 +385,7 @@ t`query workspace`(
       setSql(host, 'SELECT * FROM transactions;')
       input(host.querySelector('[aria-label="Query name"]'), 'Unfinished')
       await settle()
-      button(host, 'New').click()
+      await menuAction(host, 'New')
       await settle()
       button(host.querySelector('dialog[open]'), 'Cancel').click()
       await settle()
@@ -293,7 +395,7 @@ t`query workspace`(
       await until(() => host.querySelector('.cm-content') && host.querySelector('.ag-root'))
       t.is('SELECT * FROM transactions;', editor(host).state.doc.toString())
       t.is('Unfinished', host.querySelector('[aria-label="Query name"]').value)
-      button(host, 'New').click()
+      await menuAction(host, 'New')
       await settle()
       button(host.querySelector('dialog[open]'), 'Discard changes').click()
       await settle()
@@ -329,7 +431,18 @@ t`query workspace`(
 )
 
 function button(host, name) {
-  return [...host.querySelectorAll('button')].find((x) => x.textContent === name)
+  return [...host.querySelectorAll('button')].find((x) =>
+    x.textContent === name || x.getAttribute('aria-label') === name
+  )
+}
+function menuItem(host, name) {
+  return [...host.querySelectorAll('[role="menuitem"]')].find((x) => x.textContent === name)
+}
+async function menuAction(host, name) {
+  button(host, 'Edit').click()
+  await settle()
+  menuItem(host, name).click()
+  await settle()
 }
 function check(value, message) {
   if (!value) throw new Error(message)

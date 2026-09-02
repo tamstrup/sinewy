@@ -1,5 +1,6 @@
 import s from 'sin'
-import { AlertDialog, Button, CustomSelect, SplitPanel } from 'sinewy/theme'
+import Dropdown, { AlertDialog, Button, CustomSelect, Dialog, SplitPanel } from 'sinewy/theme'
+import { mockAiQuery } from './mock-ai.js'
 import {
   createQueryWorkspace,
   examples,
@@ -55,6 +56,51 @@ const Name = s`input
   font-size 12
   color #35353d
   &:focus { outline 2px solid #afa7ee; outline-offset 1 }
+`
+const Actionbar = s`div
+  display flex
+  align-items center
+  flex-wrap wrap
+  gap 6
+  padding 8px 0
+  border-top 1px solid #e6e6eb
+  border-bottom 1px solid #e6e6eb
+  flex-shrink 0
+`
+const Hint = s`span
+  color #93939c
+  font-size 10
+  margin 0 8px
+`
+const Prompt = s`textarea
+  display block
+  width 100%
+  min-height 110
+  max-height 210
+  resize vertical
+  margin 8px 0 12px
+  padding 12
+  border 1px solid #d9d5e9
+  border-radius 8
+  background #fcfbff
+  color #35313f
+  font inherit
+  font-size 14
+  line-height 1.6
+  &:focus { outline 2px solid #afa7ee; outline-offset 1px }
+`
+const SqlPreview = s`pre
+  max-height 230
+  overflow auto
+  margin 10px 0 16px
+  padding 14
+  border 1px solid #e4e0ef
+  border-radius 8
+  background #f7f5fc
+  color #51417b
+  font-size 12
+  line-height 1.7
+  white-space pre
 `
 const EditorLayout = s`div
   flex 1
@@ -145,9 +191,10 @@ export default s((_attrs, _children, context) => {
   const { t } = i18n
   const workspace = context.entx.query ||= createQueryWorkspace()
   let saved = []
-  let editor, grid, editorElement, gridElement
+  let editor, grid, editorElement, gridElement, nameElement
   let runtimeReady = false, disposed = false, busy = false, timer
   let error = '', notice = '', storageFailed = false, confirmation = null
+  let aiOpen = false, aiPrompt = '', aiBusy = false, aiResult = null, aiTimer
   let resultSql = workspace.lastSql
   const dirty = () =>
     workspace.name !== workspace.baseline.name || workspace.sql !== workspace.baseline.sql
@@ -156,6 +203,7 @@ export default s((_attrs, _children, context) => {
   context.onremove(() => {
     disposed = true
     clearTimeout(timer)
+    clearTimeout(aiTimer)
     if (grid) workspace.gridState = grid.getState()
     editor?.destroy()
     grid?.destroy()
@@ -276,6 +324,133 @@ export default s((_attrs, _children, context) => {
     redraw()
   }
 
+  function applySql(sql, message = '') {
+    const apply = () => {
+      editor?.setValue(sql)
+      notice = message
+      editor?.focus()
+      redraw()
+    }
+    if (dirty()) confirmation = { kind: 'discard', action: apply }
+    else apply()
+    redraw()
+  }
+
+  function changePrompt(value) {
+    clearTimeout(aiTimer)
+    aiBusy = false
+    aiResult = null
+    aiPrompt = value
+  }
+
+  function generateSql() {
+    if (aiBusy || !aiPrompt.trim()) return
+    const prompt = aiPrompt
+    aiResult = null
+    aiBusy = true
+    aiTimer = setTimeout(() => {
+      if (disposed || !aiOpen) return
+      aiResult = mockAiQuery(prompt)
+      aiBusy = false
+      redraw()
+    }, 850)
+    redraw()
+  }
+
+  function aiDialog() {
+    return Dialog(
+      {
+        id: 'query-ai',
+        open: aiOpen,
+        onopenchange: (open) => {
+          aiOpen = open
+          if (!open) {
+            clearTimeout(aiTimer)
+            aiBusy = false
+          }
+        },
+      },
+      Dialog.Trigger(
+        {
+          'aria-label': t('queryAi'),
+          size: '1',
+          variant: 'soft',
+          color: 'indigo',
+          disabled: !editor,
+          style: { marginLeft: 'auto' },
+        },
+        s`span`({ 'aria-hidden': 'true' }, '✦'),
+        t('queryAi'),
+      ),
+      Dialog.Content(
+        { size: '2', style: { width: '620px', maxWidth: 'calc(100vw - 32px)' } },
+        Badge(t('queryAiBadge')),
+        Dialog.Title(t('queryAiTitle')),
+        Dialog.Description(t('queryAiDescription')),
+        s`label`(
+          { for: 'query-ai-prompt', style: { fontSize: '12px', fontWeight: '600' } },
+          t('queryAiPrompt'),
+        ),
+        Prompt({
+          id: 'query-ai-prompt',
+          autofocus: true,
+          maxLength: 2000,
+          value: aiPrompt,
+          placeholder: t('queryAiPlaceholder'),
+          oninput: (event) => changePrompt(event.target.value),
+          onkeydown: (event) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+              event.preventDefault()
+              event.stopPropagation()
+              generateSql()
+            }
+          },
+        }),
+        Toolbar(['queryAiExpenses', 'queryAiIncome', 'queryAiAccounts'].map((key) =>
+          Button({
+            size: '1',
+            variant: 'soft',
+            color: 'gray',
+            onclick: () => changePrompt(t(key)),
+          }, t(key))
+        )),
+        s`p`({ style: { fontSize: '11px', marginBottom: '16px' } }, t('queryAiDisclaimer')),
+        s`div`(
+          { role: 'status', 'aria-live': 'polite', style: { fontSize: '12px', color: '#756c8f' } },
+          aiBusy
+            ? [Busy({ 'aria-hidden': 'true' }), ' ', t('queryAiGenerating')]
+            : aiResult
+            ? t(aiResult.topic === 'fallback' ? 'queryAiFallback' : 'queryAiReady')
+            : '',
+        ),
+        aiResult && SqlPreview({ 'aria-label': t('queryAiReady') }, s`code`(aiResult.sql)),
+        Toolbar(
+          { style: { justifyContent: 'flex-end', marginTop: '16px', marginBottom: '0' } },
+          Dialog.Close({ size: '1' }, t('cancel')),
+          Button({
+            size: '1',
+            variant: 'soft',
+            color: 'indigo',
+            disabled: aiBusy || !aiPrompt.trim(),
+            onclick: generateSql,
+          }, t('queryAiGenerate')),
+          Button({
+            size: '1',
+            variant: 'solid',
+            color: 'indigo',
+            disabled: !aiResult || !editor || aiBusy,
+            onclick: () => {
+              const sql = aiResult.sql
+              aiOpen = false
+              redraw()
+              applySql(sql, 'queryAiInserted')
+            },
+          }, t('queryAiInsert')),
+        ),
+      ),
+    )
+  }
+
   const action = (attrs, text) =>
     Button({ size: '1', color: 'gray', variant: 'outline', ...attrs }, text)
   return () =>
@@ -321,17 +496,77 @@ export default s((_attrs, _children, context) => {
           placeholder: t('queryName'),
           maxLength: 80,
           value: workspace.name,
+          dom: (element) => {
+            nameElement = element
+          },
           oninput: (event) => {
             workspace.name = event.target.value
             notice = ''
           },
         }),
-        action({ onclick: () => choose(null) }, t('queryNew')),
+      ),
+      Actionbar(
+        { role: 'group', 'aria-label': t('queryActions') },
+        Button(
+          {
+            size: '1',
+            color: 'gray',
+            variant: 'solid',
+            highContrast: true,
+            disabled: busy || !grid || !workspace.sql.trim(),
+            onclick: run,
+          },
+          busy && Busy({ 'aria-hidden': 'true' }),
+          t(busy ? 'queryRunning' : 'queryRun'),
+        ),
+        Hint('⌘ / Ctrl ↵'),
         action({ onclick: save, disabled: !workspace.sql.trim() || storageFailed }, t('querySave')),
-        action({
-          disabled: !workspace.id || storageFailed,
-          onclick: () => confirmation = { kind: 'delete', action: deleteSaved },
-        }, t('queryDelete')),
+        Dropdown(
+          Dropdown.Trigger(
+            { size: '1', variant: 'ghost', color: 'gray' },
+            t('queryEdit'),
+            Dropdown.TriggerIcon(),
+          ),
+          Dropdown.Content(
+            { size: '1', color: 'gray', align: 'start' },
+            Dropdown.Item(
+              { disabled: !editor, onselect: () => editor?.focus() },
+              t('queryEditSql'),
+            ),
+            Dropdown.Item({
+              onselect: () => {
+                nameElement?.focus()
+                nameElement?.select()
+              },
+            }, t('queryRename')),
+            Dropdown.Item({ onselect: () => choose(null) }, t('queryNew')),
+            Dropdown.Separator(),
+            Dropdown.Sub(
+              Dropdown.SubTrigger(t('queryExamples')),
+              Dropdown.SubContent(
+                Object.entries({
+                  ledger_entries: 'queryExampleLedger',
+                  transactions: 'queryExampleTransactions',
+                  accounts: 'queryExampleAccounts',
+                  documents: 'queryExampleDocuments',
+                }).map(([table, label]) =>
+                  Dropdown.Item(
+                    { disabled: !editor, onselect: () => applySql(examples[table]) },
+                    t(label),
+                  )
+                ),
+              ),
+            ),
+            Dropdown.Separator(),
+            Dropdown.Item({
+              color: 'red',
+              disabled: !workspace.id || storageFailed,
+              onselect: () => confirmation = { kind: 'delete', action: deleteSaved },
+            }, t('queryDelete')),
+          ),
+        ),
+        dirty() && Hint(t('queryUnsaved')),
+        aiDialog(),
       ),
       Status(
         { role: error ? 'alert' : 'status', data: { error: !!error } },
@@ -376,54 +611,9 @@ export default s((_attrs, _children, context) => {
                   { key: table },
                   s`summary`(table),
                   fields.map((field) => s`code`(field)),
-                  Button({
-                    size: '1',
-                    color: 'gray',
-                    variant: 'ghost',
-                    onclick: () => {
-                      const apply = () => {
-                        editor?.setValue(examples[table])
-                        editor?.focus()
-                        redraw()
-                      }
-                      if (dirty()) confirmation = { kind: 'discard', action: apply }
-                      else apply()
-                    },
-                  }, t('queryUseExample')),
                 )
               ),
             ),
-          ),
-          Toolbar(
-            { style: { marginBottom: '0' } },
-            Button(
-              {
-                size: '1',
-                color: 'gray',
-                variant: 'solid',
-                highContrast: true,
-                disabled: busy || !grid || !workspace.sql.trim(),
-                onclick: run,
-              },
-              busy && Busy({ 'aria-hidden': 'true' }),
-              t(busy ? 'queryRunning' : 'queryRun'),
-            ),
-            s`span
-          color #93939c
-          font-size 11
-        `('⌘ / Ctrl ↵'),
-            !workspace.sql &&
-              Button({
-                size: '1',
-                color: 'indigo',
-                variant: 'ghost',
-                disabled: !editor,
-                onclick: () => editor?.setValue(examples.ledger_entries),
-              }, t('queryStartExample')),
-            dirty() && s`span
-          color #9b8d67
-          font-size 11
-        `(t('queryUnsaved')),
           ),
         ),
         SplitPanel.Divider({

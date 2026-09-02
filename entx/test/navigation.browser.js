@@ -129,6 +129,124 @@ t`transaction workspace`(
   ),
 )
 
+t`selection scrolling`(
+  ...[['j', 'k'], ['ArrowDown', 'ArrowUp']].map(([down, up]) =>
+    t`${down}/${up} keeps selected rows visible below the sticky topbar`(() =>
+      scrollingFixture(async (host) => {
+        const panel = host.querySelector('[role="tabpanel"]')
+        const rows = [...host.querySelectorAll('article')]
+        const scrollLeft = host.scrollLeft
+        panel.focus({ preventScroll: true })
+        for (let index = 1; index < rows.length; index++) {
+          key(panel, down)
+          await settle()
+          t.is('true', rows[index].dataset.selected)
+          assertVisible(host, rows[index])
+          t.is(panel, document.activeElement)
+        }
+        t.is(true, host.scrollTop > 0)
+        for (let index = rows.length - 2; index >= 0; index--) {
+          key(panel, up)
+          await settle()
+          t.is('true', rows[index].dataset.selected)
+          assertVisible(host, rows[index])
+        }
+        return [scrollLeft, host.scrollLeft]
+      })
+    )
+  ),
+  t`a visible selection does not jump or steal focus`(() =>
+    scrollingFixture(async (host) => {
+      for (
+        const toggle of host.querySelectorAll('article button[aria-label="Collapse transaction"]')
+      ) {
+        toggle.click()
+      }
+      await settle()
+      const panel = host.querySelector('[role="tabpanel"]')
+      panel.focus({ preventScroll: true })
+      const before = host.scrollTop
+      key(panel, 'j')
+      await settle()
+      t.is(before, host.scrollTop)
+      key(panel, 'k')
+      await settle()
+      t.is(before, host.scrollTop)
+      key(panel, 'k')
+      await settle()
+      return [panel, document.activeElement]
+    })
+  ),
+  t`rapid repeats scroll only the final selection, after its selected attribute is rendered`(() =>
+    scrollingFixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      const rows = [...host.querySelectorAll('article')]
+      const calls = []
+      for (const row of rows) {
+        const scroll = row.scrollIntoView
+        row.scrollIntoView = function (options) {
+          calls.push([this.dataset.transactionId, this.dataset.selected])
+          return scroll.call(this, options)
+        }
+      }
+      for (let count = 0; count < 12; count++) key(panel, 'j')
+      await settle()
+      t.is(1, calls.length)
+      t.is(rows.at(-1).dataset.transactionId, calls[0][0])
+      t.is('true', calls[0][1])
+      assertVisible(host, rows.at(-1))
+      const before = host.scrollTop
+      key(panel, 'j')
+      await settle()
+      return [before, host.scrollTop]
+    })
+  ),
+  t`a pending selection scroll is ignored after leaving the transaction workspace`(() =>
+    scrollingFixture(async (host) => {
+      let calls = 0
+      for (const row of host.querySelectorAll('article')) row.scrollIntoView = () => calls++
+      key(host.querySelector('[role="tabpanel"]'), 'j')
+      host.querySelector('a[href="/accounts"]').click()
+      await settle()
+      return [0, calls]
+    })
+  ),
+  t`an oversized expanded transaction reveals its header`(() =>
+    scrollingFixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      const rows = [...host.querySelectorAll('article')]
+      // Exercise the geometry of a long posting without changing the sample ledger data.
+      rows[1].style.minHeight = `${host.clientHeight * 2}px`
+      for (let count = 0; count < 3; count++) key(panel, 'j')
+      await settle()
+      key(panel, 'k')
+      key(panel, 'k')
+      await settle()
+      t.is('true', rows[1].dataset.selected)
+      assertVisible(host, rows[1].querySelector('header'))
+      return [true, rows[1].getBoundingClientRect().height > host.clientHeight]
+    })
+  ),
+)
+
+function scrollingFixture(run) {
+  return fixture(async (host) => {
+    // An isolated viewport keeps scrolling deterministic without disturbing the runner's app.
+    host.style.cssText = 'position:fixed;inset:0;overflow:auto;z-index:1000'
+    host.querySelector('#tab-ledger').click()
+    await settle()
+    return run(host)
+  })
+}
+
+function assertVisible(host, element) {
+  const rect = element.getBoundingClientRect()
+  const topbar = host.firstElementChild.querySelector(':scope > header').getBoundingClientRect()
+  const viewport = host.getBoundingClientRect()
+  t.is(true, rect.top >= topbar.bottom + 11)
+  t.is(true, rect.bottom <= viewport.bottom - 11)
+}
+
 t`localization`(
   t`first visit defaults to Danish and new draft focus is language independent`(() =>
     fixture(async (host) => {

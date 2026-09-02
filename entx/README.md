@@ -15,7 +15,9 @@ will be decided later.
 - Cmd/Ctrl+Enter reviews the checked drafts in the current view before posting.
 - `F` toggles the filter pane.
 - `/` opens the filters and focuses text search.
-- `J`/`K` or arrow keys move the selected transaction.
+- `J`/`K` or arrow keys move the selected transaction and scroll it into view with minimal movement,
+  keeping clear of the sticky top bar. Oversized transactions reveal their header. Scrolling waits
+  for Sin's redraw promise; rapid key repeats use only the latest selection, without moving focus.
 - `Enter` collapses or expands the selected transaction.
 
 ## Transaction workflow

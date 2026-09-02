@@ -586,6 +586,8 @@ const Ledger = s`section
 
 const Transaction = s`article
   position relative
+  scroll-margin-top 64
+  scroll-margin-bottom 12
   border-bottom 1px solid #ededee
   background white
 
@@ -596,6 +598,8 @@ const Transaction = s`article
 
 const TransactionHeader = s`header
   min-height 46
+  scroll-margin-top 64
+  scroll-margin-bottom 12
   display grid
   grid-template-columns 45px 118px minmax(0, 1fr) auto auto
   align-items center
@@ -866,6 +870,7 @@ const App = s((_attrs, _children, context) => {
   let postedNotice = false
   let goPressedAt = 0
   let selectedId = transactions[0].id
+  let selectionScrollRequest = 0
   let filters = { year: '', month: '', day: '', account: '', text: '' }
   let nextId = 2000
 
@@ -978,6 +983,25 @@ const App = s((_attrs, _children, context) => {
     const current = rows.findIndex(({ id }) => id === selectedId)
     const next = current < 0 ? 0 : Math.min(rows.length - 1, Math.max(0, current + direction))
     selectedId = rows[next].id
+    const id = selectedId
+    const tab = activeTab()
+    const request = ++selectionScrollRequest
+    // Sin resolves this shared promise after the batched DOM update, including dom hooks.
+    s.redraw().then(() => {
+      if (
+        request !== selectionScrollRequest || selectedId !== id ||
+        activeArea() !== 'transactions' || activeTab() !== tab
+      ) return
+      const row = shell?.querySelector('article[data-selected="true"]')
+      if (!row) return
+      // A tall expanded transaction cannot fit: keep its identifying header visible instead.
+      // Allow 52px for the sticky topbar and 12px breathing room on either edge.
+      const availableHeight = row.ownerDocument.defaultView.innerHeight - 76
+      const target = row.getBoundingClientRect().height > availableHeight
+        ? row.querySelector('header')
+        : row
+      target?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
+    })
   }
 
   const onkeydown = (event) => {
@@ -1036,11 +1060,9 @@ const App = s((_attrs, _children, context) => {
     } else if (event.key === 'j' || event.key === 'ArrowDown') {
       event.preventDefault()
       moveSelection(1)
-      s.redraw()
     } else if (event.key === 'k' || event.key === 'ArrowUp') {
       event.preventDefault()
       moveSelection(-1)
-      s.redraw()
     } else if (event.key === 'Enter' && selectedId) {
       event.preventDefault()
       collapsed.has(selectedId) ? collapsed.delete(selectedId) : collapsed.add(selectedId)

@@ -565,6 +565,44 @@ function assertVisible(host, element) {
 }
 
 t`localization`(
+  t`settings use Sinewy native selects with matching chevron and text insets`(() =>
+    fixture(async (host) => {
+      host.querySelector('a[href="/settings"]').click()
+      await until(() => host.querySelector('[data-preference="language"]'))
+      const selects = host.querySelectorAll('select[data-preference]')
+      t.is(3, selects.length)
+      for (const select of selects) {
+        const style = getComputedStyle(select)
+        t.is('1', select.dataset.size)
+        t.is('true', select.dataset.entxSelect)
+        t.is('none', style.appearance)
+        t.is('10px', style.paddingInlineStart)
+        t.is(`calc(100% - ${style.paddingInlineStart})`, style.backgroundPositionX)
+        t.is('32px', style.paddingInlineEnd)
+        t.is(true, style.backgroundImage.includes('data:image/svg+xml,'))
+      }
+      return ['DKK', selects[2].value]
+    })
+  ),
+  t`account suggestions retain typed new accounts and accept keyboard selections`(() =>
+    fixture(async (host) => {
+      const account = host.querySelector('input[aria-label="Account"]')
+      t.is('combobox', account.getAttribute('role'))
+      account.focus()
+      input(account, 'Expenses:New category')
+      await settle()
+      host.querySelector('[data-description]').focus()
+      await settle()
+      t.is('Expenses:New category', account.value)
+      account.focus()
+      input(account, 'Assets:Bank')
+      await settle()
+      key(account, 'ArrowDown')
+      key(account, 'Enter')
+      await settle()
+      return ['Assets:Bank', account.value]
+    })
+  ),
   t`first visit defaults to Danish and new draft focus is language independent`(() =>
     fixture(async (host) => {
       t.is('da', document.documentElement.lang)

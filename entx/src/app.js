@@ -1,5 +1,7 @@
 import s from 'sin'
 import Dropdown, { AlertDialog } from 'sinewy/theme'
+import { ButtonBase, Checkbox, DraftSwitch, Select } from './controls.js'
+import AccountPicker from './account-picker.js'
 import { createI18n } from './i18n/index.js'
 import { formatAmount as displayAmount, parseAmount } from './i18n/format.js'
 import {
@@ -83,7 +85,7 @@ const TopbarStart = s`div
   padding 0 18
 `
 
-const SidebarToggle = s`button
+const SidebarToggle = ButtonBase`
   width 28
   height 28
   display inline-grid
@@ -99,7 +101,7 @@ const SidebarToggle = s`button
   &:focus-visible { outline 2px solid #968eeb; outline-offset 2 }
 `
 
-const Brand = s`button
+const Brand = ButtonBase`
   height 100%
   display flex
   align-items center
@@ -240,40 +242,6 @@ const IncludeToggle = s`label
   font-size 10
   cursor pointer
 
-  input {
-    position absolute
-    width 1
-    height 1
-    overflow hidden
-    opacity 0
-  }
-
-  span {
-    position relative
-    width 26
-    height 15
-    flex none
-    border-radius 999
-    background #d7d7db
-    transition background 120ms ease
-  }
-
-  span::after {
-    content ''
-    position absolute
-    top 2
-    left 2
-    width 11
-    height 11
-    border-radius 999
-    background white
-    box-shadow 0 1px 3px rgb(0 0 0 / 0.2)
-    transition transform 120ms ease
-  }
-
-  input:checked + span { background #655bd8 }
-  input:checked + span::after { transform translateX(11px) }
-  input:focus-visible + span { outline 2px solid #968eeb; outline-offset 2px }
 `
 
 const AccountList = s`div
@@ -304,7 +272,7 @@ const AccountBranch = s`div
   gap 2
 `
 
-const AccountToggle = s`button
+const AccountToggle = ButtonBase`
   width 18
   height 18
   flex none
@@ -408,7 +376,7 @@ const Toolbar = s`div
   gap 7
 `
 
-const Button = s`button
+const Button = ButtonBase`
   min-height 32
   display inline-flex
   align-items center
@@ -491,7 +459,7 @@ const FilterChips = s`div
   margin -6px 0 14px
 `
 
-const Chip = s`button
+const Chip = ButtonBase`
   height 24
   display inline-flex
   align-items center
@@ -646,7 +614,7 @@ const TransactionHeader = s`header
   cursor default
 `
 
-const CollapseButton = s`button
+const CollapseButton = ButtonBase`
   width 24
   height 24
   display grid
@@ -775,7 +743,7 @@ const DraftLeg = s`div
   input[data-amount] { text-align right; font-variant-numeric tabular-nums }
 `
 
-const QuietButton = s`button
+const QuietButton = ButtonBase`
   min-height 26
   display inline-flex
   align-items center
@@ -793,7 +761,7 @@ const QuietButton = s`button
   &:hover { background #efeff1; color #39393d }
 `
 
-const RemoveButton = s`button
+const RemoveButton = ButtonBase`
   width 24
   height 24
   display grid
@@ -881,6 +849,14 @@ const App = s((_attrs, _children, context) => {
   const amountEdits = new Map()
   let shell
   let transactions = structuredClone(initialTransactions)
+  const accountNames = () =>
+    [
+      ...new Set(
+        [...initialTransactions, ...transactions].flatMap(({ legs }) =>
+          legs.map(({ account }) => accountLabel(account))
+        ),
+      ),
+    ].filter(Boolean).sort()
   let lastTab = transactions.some(({ status }) => status === 'draft') ? 'drafts' : 'ledger'
   const activeArea = () =>
     route.has('/accounts')
@@ -1186,8 +1162,7 @@ const App = s((_attrs, _children, context) => {
         SidebarTitleRow(
           SidebarTitle(t('liveBalance')),
           TreeToggle(
-            s`input`({
-              type: 'checkbox',
+            Checkbox({
               checked: tree,
               onchange: (event) => tree = event.target.checked,
             }),
@@ -1200,13 +1175,10 @@ const App = s((_attrs, _children, context) => {
           }`,
         ),
         IncludeToggle(
-          s`input`({
-            type: 'checkbox',
-            role: 'switch',
+          DraftSwitch({
             checked: includeDrafts,
             onchange: (event) => includeDrafts = event.target.checked,
           }),
-          s`span`({ 'aria-hidden': 'true' }),
           t('includeDrafts'),
         ),
       ),
@@ -1283,8 +1255,9 @@ const App = s((_attrs, _children, context) => {
     FilterPanel(
       Field(
         t('year'),
-        s`select`(
+        Select(
           {
+            style: { height: '30px', paddingBlock: 0 },
             value: filters.year,
             onchange: (event) => patchFilters({ year: event.target.value, day: '' }),
           },
@@ -1295,8 +1268,9 @@ const App = s((_attrs, _children, context) => {
       ),
       Field(
         t('month'),
-        s`select`(
+        Select(
           {
+            style: { height: '30px', paddingBlock: 0 },
             value: filters.month,
             onchange: (event) => patchFilters({ month: event.target.value, day: '' }),
           },
@@ -1321,10 +1295,12 @@ const App = s((_attrs, _children, context) => {
       ),
       Field(
         t('account'),
-        s`input`({
+        AccountPicker({
           value: filters.account,
+          accounts: accountNames(),
+          label: t('account'),
           placeholder: 'Assets:Bank',
-          oninput: (event) => patchFilters({ account: event.target.value }),
+          onchange: (account) => patchFilters({ account }),
         }),
       ),
       Field(
@@ -1462,10 +1438,11 @@ const App = s((_attrs, _children, context) => {
       transaction.legs.map((leg) =>
         DraftLeg(
           { key: leg.id },
-          s`input`({
+          AccountPicker({
             value: accountLabel(leg.account),
-            'aria-label': t('account'),
-            oninput: (event) => leg.account = parseAccount(event.target.value),
+            accounts: accountNames(),
+            label: t('account'),
+            onchange: (account) => leg.account = parseAccount(account),
           }),
           amountInput(leg),
           s`input`({
@@ -1530,8 +1507,7 @@ const App = s((_attrs, _children, context) => {
       },
       TransactionHeader(
         SelectionCell(
-          isDraft && s`input`({
-            type: 'checkbox',
+          isDraft && Checkbox({
             checked: checkedDrafts.has(transaction.id),
             'aria-label': t('selectDraft', {
               description: transaction.description || t('untitled'),
@@ -1587,7 +1563,7 @@ const App = s((_attrs, _children, context) => {
       transaction.correctionOf && CorrectionNote(
         t('correctionOf'),
         ' ',
-        s`button`({
+        ButtonBase({
           onclick: (event) => {
             event.stopPropagation()
             filters = { year: '', month: '', day: '', account: '', text: '' }
@@ -1693,8 +1669,7 @@ const App = s((_attrs, _children, context) => {
         },
         isDrafts && PostingToolbar(
           s`label`(
-            s`input`({
-              type: 'checkbox',
+            Checkbox({
               checked: visibleTransactions.length > 0 &&
                 selected.length === visibleTransactions.length,
               indeterminate: selected.length > 0 && selected.length < visibleTransactions.length,

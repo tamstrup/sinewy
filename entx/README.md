@@ -1,5 +1,13 @@
 # entx
 
+## Component convention
+
+Use Sinewy first. ENTX-specific controls are appropriate only where Sinewy has no suitable
+component. Thin visual adapters in `src/controls.js` preserve ENTX styling while Sinewy owns button,
+native select, checkbox, and switch behavior. Account suggestions use Sinewy Combobox; transaction
+menus and posting review use Dropdown and AlertDialog. Plain text/date/amount inputs, navigation
+tabs, and the accounting layout remain ENTX-specific. See `AGENTS.md`.
+
 An accounting application built with a Deno backend and a Sin.js frontend using Sinewy.
 
 The current frontend is an interactive product prototype centered on an immutable ledger, with

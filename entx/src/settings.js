@@ -1,4 +1,5 @@
 import s from 'sin'
+import { Select } from './controls.js'
 
 const Page = s`section
   max-width 760
@@ -15,7 +16,7 @@ const Row = s`label
   padding 24 0
   border-bottom 1px solid #e8e8ec
   strong { display block; font-size 13; font-weight 550; margin-bottom 5 }
-  select { width 100%; border 1px solid #dcdce2; border-radius 6; padding 9 10; background white; color #292930; font inherit; font-size 12 }
+  select { border-color #dcdce2; color #292930 }
   select:focus-visible { outline 2px solid #7777b8; outline-offset 3 }
 `
 const Preview = s`section
@@ -40,7 +41,7 @@ export default s((_attrs, _children, context) => {
       s`p`(t('preferencesSubtitle')),
       Row(
         s`span`(s`strong`(t('language')), s`p`(t('languageHelp'))),
-        s`select`(
+        Select(
           {
             'aria-label': t('language'),
             data: { preference: 'language' },
@@ -59,7 +60,7 @@ export default s((_attrs, _children, context) => {
       ),
       Row(
         s`span`(s`strong`(t('regionalFormat')), s`p`(t('regionalHelp'))),
-        s`select`(
+        Select(
           {
             'aria-label': t('regionalFormat'),
             data: { preference: 'locale' },
@@ -78,7 +79,7 @@ export default s((_attrs, _children, context) => {
       ),
       Row(
         s`span`(s`strong`(t('commodity')), s`p`(t('commodityHelp'))),
-        s`select`(
+        Select(
           {
             'aria-label': t('commodity'),
             data: { preference: 'commodity' },

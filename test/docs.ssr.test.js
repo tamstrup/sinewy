@@ -17,6 +17,7 @@ t`documentation ssr`(
     t.is(true, result.links.has('/components/checkbox'))
     t.is(true, result.links.has('/components/radio'))
     t.is(true, result.links.has('/components/split-panel'))
+    t.is(true, result.links.has('/components/toast'))
     return [true, result.links.has('/components/combobox')]
   }),
 
@@ -26,6 +27,12 @@ t`documentation ssr`(
     t.is(true, result.html.includes('data-source="docs/components/split-panel.md"'))
     t.is(true, result.html.includes('aria-orientation="horizontal"'))
     return [true, result.html.includes('aria-orientation="vertical"')]
+  }),
+  t`renders toast documentation and an empty live demo viewport`(async() => {
+    const result = await render('/components/toast')
+    t.is('Toast — Sinewy', result.title)
+    t.is(true, result.html.includes('Show toast'))
+    return [true, result.html.includes('data-toast-viewport')]
   }),
 
   t`renders the toggle document and live example`(async() => {

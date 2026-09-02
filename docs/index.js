@@ -1,5 +1,5 @@
 import s from 'sin'
-import { SplitPanel } from '../src/theme.js'
+import { SplitPanel, Toast } from '../src/theme.js'
 import Dropdown, { AlertDialog, Button, Checkbox, Combobox, ContextMenu, CustomSelect, Dialog, NativeSelect, Radio, Select, Switch, Toggle } from '../src/theme.js'
 import documents, { documentsBySlug } from './content.generated.js'
 
@@ -852,6 +852,13 @@ const ComboboxDemoField = s`div
 `
 
 const componentDetails = {
+  toast: {
+    status: 'Preview',
+    tags: ['Status messages', 'Pausable timer', 'Headless + theme'],
+    summary: 'Quiet confirmations with polite announcements, dismissal, and timers that pause during interaction.',
+    preview: ToastPreview,
+    previewHeadings: [{ id: 'live-example', text: 'Live example' }]
+  },
   'split-panel': {
     status: 'Preview',
     tags: ['Resizable layout', 'Pointer + keyboard', 'Headless + theme'],
@@ -1177,6 +1184,24 @@ function SelectPreview() {
     )
   )
 }
+
+function ToastPreview() {
+  return s`section#live-example`(
+    s`h2`('Live example'),
+    s`p`('Send a notification to the bottom corner. Hover or focus it to pause dismissal.'),
+    ToastExample()
+  )
+}
+
+const ToastExample = s(() => {
+  let message = null, id = 0
+  return () => s`div`(
+    Button({ onclick: () => message = { id: ++id } }, 'Show toast'),
+    Toast.Viewport(message && Toast({ key: message.id, onopenchange: open => { if (!open) message = null } },
+      s`span`('Query saved'), Toast.Close()
+    ))
+  )
+})
 
 function SplitPanelPreview() {
   const content = text => s`div padding 20`(text)

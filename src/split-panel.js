@@ -32,6 +32,7 @@ const Handle = s`div
   cursor col-resize
   z-index 1
   outline-offset 2px
+  &[data-pointer-focus]:focus { outline none }
   &[aria-orientation='horizontal'] { cursor row-resize }
   &[aria-disabled='true'] { cursor default }
   &::before {
@@ -155,7 +156,7 @@ function panel(side) {
 SplitPanel.Start = panel('start')
 SplitPanel.End = panel('end')
 SplitPanel.Divider = s(({
-  dom, data, onkeydown, onpointerdown, onpointermove, onpointerup, onpointercancel,
+  dom, data, onkeydown, onblur, onpointerdown, onpointermove, onpointerup, onpointercancel,
   onlostpointercapture, ...attrs
 }, children, context) => {
   const state = useSplit(context)
@@ -173,11 +174,18 @@ SplitPanel.Divider = s(({
     'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': state.percent,
     'aria-disabled': String(config.disabled), data: { ...data, splitDivider: '' },
     dom: [element => { state.divider = element; state.schedule() }, ...array(dom)],
-    onkeydown: handler(onkeydown, event => keyboard(state, event)),
+    onkeydown: handler(onkeydown, event => {
+      state.divider.removeAttribute('data-pointer-focus')
+      keyboard(state, event)
+    }),
+    onblur: handler(onblur, () => state.divider.removeAttribute('data-pointer-focus')),
     onpointerdown: handler(onpointerdown, event => {
       if (state.attrs.disabled || event.button !== 0 || !event.isPrimary) return
       event.preventDefault()
       event.stopPropagation()
+      // Programmatic focus can inherit :focus-visible from a previously focused editor.
+      // Keep keyboard focus available, but suppress its ring for pointer interaction.
+      state.divider.setAttribute('data-pointer-focus', '')
       state.divider.focus({ preventScroll: true })
       measure(state)
       state.pointer = event.pointerId

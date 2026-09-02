@@ -111,6 +111,8 @@ not public configuration. Thin visible dividers can retain a generous invisible 
 Give Divider an `aria-label` matching the primary pane, or `aria-labelledby` referencing its heading.
 It supplies separator semantics, orientation, current/minimum/maximum values, and `aria-controls`.
 Zero-size panes become inert while their content stays mounted. Disabled dividers leave the tab order.
+Pointer dragging focuses the divider without a focus ring, including when focus came from a text
+editor. Keyboard interaction and subsequent keyboard focus retain the visible focus treatment.
 
 | Key | Behavior |
 | --- | --- |

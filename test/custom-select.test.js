@@ -192,6 +192,61 @@ t`custom select`(
     return [true, content.contains(visible)]
   })),
 
+  ...['1', '2', '3'].map(size => t`fits grouped popup rows to their contents at size ${size}`(() => fixture({
+    root: { size, style: { width: '140px' } },
+    items: () => [
+      CustomSelect.Group({ label: 'Fruit' },
+        CustomSelect.Option({ value: 'apple' }, 'Apple'),
+        CustomSelect.Option({ value: 'pear' }, 'Pear'),
+        CustomSelect.Option({ value: 'orange', disabled: true }, 'Orange — unavailable')
+      ),
+      CustomSelect.Group({ label: 'Vegetables' },
+        CustomSelect.Option({ value: 'carrot' }, 'Carrot'),
+        CustomSelect.Option({ value: 'broccoli' }, 'Broccoli')
+      )
+    ]
+  }, async({ trigger, content, options }) => {
+    trigger.click()
+    await settle()
+    // An explicit override prevents Safari's intrinsic UA popover height.
+    t.is('auto', content.style.height)
+    t.is('start', getComputedStyle(content).alignContent)
+    const groups = Array.from(content.querySelectorAll('[role="group"]'))
+    for (const group of groups) {
+      const last = group.querySelector('[role="option"]:last-child')
+      t.is(true, Math.abs(group.getBoundingClientRect().bottom - last.getBoundingClientRect().bottom) < 1)
+    }
+    const padding = parseFloat(getComputedStyle(content).paddingBottom) + parseFloat(getComputedStyle(content).borderBottomWidth)
+    t.is(true, Math.abs(content.getBoundingClientRect().bottom - groups.at(-1).getBoundingClientRect().bottom - padding) < 1)
+    t.is(true, content.getBoundingClientRect().width > trigger.getBoundingClientRect().width)
+    const label = options[2].firstElementChild
+    return [true, label.getBoundingClientRect().height <= parseFloat(getComputedStyle(label).lineHeight) + 1]
+  }))),
+
+  t`keeps naturally wide popups inside the viewport at the right edge`(() => fixture({
+    root: { style: { width: '140px' } },
+    items: () => [CustomSelect.Option({ value: 'express' }, 'Express delivery with tracking')]
+  }, async({ trigger, content, host }) => {
+    host.style.cssText = 'position:fixed;right:8px;top:8px;width:140px'
+    trigger.click()
+    await settle()
+    const popup = content.getBoundingClientRect()
+    t.is(true, popup.width > trigger.getBoundingClientRect().width)
+    t.is(true, popup.left >= 7)
+    return [true, popup.right <= window.innerWidth - 7]
+  })),
+
+  t`caps oversized option labels to the viewport and wraps them`(() => fixture({
+    root: { style: { width: '140px' } },
+    items: () => [CustomSelect.Option({ value: 'long' }, 'Long delivery description '.repeat(50))]
+  }, async({ trigger, content }) => {
+    trigger.click()
+    await settle()
+    const popup = content.getBoundingClientRect()
+    t.is(true, popup.width <= window.innerWidth - 15)
+    return [true, content.scrollWidth <= content.clientWidth + 1]
+  })),
+
   t`tracks changed option labels, removal, and DOM order`(() => {
     let rows = [['a', 'Alpha'], ['b', 'Beta'], ['c', 'Charlie']]
     return fixture({ root: { defaultValue: 'a' }, items: () => rows.map(([value, text]) => CustomSelect.Option({ key: value, value }, text)) }, async({ trigger, proxy, host }) => {

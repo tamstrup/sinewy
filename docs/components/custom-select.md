@@ -9,7 +9,7 @@ description: A consistently themed single-choice control without a search field.
 
 Use this component when consistent picker styling matters. Use [Select or NativeSelect](./select.md) when you want the platform's own picker. The existing `Select` export is unchanged; `NativeSelect` is an explicit alias, not a migration requirement.
 
-The popup uses the Popover API's top layer to escape clipping ancestors, with viewport-aware positioning that flips above the trigger when needed. Target browsers must support the Popover API and ResizeObserver. Custom selection requires JavaScript; choose NativeSelect for a functional no-JavaScript control.
+The popup uses the Popover API's top layer to escape clipping ancestors, with viewport-aware positioning that flips above the trigger when needed. It is at least as wide as the trigger and can grow to fit option labels, capped to the viewport. Groups stay content-sized, including in Safari. Target browsers must support the Popover API and ResizeObserver. Custom selection requires JavaScript; choose NativeSelect for a functional no-JavaScript control.
 
 ## Import
 

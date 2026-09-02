@@ -66,7 +66,7 @@ Combobox({ size: '2', color: 'indigo' },
 
 The themed root accepts `size="1|2|3"`, `color`, and `highContrast`, plus normal root `style` and `data` values. It deliberately has one field treatment rather than the action-oriented `solid`, `soft`, `outline`, and `ghost` variants used by Button.
 
-Unlike the headless root, the themed root renders a positioned wrapper. Its listbox inherits the root's light/dark-aware palette. Both versions place the listbox in the browser's popover top layer, aligned with the control and flipped above it when space below is limited. Resize and scroll keep the list aligned. All themed parts still support normal Sin style extension.
+Unlike the headless root, the themed root renders a positioned wrapper. Its listbox inherits the root's light/dark-aware palette. Both versions place the listbox in the browser's popover top layer, aligned with the control and flipped above it when space below is limited. The list is at least as wide as the control and can grow to fit option labels within the viewport. Resize and scroll keep the list aligned. All themed parts still support normal Sin style extension.
 
 ## Styling
 

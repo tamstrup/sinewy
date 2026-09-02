@@ -168,15 +168,19 @@ const InputSurface = Headless.Input`
 `
 
 const ContentSurface = Headless.Content`
-  width 100%
+  width max-content
+  height auto
   max-height min(280px, calc(100vh - 24px))
   display grid
+  align-content start
+  grid-auto-rows max-content
   position fixed
   inset auto
   margin 0
   gap 2
   padding 5
   overflow auto
+  overflow-wrap anywhere
   border 1px solid $sinewy-neutral-6
   border-radius 10
   background color-mix(in srgb, $sinewy-panel 98%, transparent)
@@ -202,6 +206,7 @@ const ContentSurface = Headless.Content`
 `
 
 const ItemBox = Headless.Item`
+  box-sizing border-box
   width 100%
   min-height 34
   display grid

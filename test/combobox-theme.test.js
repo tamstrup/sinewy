@@ -38,6 +38,17 @@ t`combobox theme`(
     return ['rgb(255, 255, 255)', getComputedStyle(highlighted).color]
   })),
 
+  t`keeps popup height content-sized and width at least the control width`(() => withCombobox({
+    root: { style: { width: '100px' } }
+  }, async({ input, control, content }) => {
+    input.focus()
+    key(input, 'ArrowDown')
+    await settle()
+    t.is('auto', content.style.height)
+    t.is('start', getComputedStyle(content).alignContent)
+    return [true, content.getBoundingClientRect().width >= control.getBoundingClientRect().width]
+  })),
+
   t`keeps filtered themed options visually hidden`(() => withCombobox({}, async({ input, items }) => {
     input.focus()
     input.value = 'income'

@@ -61,18 +61,28 @@ function positionPopup(state) {
   const view = element.ownerDocument.defaultView
   const gutter = 8
   const gap = 6
-  const below = view.innerHeight - rect.bottom - gap - gutter
-  const above = rect.top - gap - gutter
-  const up = below < Math.min(element.scrollHeight, 280) && above > below
-  const available = Math.max(0, up ? above : below)
+  const maxWidth = Math.max(0, view.innerWidth - gutter * 2)
+  // Safari's UA popover height is intrinsic, which stretches fixed grid
+  // popovers (WebKit 270334). Use ordinary content height in every browser.
+  // The trigger is a minimum width, not a cap on readable option labels.
   Object.assign(element.style, {
     position: 'fixed',
     margin: '0',
     inset: 'auto',
     boxSizing: 'border-box',
-    width: Math.min(rect.width, view.innerWidth - gutter * 2) + 'px',
+    height: 'auto',
+    width: 'max-content',
+    minWidth: Math.min(rect.width, maxWidth) + 'px',
+    maxWidth: maxWidth + 'px'
+  })
+  const width = element.getBoundingClientRect().width
+  const below = view.innerHeight - rect.bottom - gap - gutter
+  const above = rect.top - gap - gutter
+  const up = below < Math.min(element.scrollHeight, 280) && above > below
+  const available = Math.max(0, up ? above : below)
+  Object.assign(element.style, {
     maxHeight: Math.min(320, available) + 'px',
-    left: Math.max(gutter, Math.min(rect.left, view.innerWidth - rect.width - gutter)) + 'px',
+    left: Math.max(gutter, Math.min(rect.left, view.innerWidth - width - gutter)) + 'px',
     top: up ? 'auto' : rect.bottom + gap + 'px',
     bottom: up ? view.innerHeight - rect.top + gap + 'px' : 'auto'
   })

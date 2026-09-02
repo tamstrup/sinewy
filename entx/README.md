@@ -107,6 +107,11 @@ SQL, results, and grid layout survive navigation within the app, but not a reloa
 errors are reported without overwriting malformed stored data. There is no database or cross-device
 synchronization.
 
+Save, delete, and AI-insert confirmations use the themed Sinewy Toast without moving the editor or
+grid. The latest confirmation replaces the previous one. Toasts can be dismissed and auto-dismiss
+after five seconds, pausing while hovered, focused, or the window is inactive. Errors remain inline
+until resolved; important failures never depend on a temporary toast. Labels support both languages.
+
 The grid runs in Enterprise evaluation mode. A key found in another project was licensed only for
 that application and is not reused. Supply a valid ENTX license as `window.ENTX_AG_GRID_LICENSE_KEY`
 before the Query page mounts; keep private license configuration out of source control. Production
@@ -175,5 +180,6 @@ npm run build
 deno task test
 deno fmt --check
 deno lint
+npm run test:ssr
 npm run test:browser
 ```

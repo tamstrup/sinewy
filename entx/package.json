@@ -10,6 +10,7 @@
     "prebuild": "npm run prepare:grid",
     "build": "sin generate",
     "pretest:browser": "npm run prepare:grid",
+    "test:ssr": "node --test test/query.ssr.js",
     "test:browser": "sin test test/index.browser.js --headless --ci"
   },
   "dependencies": {

@@ -96,6 +96,58 @@ t`query workspace`(
       return ['SELECT "MixedCase" FROM accounts;', view.state.doc.toString()]
     })
   ),
+  t`saving shows a dismissible toast without moving focus or resizing the workspace`(() =>
+    fixture(async (host) => {
+      host.style.cssText = 'position:fixed;inset:0;width:1280px;height:720px;overflow:hidden'
+      host.firstElementChild.style.height = '720px'
+      await settle()
+      const viewport = host.querySelector('[data-toast-viewport]')
+      t.is('status', viewport.getAttribute('role'))
+      t.is(null, viewport.querySelector('[data-toast]'))
+      setSql(host, 'select * from accounts;')
+      input(host.querySelector('[aria-label="Query name"]'), 'Toast report')
+      await settle()
+      const split = host.querySelector('#query-split')
+      const save = button(host, 'Save')
+      save.focus({ preventScroll: true })
+      const before = split.getBoundingClientRect().toJSON()
+      save.click()
+      await settle()
+      const first = viewport.querySelector('[data-toast]')
+      t.is(true, first.textContent.includes('Query saved'))
+      t.is(save, document.activeElement)
+      t.is(JSON.stringify(before), JSON.stringify(split.getBoundingClientRect().toJSON()))
+      setSql(host, 'select * from transactions;')
+      await settle()
+      t.is(first, viewport.querySelector('[data-toast]'))
+      save.click()
+      await settle()
+      t.is(1, viewport.querySelectorAll('[data-toast]').length)
+      t.is(false, first === viewport.querySelector('[data-toast]'))
+      const close = button(viewport, 'Dismiss notification')
+      close.focus()
+      close.click()
+      await settle()
+      t.is(save, document.activeElement)
+      return [0, viewport.querySelectorAll('[data-toast]').length]
+    })
+  ),
+  t`leaving Query removes its notification without replaying it on return`(() =>
+    fixture(async (host) => {
+      setSql(host, 'select * from accounts;')
+      input(host.querySelector('[aria-label="Query name"]'), 'Temporary notice')
+      await settle()
+      button(host, 'Save').click()
+      await settle()
+      t.is(1, host.querySelectorAll('[data-toast]').length)
+      host.querySelector('a[href="/files"]').click()
+      await settle()
+      t.is(0, host.querySelectorAll('[data-toast-viewport]').length)
+      host.querySelector('a[href="/query"]').click()
+      await until(() => host.querySelector('.cm-content') && host.querySelector('.ag-root'))
+      return [0, host.querySelectorAll('[data-toast]').length]
+    })
+  ),
   t`nested split resizing preserves editor and grid, with internal scrolling only`(() =>
     fixture(async (host) => {
       // Give both panes resizing room independently of Chrome's tiny default test window.
@@ -242,6 +294,10 @@ t`query workspace`(
       button(dialog, 'Insert query').click()
       await settle()
       t.is(false, dialog.open)
+      t.is(
+        true,
+        host.querySelector('[data-toast]').textContent.includes('Demo-generated SQL inserted'),
+      )
       t.is(true, editor(host).state.doc.toString().includes('group by month, commodity'))
       return [0, host.querySelectorAll('.ag-row').length]
     })
@@ -328,6 +384,7 @@ t`query workspace`(
       await settle()
       button(host.querySelector('dialog[open]'), 'Delete').click()
       await settle()
+      t.is(true, host.querySelector('[data-toast]').textContent.includes('Saved query deleted'))
       t.is(0, JSON.parse(localStorage.getItem(QUERY_STORAGE_KEY)).length)
       return ['SELECT * FROM accounts;', editor(host).state.doc.toString()]
     })
@@ -436,6 +493,13 @@ t`query workspace`(
     fixture(async (host) => {
       t.is(true, button(host, 'Save').disabled)
       t.is(true, host.textContent.includes('Existing data was left untouched'))
+      t.is(
+        true,
+        host.querySelector('[role="alert"]').textContent.includes(
+          'Existing data was left untouched',
+        ),
+      )
+      t.is(0, host.querySelectorAll('[data-toast]').length)
       setSql(host, 'select * from documents')
       await settle()
       button(host, 'Run query').click()
@@ -514,12 +578,15 @@ async function fixture(run, savedQueries = null) {
   history.replaceState(null, '', '/query')
   const host = document.createElement('div')
   document.body.append(host)
-  const mounted = s.mount(host, App)
+  let active = true
+  const mounted = s.mount(host, () => active && App())
   try {
     await until(() => host.querySelector('.cm-content') && host.querySelector('.ag-root'))
     return await run(host)
   } finally {
     host.querySelectorAll('dialog[open]').forEach((dialog) => dialog.close())
+    active = false
+    await s.redraw()
     mounted.unmount()
     host.remove()
     history.replaceState(null, '', previousUrl)

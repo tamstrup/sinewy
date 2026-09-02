@@ -1,5 +1,12 @@
 import s from 'sin'
-import Dropdown, { AlertDialog, Button, CustomSelect, Dialog, SplitPanel } from 'sinewy/theme'
+import Dropdown, {
+  AlertDialog,
+  Button,
+  CustomSelect,
+  Dialog,
+  SplitPanel,
+  Toast,
+} from 'sinewy/theme'
 import { mockAiQuery } from './mock-ai.js'
 import {
   createQueryWorkspace,
@@ -199,7 +206,7 @@ export default s((_attrs, _children, context) => {
   let saved = []
   let editor, grid, editorElement, gridElement, nameElement
   let runtimeReady = false, disposed = false, busy = false, timer
-  let error = '', notice = '', storageFailed = false, confirmation = null
+  let error = '', notice = null, noticeId = 0, storageFailed = false, confirmation = null
   let aiOpen = false, aiPrompt = '', aiBusy = false, aiResult = null, aiTimer
   let resultSql = workspace.lastSql
   const dirty = () =>
@@ -227,7 +234,6 @@ export default s((_attrs, _children, context) => {
         hint: t('queryEditorHint'),
         onchange: (value) => {
           workspace.sql = value
-          notice = ''
           redraw()
         },
         onrun: run,
@@ -249,7 +255,6 @@ export default s((_attrs, _children, context) => {
     if (busy || !grid || !workspace.sql.trim()) return
     const sql = workspace.sql
     error = ''
-    notice = ''
     busy = true
     grid.loading(true)
     redraw()
@@ -283,7 +288,6 @@ export default s((_attrs, _children, context) => {
     })
     resultSql = ''
     error = ''
-    notice = ''
     editor?.setValue(workspace.sql)
     grid?.show(null)
     editor?.focus()
@@ -307,7 +311,7 @@ export default s((_attrs, _children, context) => {
       workspace.name = saved.find((q) => q.id === id).name
       workspace.baseline = { name: workspace.name, sql: workspace.sql }
       error = ''
-      notice = 'querySaved'
+      notify('querySaved')
     } catch (cause) {
       error = cause.message.startsWith('query') ? cause.message : 'queryStorageUnavailable'
     }
@@ -322,7 +326,7 @@ export default s((_attrs, _children, context) => {
       // Keep the SQL as an unsaved draft so deletion is recoverable by saving again.
       workspace.id = null
       workspace.baseline = { name: '', sql: '' }
-      notice = 'queryDeleted'
+      notify('queryDeleted')
       error = ''
     } catch {
       error = 'queryStorageUnavailable'
@@ -333,13 +337,17 @@ export default s((_attrs, _children, context) => {
   function applySql(sql, message = '') {
     const apply = () => {
       editor?.setValue(sql)
-      notice = message
+      if (message) notify(message)
       editor?.focus()
       redraw()
     }
     if (dirty()) confirmation = { kind: 'discard', action: apply }
     else apply()
     redraw()
+  }
+
+  function notify(key) {
+    notice = { key, id: ++noticeId }
   }
 
   function changePrompt(value) {
@@ -491,7 +499,7 @@ export default s((_attrs, _children, context) => {
           value: workspace.id,
           size: '1',
           color: 'gray',
-          style: { width: 'clamp(130px, 16vw, 180px)', flexShrink: '0' },
+          style: { width: 'clamp(130px, 16vw, 180px)', flexShrink: '0', whiteSpace: 'nowrap' },
           onvaluechange: (id) => choose(saved.find((q) => q.id === id)),
         }, saved.map((q) => CustomSelect.Option({ key: q.id, value: q.id }, q.name))),
         NameField(
@@ -505,7 +513,6 @@ export default s((_attrs, _children, context) => {
             },
             oninput: (event) => {
               workspace.name = event.target.value
-              notice = ''
             },
           }),
           dirty() &&
@@ -572,10 +579,8 @@ export default s((_attrs, _children, context) => {
         ),
         aiDialog(),
       ),
-      (error || notice) && Status(
-        { role: error ? 'alert' : 'status', data: { error: !!error } },
-        t(error || notice),
-      ),
+      // Keep a real placeholder in SSR too; an empty string has no HTML text node to hydrate.
+      error ? Status({ role: 'alert', data: { error: true } }, t(error)) : null,
       SplitPanel(
         {
           id: 'query-split',
@@ -652,6 +657,23 @@ export default s((_attrs, _children, context) => {
               mountRuntime()
             },
           }),
+        ),
+      ),
+      Toast.Viewport(
+        { 'aria-label': t('notifications') },
+        notice && Toast(
+          {
+            key: notice.id,
+            duration: 5000,
+            onopenchange: (open) => {
+              if (!open) {
+                notice = null
+                redraw()
+              }
+            },
+          },
+          s`span`(t(notice.key)),
+          Toast.Close({ 'aria-label': t('dismissNotification') }),
         ),
       ),
       AlertDialog(

@@ -3,6 +3,8 @@ import { formatNumber } from './format.js'
 const plurals = new Map()
 
 export const en = {
+  notifications: 'Notifications',
+  dismissNotification: 'Dismiss notification',
   resizeAccounts: 'Accounts sidebar',
   resizeQueryEditor: 'SQL editor',
   query: 'Query',
@@ -51,7 +53,7 @@ export const en = {
   queryRun: 'Run query',
   queryRunning: 'Running…',
   queryUnsaved: 'Unsaved changes',
-  querySaved: 'Query saved in this browser.',
+  querySaved: 'Query saved',
   queryDeleted: 'Saved query deleted. The SQL is still here; save it again to restore it.',
   queryMockExplanation:
     'Demo only: SQL is not executed. Results are fixed samples of the first referenced view; columns, filters, joins and expressions are not evaluated.',
@@ -206,6 +208,8 @@ export const en = {
 }
 
 export const da = {
+  notifications: 'Beskeder',
+  dismissNotification: 'Luk besked',
   resizeAccounts: 'Kontosidepanel',
   resizeQueryEditor: 'SQL-editor',
   query: 'Forespørgsler',
@@ -254,7 +258,7 @@ export const da = {
   queryRun: 'Kør forespørgsel',
   queryRunning: 'Kører…',
   queryUnsaved: 'Ikke-gemte ændringer',
-  querySaved: 'Forespørgslen er gemt i denne browser.',
+  querySaved: 'Forespørgsel gemt',
   queryDeleted: 'Den gemte forespørgsel er slettet. SQL-teksten er her stadig og kan gemmes igen.',
   queryMockExplanation:
     'Kun demo: SQL udføres ikke. Resultater er faste eksempler fra den første nævnte visning; kolonner, filtre, joins og udtryk fortolkes ikke.',

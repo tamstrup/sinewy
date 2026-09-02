@@ -1,10 +1,36 @@
 import s from 'sin'
 import t from 'sin/test'
 import App from '../src/app.js'
+import { PREFERENCES_KEY } from '../src/i18n/format.js'
 
 t.timeout = 5000
 
 t`transaction workspace`(
+  ...['drafts', 'ledger'].flatMap((tab) =>
+    ['mouse', 'keyboard'].map((method) =>
+      t`new transaction focuses its description from ${tab} via ${method}`(() =>
+        fixture(async (host) => {
+          if (tab === 'ledger') {
+            host.querySelector('#tab-ledger').click()
+            await settle()
+          }
+          const create = button(host, 'New transaction', true)
+          create.focus()
+          method === 'mouse' ? create.click() : key(create, 'n')
+          await settle()
+
+          const description = [...host.querySelectorAll('[aria-label="Transaction description"]')]
+            .find((element) => element.value === '')
+          t.is(true, !!description)
+          t.is(description, document.activeElement)
+          const rows = host.querySelectorAll('article').length
+          key(description, 'n')
+          await settle()
+          return [rows, host.querySelectorAll('article').length]
+        })
+      )
+    )
+  ),
   t`tabs separate the lifecycle without changing live balances`(() =>
     fixture(async (host) => {
       const balances = host.querySelector('aside').textContent
@@ -103,10 +129,170 @@ t`transaction workspace`(
   ),
 )
 
-async function fixture(run) {
+t`localization`(
+  t`first visit defaults to Danish and new draft focus is language independent`(() =>
+    fixture(async (host) => {
+      t.is('da', document.documentElement.lang)
+      t.is('Kassekladde1', host.querySelector('#tab-drafts').textContent)
+      for (const method of ['mouse', 'keyboard']) {
+        const create = button(host, 'Ny transaktion', true)
+        create.focus()
+        method === 'mouse' ? create.click() : key(create, 'n')
+        await settle()
+        t.is(true, document.activeElement.matches('[data-description]'))
+        t.is('', document.activeElement.value)
+      }
+      return [3, host.querySelectorAll('article').length]
+    }, null)
+  ),
+  t`settings loads directly through the lazy route and restores saved preferences`(() =>
+    fixture(
+      async (host) => {
+        await until(() => host.querySelector('[data-preference="language"]'))
+        t.is('/settings', location.pathname)
+        t.is('en', host.querySelector('[data-preference="language"]').value)
+        t.is('da-DK', host.querySelector('[data-preference="locale"]').value)
+        return [true, host.textContent.includes('1.234,56 EUR')]
+      },
+      { language: 'en', locale: 'da-DK', commodity: 'EUR' },
+      '/settings',
+    )
+  ),
+  t`switching language and region preserves draft data, filters, selection and balances`(() =>
+    fixture(async (host) => {
+      const row = host.querySelector('article')
+      input(row.querySelector('[data-description]'), 'Kaffe med Ægir')
+      input(row.querySelectorAll('[data-amount]')[0], '-1234.56')
+      input(row.querySelectorAll('[data-amount]')[1], '1234.56')
+      row.querySelector('input[type="checkbox"]').click()
+      host.querySelector('[role="switch"]').click()
+      button(host, 'Filter', true).click()
+      await settle()
+      input(host.querySelector('[data-filter-text]'), 'Ægir')
+      await settle()
+      host.querySelector('a[href="/settings"]').click()
+      await until(() => host.querySelector('[data-preference="language"]'))
+      change(host.querySelector('[data-preference="language"]'), 'da')
+      await settle()
+      t.is('da', document.documentElement.lang)
+      t.is(true, host.textContent.includes('1,234.56 DKK'))
+      change(host.querySelector('[data-preference="locale"]'), 'da-DK')
+      await settle()
+      t.is(true, host.textContent.includes('1.234,56 DKK'))
+      host.querySelector('nav a[href="/transactions/drafts"]').click()
+      await settle()
+      const restored = host.querySelector('article')
+      t.is('Kaffe med Ægir', restored.querySelector('[data-description]').value)
+      t.is('-1.234,56', restored.querySelectorAll('[data-amount]')[0].value)
+      t.is('1.234,56', restored.querySelectorAll('[data-amount]')[1].value)
+      t.is('Assets:Bank', restored.querySelector('[aria-label="Konto"]').value)
+      t.is(true, restored.querySelector('input[type="checkbox"]').checked)
+      t.is('Ægir', host.querySelector('[data-filter-text]').value)
+      t.is(true, host.querySelector('[role="switch"]').checked)
+      t.is(false, button(host, 'Bogfør valgte').disabled)
+      t.is(true, host.querySelector('aside').textContent.includes('1.234,56'))
+      return ['da', JSON.parse(localStorage.getItem(PREFERENCES_KEY)).language]
+    })
+  ),
+  t`unfinished Danish amount keeps its text and parser locale across settings navigation`(() =>
+    fixture(async (host) => {
+      const amount = host.querySelectorAll('[data-amount]')[1]
+      amount.focus()
+      input(amount, '123,')
+      await settle()
+      t.is('123,', amount.value)
+      t.is('true', amount.getAttribute('aria-invalid'))
+      t.is(true, button(host.querySelector('article'), 'Bogfør').disabled)
+      host.querySelector('a[href="/settings"]').click()
+      await until(() => host.querySelector('[data-preference="locale"]'))
+      change(host.querySelector('[data-preference="locale"]'), 'en-GB')
+      change(host.querySelector('[data-preference="language"]'), 'en')
+      await settle()
+      host.querySelector('nav a[href="/transactions/drafts"]').click()
+      await settle()
+      const restored = host.querySelectorAll('[data-amount]')[1]
+      t.is('123,', restored.value)
+      restored.focus()
+      t.is(true, restored === document.activeElement)
+      input(restored, '123,56')
+      await settle()
+      t.is(false, restored.hasAttribute('aria-invalid'))
+      t.is(true, restored.isConnected)
+      t.is(true, restored === host.querySelectorAll('[data-amount]')[1])
+      t.is(true, restored === document.activeElement)
+      t.is('en-GB', JSON.parse(localStorage.getItem(PREFERENCES_KEY)).locale)
+      // Dispatch explicitly, like input/change above, without depending on OS window focus.
+      restored.dispatchEvent(new FocusEvent('blur'))
+      await settle()
+      t.is('123.56', restored.value)
+      return [false, restored.hasAttribute('aria-invalid')]
+    }, { language: 'da', locale: 'da-DK', commodity: 'DKK' })
+  ),
+  t`Danish decimal amounts can be reviewed and posted without changing their value`(() =>
+    fixture(async (host) => {
+      const amounts = host.querySelectorAll('[data-amount]')
+      input(amounts[0], '-1.234,56')
+      input(amounts[1], '1.234,56')
+      await settle()
+      button(host.querySelector('article'), 'Bogfør').click()
+      await settle()
+      t.is(true, host.querySelector('dialog').textContent.includes('Bogfør 1 transaktion?'))
+      button(host, 'Bogfør i regnskabet').click()
+      await settle()
+      host.querySelector('#tab-ledger').click()
+      await settle()
+      const posted = host.querySelector('[data-transaction-id="draft-1"]')
+      t.is(true, posted.textContent.includes('-1.234,56'))
+      return [0, posted.querySelectorAll('input').length]
+    }, null)
+  ),
+  t`changing default currency affects only new entries and persists locally`(() =>
+    fixture(async (host) => {
+      host.querySelector('a[href="/settings"]').click()
+      await until(() => host.querySelector('[data-preference="commodity"]'))
+      change(host.querySelector('[data-preference="commodity"]'), 'EUR')
+      await settle()
+      host.querySelector('nav a[href="/transactions/drafts"]').click()
+      await settle()
+      t.is('DKK', host.querySelector('[aria-label="Commodity"]').value)
+      button(host, 'New transaction', true).click()
+      await settle()
+      t.is(
+        'EUR',
+        host.querySelector('[data-transaction-id="draft-2000"] [aria-label="Commodity"]').value,
+      )
+      return ['EUR', JSON.parse(localStorage.getItem(PREFERENCES_KEY)).commodity]
+    })
+  ),
+)
+
+function change(element, value) {
+  element.value = value
+  element.dispatchEvent(new Event('change', { bubbles: true }))
+}
+
+async function until(condition) {
+  const deadline = performance.now() + 3000
+  while (!condition()) {
+    if (performance.now() > deadline) throw new Error('Expected route content did not appear')
+    await settle()
+  }
+  await settle()
+}
+
+async function fixture(
+  run,
+  preferences = { language: 'en', locale: 'en-GB', commodity: 'DKK' },
+  path = '/transactions/drafts',
+) {
   const url = location.href
   const saved = localStorage.getItem('entx.transactions.tab')
-  history.replaceState(null, '', '/transactions/drafts')
+  const savedPreferences = localStorage.getItem(PREFERENCES_KEY)
+  const savedLanguage = document.documentElement.lang
+  preferences === null
+    ? localStorage.removeItem(PREFERENCES_KEY)
+    : localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences))
+  history.replaceState(null, '', path)
   const host = document.createElement('div')
   document.body.append(host)
   const mounted = s.mount(host, App)
@@ -121,6 +307,10 @@ async function fixture(run) {
     saved === null
       ? localStorage.removeItem('entx.transactions.tab')
       : localStorage.setItem('entx.transactions.tab', saved)
+    savedPreferences === null
+      ? localStorage.removeItem(PREFERENCES_KEY)
+      : localStorage.setItem(PREFERENCES_KEY, savedPreferences)
+    document.documentElement.lang = savedLanguage
   }
 }
 

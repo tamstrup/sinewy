@@ -38,27 +38,27 @@ function readyDraft(id = 'draft-a') {
 
 Deno.test('draft readiness distinguishes incomplete, unbalanced and ready', () => {
   const draft = readyDraft()
-  assertEquals(draftReadiness(draft), 'Ready')
+  assertEquals(draftReadiness(draft), 'ready')
   draft.legs[1].amount = -90
-  assertEquals(draftReadiness(draft), 'Unbalanced')
+  assertEquals(draftReadiness(draft), 'unbalanced')
   for (const amount of ['', null, NaN, Infinity, undefined]) {
     draft.legs[1].amount = amount
-    assertEquals(draftReadiness(draft), 'Incomplete')
+    assertEquals(draftReadiness(draft), 'incomplete')
   }
   draft.legs[1].amount = -100
   draft.description = ' '
-  assertEquals(draftReadiness(draft), 'Incomplete')
+  assertEquals(draftReadiness(draft), 'incomplete')
   draft.description = 'Office supplies'
   draft.legs[0].account = []
-  assertEquals(draftReadiness(draft), 'Incomplete')
+  assertEquals(draftReadiness(draft), 'incomplete')
   draft.legs[0].account = ['Expenses']
   draft.legs[0].commodity = ''
-  assertEquals(draftReadiness(draft), 'Incomplete')
+  assertEquals(draftReadiness(draft), 'incomplete')
 })
 
 Deno.test('invalid or missing draft dates cannot be posted', () => {
   for (const date of ['', '2026-13-01', '2026-02-30', 'not a date']) {
-    assertEquals(draftReadiness({ ...readyDraft(), date }), 'Incomplete')
+    assertEquals(draftReadiness({ ...readyDraft(), date }), 'incomplete')
   }
 })
 
@@ -66,12 +66,12 @@ Deno.test('readiness requires balancing each commodity independently', () => {
   const draft = readyDraft()
   draft.legs[1].commodity = 'EUR'
   assertEquals(isBalanced(draft), false)
-  assertEquals(draftReadiness(draft), 'Unbalanced')
+  assertEquals(draftReadiness(draft), 'unbalanced')
   draft.legs.push(
     { account: ['Assets', 'Bank'], amount: -100, commodity: 'DKK' },
     { account: ['Expenses', 'Office'], amount: 100, commodity: 'EUR' },
   )
-  assertEquals(draftReadiness(draft), 'Ready')
+  assertEquals(draftReadiness(draft), 'ready')
 })
 
 Deno.test('tabs partition transactions and combine with the active filters', () => {

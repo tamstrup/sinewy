@@ -128,7 +128,7 @@ export function draftReadiness(transaction) {
       leg.amount !== '' && leg.amount !== null && Number.isFinite(Number(leg.amount)) &&
       typeof leg.commodity === 'string' && leg.commodity.trim()
     )
-  return !complete ? 'Incomplete' : isBalanced(transaction) ? 'Ready' : 'Unbalanced'
+  return !complete ? 'incomplete' : isBalanced(transaction) ? 'ready' : 'unbalanced'
 }
 
 export function transactionsForTab(transactions, tab, filters) {
@@ -143,7 +143,7 @@ export function postDrafts(transactions, ids, postedAt = new Date().toISOString(
   const drafts = transactions.filter(({ id }) => selected.has(id))
   if (
     !selected.size || drafts.length !== selected.size ||
-    drafts.some((draft) => draft.status !== 'draft' || draftReadiness(draft) !== 'Ready')
+    drafts.some((draft) => draft.status !== 'draft' || draftReadiness(draft) !== 'ready')
   ) {
     throw new Error('Only complete, balanced drafts can be posted.')
   }
@@ -161,7 +161,7 @@ export function createCorrection(source, id, date) {
     status: 'draft',
     correctionOf: source.id,
     date,
-    description: `Correction · ${source.description}`,
+    description: source.description,
     legs: source.legs.map((leg, index) => ({
       ...structuredClone(leg),
       id: `${id}-${index + 1}`,
@@ -215,28 +215,6 @@ export function accountBalances(transactions, tree = true) {
       accountLabel(a.account).localeCompare(accountLabel(b.account)) ||
       a.commodity.localeCompare(b.commodity)
     )
-}
-
-export function formatAmount(amount, showSign = false) {
-  return new Intl.NumberFormat('da-DK', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    signDisplay: showSign ? 'exceptZero' : 'auto',
-  }).format(amount)
-}
-
-export function periodLabel(filters) {
-  if (filters.day) {
-    return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-      .format(new Date(`${filters.day}T12:00:00`))
-  }
-
-  if (filters.year && filters.month) {
-    return new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' })
-      .format(new Date(`${filters.year}-${filters.month}-01T12:00:00`))
-  }
-
-  return filters.year || 'All dates'
 }
 
 function round(value) {

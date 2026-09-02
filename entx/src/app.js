@@ -1,16 +1,15 @@
 import s from 'sin'
 import Dropdown, { AlertDialog } from 'sinewy/theme'
+import { createI18n } from './i18n/index.js'
+import { formatAmount as displayAmount, parseAmount } from './i18n/format.js'
 import {
   accountBalances,
   accountLabel,
   createCorrection,
-  DEFAULT_COMMODITY,
   draftReadiness,
   filterTransactions,
-  formatAmount,
   initialTransactions,
   parseAccount,
-  periodLabel,
   postDrafts,
   transactionsForTab,
   transactionTotals,
@@ -825,12 +824,30 @@ const Placeholder = s`section
   p { font-size 12 }
 `
 
-const App = s((_attrs, _children, { route }) => {
+const App = s((_attrs, _children, context) => {
+  const { route } = context
+  const i18n = createI18n()
+  const { t, amount: formatAmount } = i18n
+  const periodLabel = (filters) => i18n.period(filters)
+  context.entx = { i18n }
+  context.doc.lang(i18n.preferences().language)
+  context.onremove(i18n.preferences.observe(() => {
+    context.doc.lang(i18n.preferences().language)
+    context.redraw()
+  }))
+  // Raw, unfinished amounts survive navigation without changing their input locale.
+  const amountEdits = new Map()
   let shell
   let transactions = structuredClone(initialTransactions)
   let lastTab = transactions.some(({ status }) => status === 'draft') ? 'drafts' : 'ledger'
   const activeArea = () =>
-    route.has('/accounts') ? 'accounts' : route.has('/files') ? 'files' : 'transactions'
+    route.has('/accounts')
+      ? 'accounts'
+      : route.has('/files')
+      ? 'files'
+      : route.has('/settings')
+      ? 'settings'
+      : 'transactions'
   const activeTab = () =>
     route.has('/transactions/ledger')
       ? 'ledger'
@@ -874,12 +891,12 @@ const App = s((_attrs, _children, { route }) => {
     filters = { year: '', month: '', day: '', account: '', text: '' }
     selectedId = id
     collapsed.delete(id)
-    notice = message + (hadFilters ? ' Filters cleared to show it.' : '')
+    notice = { key: message, filtersCleared: !!hadFilters }
     postedNotice = false
     navigateTab('drafts')
-    requestAnimationFrame(() =>
+    s.redraw().then(() =>
       shell?.querySelector(
-        `[data-transaction-id="${id}"] input[aria-label="Transaction description"]`,
+        `[data-transaction-id="${id}"] input[data-description]`,
       )?.focus()
     )
   }
@@ -892,16 +909,21 @@ const App = s((_attrs, _children, { route }) => {
       date: today(),
       description: '',
       legs: [
-        { id: `${id}-1`, account: ['Assets', 'Bank'], amount: '', commodity: DEFAULT_COMMODITY },
+        {
+          id: `${id}-1`,
+          account: ['Assets', 'Bank'],
+          amount: '',
+          commodity: i18n.preferences().commodity,
+        },
         {
           id: `${id}-2`,
           account: ['Expenses', 'Uncategorized'],
           amount: '',
-          commodity: DEFAULT_COMMODITY,
+          commodity: i18n.preferences().commodity,
         },
       ],
     })
-    showDraft(id, 'New draft created.')
+    showDraft(id, 'newDraft')
   }
 
   const duplicateToDrafts = (source, reverse = false) => {
@@ -911,7 +933,7 @@ const App = s((_attrs, _children, { route }) => {
         id,
         status: 'draft',
         date: today(),
-        description: `${source.description} · copy`,
+        description: source.description,
         legs: source.legs.map((leg, index) => ({
           ...structuredClone(leg),
           id: `${id}-${index + 1}`,
@@ -920,9 +942,7 @@ const App = s((_attrs, _children, { route }) => {
     )
     showDraft(
       id,
-      reverse
-        ? 'Linked correction draft created. The original remains unchanged.'
-        : 'Transaction copied to Drafts.',
+      reverse ? 'correctionCreated' : 'copied',
     )
   }
 
@@ -934,7 +954,7 @@ const App = s((_attrs, _children, { route }) => {
   }
 
   const reviewPosting = (drafts) => {
-    if (!drafts.length || drafts.some((draft) => draftReadiness(draft) !== 'Ready')) return
+    if (!drafts.length || drafts.some((draft) => draftReadiness(draft) !== 'ready')) return
     reviewError = ''
     reviewIds = drafts.map(({ id }) => id)
   }
@@ -943,14 +963,12 @@ const App = s((_attrs, _children, { route }) => {
     try {
       transactions = postDrafts(transactions, reviewIds)
       reviewIds.forEach((id) => checkedDrafts.delete(id))
-      notice = `${reviewIds.length} ${
-        reviewIds.length === 1 ? 'transaction' : 'transactions'
-      } posted to the ledger.`
+      notice = { key: 'postedNotice', params: { count: reviewIds.length } }
       postedNotice = true
       selectedId = visible()[0]?.id ?? ''
-    } catch (error) {
+    } catch {
       event.preventDefault()
-      reviewError = error.message
+      reviewError = 'postingError'
     }
   }
 
@@ -1033,21 +1051,28 @@ const App = s((_attrs, _children, { route }) => {
   const topbar = () =>
     Topbar(
       Brand(
-        { onclick: () => navigateTab(lastTab), 'aria-label': 'Go to transactions' },
+        { onclick: () => navigateTab(lastTab), 'aria-label': t('goTransactions') },
         Mark('E'),
         Wordmark('ENTX'),
       ),
       Nav(
-        { 'aria-label': 'Main navigation' },
+        { 'aria-label': t('mainNavigation') },
         ['transactions', 'accounts', 'files'].map((area) =>
           NavButton({
             key: area,
             href: area === 'transactions' ? `/transactions/${lastTab}` : `/${area}`,
             'aria-current': activeArea() === area ? 'page' : undefined,
-          }, area[0].toUpperCase() + area.slice(1))
+          }, t(area))
         ),
       ),
-      TopbarEnd(SyncDot(), s`span`('Local prototype')),
+      TopbarEnd(
+        SyncDot(),
+        s`span`(t('localPrototype')),
+        NavButton({
+          href: '/settings',
+          'aria-current': activeArea() === 'settings' ? 'page' : undefined,
+        }, t('settings')),
+      ),
     )
 
   const sidebar = (visibleTransactions) => {
@@ -1059,19 +1084,19 @@ const App = s((_attrs, _children, { route }) => {
     return Sidebar(
       SidebarHeader(
         SidebarTitleRow(
-          SidebarTitle('Live balance'),
+          SidebarTitle(t('liveBalance')),
           TreeToggle(
             s`input`({
               type: 'checkbox',
               checked: tree,
               onchange: (event) => tree = event.target.checked,
             }),
-            'Tree',
+            t('tree'),
           ),
         ),
         SidebarMeta(
-          `${periodLabel(filters)} · ${committed.length} posted${
-            includeDrafts && drafts.length ? ` + ${drafts.length} drafts` : ''
+          `${periodLabel(filters)} · ${t('postedCount', { count: committed.length })}${
+            includeDrafts && drafts.length ? ` + ${t('draftCount', { count: drafts.length })}` : ''
           }`,
         ),
         IncludeToggle(
@@ -1082,7 +1107,7 @@ const App = s((_attrs, _children, { route }) => {
             onchange: (event) => includeDrafts = event.target.checked,
           }),
           s`span`({ 'aria-hidden': 'true' }),
-          'Include drafts',
+          t('includeDrafts'),
         ),
       ),
       AccountList(
@@ -1109,7 +1134,9 @@ const App = s((_attrs, _children, { route }) => {
                   ? hasChildren
                     ? AccountToggle(
                       {
-                        'aria-label': `${isCollapsed ? 'Expand' : 'Collapse'} ${name}`,
+                        'aria-label': t(isCollapsed ? 'expandAccount' : 'collapseAccount', {
+                          account: name,
+                        }),
                         'aria-expanded': String(!isCollapsed),
                         onclick: () =>
                           isCollapsed
@@ -1134,20 +1161,20 @@ const App = s((_attrs, _children, { route }) => {
                 {
                   data: { staged: includeDrafts && draftKeys.has(key) },
                   title: includeDrafts && draftKeys.has(key)
-                    ? 'Includes draft transactions'
-                    : 'Posted balance',
+                    ? t('includesDrafts')
+                    : t('postedBalance'),
                 },
                 s`span`(
                   formatAmount(amount),
-                  commodity === DEFAULT_COMMODITY ? null : s`em`(commodity),
+                  commodity === i18n.preferences().commodity ? null : s`em`(commodity),
                 ),
               ),
             )
           }),
       ),
       SidebarFooter(
-        s`span`(s`strong`('DKK'), ' · default commodity'),
-        s`span`(includeDrafts ? 'Draft effects included in purple' : 'Posted balances only'),
+        s`span`(s`strong`(i18n.preferences().commodity), ' · ', t('defaultCommodity')),
+        s`span`(t(includeDrafts ? 'draftEffects' : 'postedOnly')),
       ),
     )
   }
@@ -1155,31 +1182,33 @@ const App = s((_attrs, _children, { route }) => {
   const filterPanel = () =>
     FilterPanel(
       Field(
-        'Year',
+        t('year'),
         s`select`(
           {
             value: filters.year,
             onchange: (event) => patchFilters({ year: event.target.value, day: '' }),
           },
-          s`option`({ value: '' }, 'Any year'),
+          s`option`({ value: '' }, t('anyYear')),
           s`option`({ value: '2026' }, '2026'),
           s`option`({ value: '2025' }, '2025'),
         ),
       ),
       Field(
-        'Month',
+        t('month'),
         s`select`(
           {
             value: filters.month,
             onchange: (event) => patchFilters({ month: event.target.value, day: '' }),
           },
-          s`option`({ value: '' }, 'Any month'),
-          ...['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-            .map((month, index) => s`option`({ value: String(index + 1).padStart(2, '0') }, month)),
+          s`option`({ value: '' }, t('anyMonth')),
+          ...Array.from({ length: 12 }, (_, index) => {
+            const month = String(index + 1).padStart(2, '0')
+            return s`option`({ value: month }, i18n.date(`2026-${month}-01`, { month: 'short' }))
+          }),
         ),
       ),
       Field(
-        'Exact day',
+        t('day'),
         s`input`({
           type: 'date',
           value: filters.day,
@@ -1191,7 +1220,7 @@ const App = s((_attrs, _children, { route }) => {
         }),
       ),
       Field(
-        'Account',
+        t('account'),
         s`input`({
           value: filters.account,
           placeholder: 'Assets:Bank',
@@ -1199,18 +1228,18 @@ const App = s((_attrs, _children, { route }) => {
         }),
       ),
       Field(
-        'Text',
+        t('text'),
         s`input`({
           data: { filterText: true },
           value: filters.text,
-          placeholder: 'Description contains…',
+          placeholder: t('descriptionContains'),
           oninput: (event) => patchFilters({ text: event.target.value }),
         }),
       ),
       Button({
         disabled: !activeFilters(),
         onclick: () => filters = { year: '', month: '', day: '', account: '', text: '' },
-      }, 'Clear'),
+      }, t('clear')),
     )
 
   const filterChips = () => {
@@ -1219,9 +1248,9 @@ const App = s((_attrs, _children, { route }) => {
       filters.month &&
       [
         'month',
-        new Date(`2026-${filters.month}-01T12:00:00`).toLocaleString('en', { month: 'long' }),
+        i18n.date(`2026-${filters.month}-01`, { month: 'long' }),
       ],
-      filters.day && ['day', filters.day],
+      filters.day && ['day', i18n.date(filters.day)],
       filters.account && ['account', filters.account],
       filters.text && ['text', `“${filters.text}”`],
     ].filter(Boolean)
@@ -1233,7 +1262,7 @@ const App = s((_attrs, _children, { route }) => {
             {
               key,
               onclick: () => patchFilters({ [key]: '' }),
-              title: `Remove ${key} filter`,
+              title: t('removeFilter', { filter: t(key) }),
             },
             label,
             '×',
@@ -1249,20 +1278,20 @@ const App = s((_attrs, _children, { route }) => {
         size: '1',
         variant: 'ghost',
         color: 'gray',
-        'aria-label': `Actions for ${transaction.description}`,
+        'aria-label': t('actionsFor', { description: transaction.description }),
       }, MenuDots('•••')),
       Dropdown.Content(
         { size: '1', align: 'end', color: 'gray' },
-        Dropdown.Label('Transaction'),
-        Dropdown.Item({ onselect: () => duplicateToDrafts(transaction) }, 'Duplicate to drafts'),
+        Dropdown.Label(t('transaction')),
+        Dropdown.Item({ onselect: () => duplicateToDrafts(transaction) }, t('duplicate')),
         transaction.status === 'committed'
           ? Dropdown.Item(
             { onselect: () => duplicateToDrafts(transaction, true) },
-            'Create correction',
+            t('correction'),
           )
           : Dropdown.Item(
             { color: 'red', onselect: () => removeDraft(transaction.id) },
-            'Discard draft',
+            t('discard'),
           ),
       ),
     )
@@ -1280,6 +1309,54 @@ const App = s((_attrs, _children, { route }) => {
       ),
     )
 
+  const amountInput = (leg) => {
+    const edit = amountEdits.get(leg.id)
+    const finishEdit = () => {
+      const current = amountEdits.get(leg.id)
+      if (!current || ['valid', 'empty'].includes(current.state)) amountEdits.delete(leg.id)
+    }
+    const invalid = edit && ['partial', 'invalid'].includes(edit.state)
+    const errorId = `amount-error-${leg.id}`
+    const error = edit?.state === 'partial' ? t('unfinishedAmount') : t('invalidAmount', {
+      example: displayAmount(1234.56, edit?.locale || i18n.preferences().locale),
+    })
+    return s`span min-width 0 position relative`(
+      s`input`({
+        dom: () => finishEdit,
+        data: { amount: true },
+        type: 'text',
+        inputmode: 'decimal',
+        value: edit ? edit.raw : leg.amount === '' ? '' : formatAmount(leg.amount),
+        'aria-label': t('amount'),
+        'aria-invalid': invalid ? 'true' : undefined,
+        'aria-describedby': invalid ? errorId : undefined,
+        title: invalid ? error : undefined,
+        style: invalid ? { color: '#b6374f', textDecoration: 'underline dotted' } : undefined,
+        onfocus: () => {
+          if (amountEdits.has(leg.id)) return
+          const locale = i18n.preferences().locale
+          amountEdits.set(leg.id, {
+            locale,
+            raw: leg.amount === '' ? '' : displayAmount(leg.amount, locale),
+            state: leg.amount === '' ? 'empty' : 'valid',
+          })
+        },
+        oninput: (event) => {
+          const locale = amountEdits.get(leg.id)?.locale || i18n.preferences().locale
+          const raw = event.target.value
+          const parsed = parseAmount(raw, locale)
+          amountEdits.set(leg.id, { locale, raw, state: parsed.state })
+          leg.amount = parsed.value
+        },
+        onblur: finishEdit,
+      }),
+      invalid && s`span position absolute width 1 height 1 overflow hidden clip-path inset(50%)`(
+        { id: errorId },
+        error,
+      ),
+    )
+  }
+
   const draftLegs = (transaction) =>
     Legs(
       transaction.legs.map((leg) =>
@@ -1287,25 +1364,17 @@ const App = s((_attrs, _children, { route }) => {
           { key: leg.id },
           s`input`({
             value: accountLabel(leg.account),
-            'aria-label': 'Account',
+            'aria-label': t('account'),
             oninput: (event) => leg.account = parseAccount(event.target.value),
           }),
-          s`input`({
-            data: { amount: true },
-            type: 'number',
-            step: '0.01',
-            value: leg.amount,
-            'aria-label': 'Amount',
-            oninput: (event) =>
-              leg.amount = event.target.value === '' ? '' : Number(event.target.value),
-          }),
+          amountInput(leg),
           s`input`({
             value: leg.commodity,
-            'aria-label': 'Commodity',
+            'aria-label': t('commodity'),
             oninput: (event) => leg.commodity = event.target.value.toUpperCase(),
           }),
           RemoveButton({
-            'aria-label': 'Remove leg',
+            'aria-label': t('removeLeg'),
             onclick: () => transaction.legs = transaction.legs.filter(({ id }) => id !== leg.id),
           }, '×'),
         )
@@ -1317,28 +1386,29 @@ const App = s((_attrs, _children, { route }) => {
               id: `${transaction.id}-${nextId++}`,
               account: ['Expenses', 'Uncategorized'],
               amount: '',
-              commodity: DEFAULT_COMMODITY,
+              commodity: i18n.preferences().commodity,
             }),
-        }, '+ Add leg'),
+        }, t('addLeg')),
         DraftActions(
           BalanceMessage(
-            { data: { balanced: draftReadiness(transaction) === 'Ready' } },
-            draftReadiness(transaction) === 'Incomplete'
-              ? 'Complete the date, description and all legs'
-              : draftReadiness(transaction) === 'Ready'
-              ? 'Balanced · ready to post'
+            { data: { balanced: draftReadiness(transaction) === 'ready' } },
+            draftReadiness(transaction) === 'incomplete'
+              ? t('completeDraft')
+              : draftReadiness(transaction) === 'ready'
+              ? t('balanced')
               : transactionTotals(transaction).filter(({ amount }) => amount !== 0)
                 .map(({ amount, commodity }) =>
-                  `${formatAmount(Math.abs(amount))} ${commodity} ${
-                    amount < 0 ? 'missing' : 'over'
-                  }`
+                  t(amount < 0 ? 'missing' : 'over', {
+                    amount: formatAmount(Math.abs(amount)),
+                    commodity,
+                  })
                 ).join(' · '),
           ),
           Button({
             data: { primary: true },
-            disabled: draftReadiness(transaction) !== 'Ready',
+            disabled: draftReadiness(transaction) !== 'ready',
             onclick: () => reviewPosting([transaction]),
-          }, 'Post'),
+          }, t('post')),
         ),
       ),
     )
@@ -1346,7 +1416,7 @@ const App = s((_attrs, _children, { route }) => {
   const transactionRow = (transaction) => {
     const isDraft = transaction.status === 'draft'
     const isCollapsed = collapsed.has(transaction.id)
-    const readiness = isDraft ? draftReadiness(transaction) : 'Posted'
+    const readiness = isDraft ? draftReadiness(transaction) : 'posted'
 
     return Transaction(
       {
@@ -1363,7 +1433,9 @@ const App = s((_attrs, _children, { route }) => {
           isDraft && s`input`({
             type: 'checkbox',
             checked: checkedDrafts.has(transaction.id),
-            'aria-label': `Select ${transaction.description || 'untitled draft'}`,
+            'aria-label': t('selectDraft', {
+              description: transaction.description || t('untitled'),
+            }),
             onclick: (event) => event.stopPropagation(),
             onchange: (event) =>
               event.target.checked
@@ -1372,7 +1444,7 @@ const App = s((_attrs, _children, { route }) => {
           }),
           CollapseButton(
             {
-              'aria-label': isCollapsed ? 'Expand transaction' : 'Collapse transaction',
+              'aria-label': t(isCollapsed ? 'expandTransaction' : 'collapseTransaction'),
               'aria-expanded': String(!isCollapsed),
               onclick: (event) => {
                 event.stopPropagation()
@@ -1391,28 +1463,30 @@ const App = s((_attrs, _children, { route }) => {
           ? DraftHeaderInput({
             type: 'date',
             value: transaction.date,
-            'aria-label': 'Transaction date',
+            'aria-label': t('transactionDate'),
             oninput: (event) => transaction.date = event.target.value,
           })
-          : DateText({ datetime: transaction.date }, transaction.date),
+          : DateText({ datetime: transaction.date }, i18n.date(transaction.date)),
         isDraft
           ? DraftHeaderInput({
             value: transaction.description,
-            placeholder: 'Describe this transaction…',
-            'aria-label': 'Transaction description',
+            data: { description: true },
+            placeholder: t('describeTransaction'),
+            'aria-label': t('transactionDescription'),
             oninput: (event) => transaction.description = event.target.value,
           })
           : Description(transaction.description),
         StateBadge({
           data: {
-            balanced: readiness === 'Ready',
-            unbalanced: readiness === 'Unbalanced',
+            balanced: readiness === 'ready',
+            unbalanced: readiness === 'unbalanced',
           },
-        }, readiness),
+        }, t(readiness)),
         transactionMenu(transaction),
       ),
       transaction.correctionOf && CorrectionNote(
-        'Correction of ',
+        t('correctionOf'),
+        ' ',
         s`button`({
           onclick: (event) => {
             event.stopPropagation()
@@ -1427,7 +1501,8 @@ const App = s((_attrs, _children, { route }) => {
             )
           },
         }, transaction.correctionOf),
-        ' · opposing entries; the original stays unchanged',
+        ' · ',
+        t('opposingEntries'),
       ),
       !isCollapsed && (isDraft ? draftLegs(transaction) : committedLegs(transaction)),
     )
@@ -1438,19 +1513,17 @@ const App = s((_attrs, _children, { route }) => {
     const draftCount = transactions.filter(({ status }) => status === 'draft').length
     const selected = selectedDrafts()
     const ready = visibleTransactions.filter((transaction) =>
-      isDrafts && draftReadiness(transaction) === 'Ready'
+      isDrafts && draftReadiness(transaction) === 'ready'
     )
     const postableSelection = selected.length &&
-      selected.every((transaction) => draftReadiness(transaction) === 'Ready')
+      selected.every((transaction) => draftReadiness(transaction) === 'ready')
 
     return [
       MainHeader(
         TitleGroup(
-          Title('Transactions'),
+          Title(t('transactions')),
           Subtitle(
-            isDrafts
-              ? 'Prepare and review before posting'
-              : 'Posted transactions · the authoritative record',
+            t(isDrafts ? 'prepare' : 'authoritative'),
           ),
         ),
         Toolbar(
@@ -1459,15 +1532,15 @@ const App = s((_attrs, _children, { route }) => {
               data: { active: filtersOpen || activeFilters() },
               onclick: () => filtersOpen = !filtersOpen,
             },
-            'Filter',
-            activeFilters() ? `· ${activeFilters()}` : null,
+            t('filter'),
+            activeFilters() ? `· ${i18n.number(activeFilters())}` : null,
             Key('F'),
           ),
-          Button({ data: { primary: true }, onclick: addDraft }, 'New transaction', Key('N')),
+          Button({ data: { primary: true }, onclick: addDraft }, t('newTransaction'), Key('N')),
         ),
       ),
       TransactionTabs(
-        { role: 'tablist', 'aria-label': 'Transaction workspace' },
+        { role: 'tablist', 'aria-label': t('transactionWorkspace') },
         ['drafts', 'ledger'].map((tab) =>
           TransactionTab({
             key: tab,
@@ -1500,13 +1573,14 @@ const App = s((_attrs, _children, { route }) => {
               navigateTab(next)
               requestAnimationFrame(() => shell?.querySelector(`#tab-${next}`)?.focus())
             },
-          }, tab === 'drafts' ? ['Drafts', s`span`(draftCount)] : 'Ledger')
+          }, tab === 'drafts' ? [t('drafts'), s`span`(i18n.number(draftCount))] : t('ledger'))
         ),
       ),
       Notice(
         { role: 'status', 'aria-live': 'polite' },
-        notice,
-        postedNotice && QuietButton({ onclick: () => navigateTab('ledger') }, 'View in Ledger →'),
+        notice && t(notice.key, notice.params),
+        notice?.filtersCleared && [' ', t('filtersCleared')],
+        postedNotice && QuietButton({ onclick: () => navigateTab('ledger') }, t('viewLedger')),
       ),
       filtersOpen && filterPanel(),
       filterChips(),
@@ -1530,53 +1604,55 @@ const App = s((_attrs, _children, { route }) => {
                   event.target.checked ? checkedDrafts.add(id) : checkedDrafts.delete(id)
                 ),
             }),
-            'Select visible',
+            t('selectVisible'),
           ),
           s`span`(
             selected.length
-              ? `${selected.length} selected in view`
-              : `${ready.length} ready to post`,
+              ? t('selectedCount', { count: selected.length })
+              : t('readyCount', { count: ready.length }),
           ),
           Button({
             disabled: !postableSelection,
             title: selected.length && !postableSelection
-              ? 'Every selected draft must be complete and balanced'
-              : 'Review selected drafts before posting',
+              ? t('selectionIncomplete')
+              : t('reviewSelected'),
             onclick: () => reviewPosting(selected),
-          }, 'Post selected'),
+          }, t('postSelected')),
           Button(
             { disabled: !ready.length, onclick: () => reviewPosting(ready) },
-            'Post all ready',
+            t('postReady'),
           ),
         ),
         SectionHeader(
-          SectionLabel(periodLabel(filters), s`span`(visibleTransactions.length)),
-          s`span`({ style: { color: '#929298', fontSize: '10px' } }, 'Newest first'),
+          SectionLabel(periodLabel(filters), s`span`(i18n.number(visibleTransactions.length))),
+          s`span`({ style: { color: '#929298', fontSize: '10px' } }, t('newestFirst')),
         ),
         Ledger(
           visibleTransactions.length ? visibleTransactions.map(transactionRow) : EmptyState(s`div`(
             s`p`(
-              activeFilters()
-                ? `No ${isDrafts ? 'drafts' : 'posted transactions'} match these filters.`
-                : isDrafts
-                ? 'Your drafts are clear. Start a new transaction when you’re ready.'
-                : 'No posted transactions yet. Review and post a draft to start the ledger.',
+              t(
+                activeFilters()
+                  ? isDrafts ? 'noDraftMatches' : 'noPostedMatches'
+                  : isDrafts
+                  ? 'emptyDrafts'
+                  : 'emptyLedger',
+              ),
             ),
             activeFilters() &&
               QuietButton({
                 onclick: () => filters = { year: '', month: '', day: '', account: '', text: '' },
-              }, 'Clear filters'),
+              }, t('clearFilters')),
           )),
         ),
       ),
       KeyboardHint(
-        s`span`(Key('G D'), 'drafts'),
-        s`span`(Key('G L'), 'ledger'),
-        s`span`(Key('J'), Key('K'), 'navigate'),
-        s`span`(Key('↵'), 'collapse / expand'),
-        s`span`(Key('/'), 'search'),
-        s`span`(Key('N'), 'new transaction'),
-        isDrafts && s`span`(Key('⌘ / Ctrl ↵'), 'review selected'),
+        s`span`(Key('G D'), t('drafts')),
+        s`span`(Key('G L'), t('ledger')),
+        s`span`(Key('J'), Key('K'), t('navigate')),
+        s`span`(Key('↵'), t('collapseExpand')),
+        s`span`(Key('/'), t('search')),
+        s`span`(Key('N'), t('newTransaction')),
+        isDrafts && s`span`(Key('⌘ / Ctrl ↵'), t('reviewSelectedHint')),
       ),
     ]
   }
@@ -1596,26 +1672,30 @@ const App = s((_attrs, _children, { route }) => {
       AlertDialog.Content(
         { size: '2', color: 'indigo' },
         AlertDialog.Title(
-          `Post ${reviewIds.length} ${reviewIds.length === 1 ? 'transaction' : 'transactions'}?`,
+          t('postQuestion', { count: reviewIds.length }),
         ),
         AlertDialog.Description(
-          'Posting makes these transactions read-only in the ledger. Changes must be made through a linked correction draft.',
+          t('postingExplanation'),
         ),
         ReviewList(
           transactions.filter(({ id }) => reviewIds.includes(id)).map((transaction) =>
             s`li`(
               { key: transaction.id },
               s`strong`(transaction.description),
-              s`time`(`${transaction.date} · ${transaction.legs.length} legs · Ready`),
+              s`time`(
+                `${i18n.date(transaction.date)} · ${
+                  t('legCount', { count: transaction.legs.length })
+                } · ${t('ready')}`,
+              ),
             )
           ),
         ),
-        reviewError && s`p`({ role: 'alert' }, reviewError),
+        reviewError && s`p`({ role: 'alert' }, t(reviewError)),
         Toolbar(
-          AlertDialog.Close({ autofocus: true, variant: 'soft', color: 'gray' }, 'Cancel'),
+          AlertDialog.Close({ autofocus: true, variant: 'soft', color: 'gray' }, t('cancel')),
           AlertDialog.Close(
             { variant: 'solid', color: 'indigo', onclick: confirmPosting },
-            'Post to ledger',
+            t('postLedger'),
           ),
         ),
       ),
@@ -1624,14 +1704,14 @@ const App = s((_attrs, _children, { route }) => {
   const placeholder = () => [
     MainHeader(
       TitleGroup(
-        Title(activeArea()[0].toUpperCase() + activeArea().slice(1)),
-        Subtitle('Reserved for the next product-design pass'),
+        Title(t(activeArea())),
+        Subtitle(t('nextPass')),
       ),
     ),
     Placeholder(
       s`div`(
-        s`strong`(`${activeArea()[0].toUpperCase() + activeArea().slice(1)} comes next`),
-        s`p`('The navigation is active; this area is intentionally not designed yet.'),
+        s`strong`(t('comesNext', { area: t(activeArea()) })),
+        s`p`(t('placeholder')),
       ),
     ),
   ]
@@ -1646,6 +1726,7 @@ const App = s((_attrs, _children, { route }) => {
       {
         dom: (element) => {
           shell = element
+          i18n.load()
           const keydown = (event) => {
             if (element.contains(event.target) || event.target === element.ownerDocument.body) {
               onkeydown(event)
@@ -1678,6 +1759,7 @@ const App = s((_attrs, _children, { route }) => {
           '/transactions/ledger': () => transactionsView(visible()),
           '/accounts': placeholder,
           '/files': placeholder,
+          '/settings': () => import('./settings.js'),
         })),
       ),
       postingReview(),

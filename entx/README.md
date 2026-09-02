@@ -21,9 +21,9 @@ will be decided later.
 ## Transaction workflow
 
 Transactions has two URL-addressable workspaces: `/transactions/drafts` and `/transactions/ledger`
-(Drafts/Ledger; intended Danish labels: Kassekladde/Bogførte). The last-opened tab is remembered
-locally. On the first visit, drafts take precedence when present. There is no mixed “All” view.
-Filters are retained across tabs and operate inside each tab.
+(Drafts/Ledger; Danish labels: Kassekladde/Bogførte). The last-opened tab is remembered locally. On
+the first visit, drafts take precedence when present. There is no mixed “All” view. Filters are
+retained across tabs and operate inside each tab.
 
 Drafts show Incomplete, Unbalanced, or Ready. Readiness requires a date, description, at least two
 complete legs, and a zero balance in each commodity. Posting a single draft, selected drafts, or all
@@ -35,9 +35,38 @@ Live Balance uses the same filtered transaction set in both tabs, independent of
 “Include drafts” is off by default. When enabled, combined amounts affected by drafts are purple;
 there is no separate pending amount. Transactions remain expanded by default.
 
-Only the tab preference is persisted. Transaction edits and posting still reset on reload; this is
-not yet a durable accounting backend. The static build generates both tab routes for direct
-navigation.
+Only user preferences and the tab preference are persisted. Transaction edits and posting still
+reset on reload; this is not yet a durable accounting backend. The static build generates both tab
+routes for direct navigation.
+
+## Language and regional preferences
+
+Open **Indstillinger / Settings** in the top bar (`/settings`). Its default-exported Sin component
+is loaded with a direct dynamic-import route. First visits use Danish text, Danish regional
+formatting, and DKK. Language (Danish/English), regional format (Denmark/United Kingdom), and
+default commodity (DKK/EUR/USD/GBP) are independent. Preferences save automatically in this browser,
+without a database. If browser storage is blocked, the application continues with session-only
+preferences.
+
+Translations live in `src/i18n/messages.js`; messages include plural forms, validation, accessible
+labels, and notices. `createI18n()` is scoped to each App instance, not a global locale singleton.
+Switching preferences updates the document language and interface without resetting drafts, filters,
+selection, or navigation. Account segments, descriptions, status codes, ISO dates, and amounts
+remain locale-independent data. Duplication and corrections preserve the source description.
+
+Cached `Intl` formatters handle numbers and dates. Calendar dates are explicitly formatted in UTC so
+they cannot shift a day with the user's timezone. Native date input presentation follows the browser
+or OS and cannot be forced to follow the interface language reliably.
+
+Amount fields accept the selected regional format, including correctly grouped pasted values:
+`1.234,56` in Denmark or `1,234.56` in the UK. Wrong grouping, scientific notation, and more than
+two decimal places are rejected instead of guessed or silently rounded. Partial input such as `-` or
+`123,` remains editable and prevents posting. An unfinished edit retains its original input locale
+when settings change; after a valid edit loses focus, it adopts the new display format.
+
+The existing prototype arithmetic is still JavaScript numbers rounded to two decimal places, not a
+production exact-decimal ledger. Arbitrary commodity precision, durable storage, and exact backend
+arithmetic remain future work. Changing the default commodity never converts existing entries.
 
 ## Run locally
 

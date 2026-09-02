@@ -1,0 +1,1305 @@
+import s from 'sin'
+import Dropdown from 'sinewy/theme'
+import {
+  accountBalances,
+  accountLabel,
+  DEFAULT_COMMODITY,
+  filterTransactions,
+  formatAmount,
+  initialTransactions,
+  isBalanced,
+  parseAccount,
+  periodLabel,
+  transactionTotal,
+} from './model.js'
+
+const CHEVRON_ICON = `data:image/svg+xml,${
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"><path d="m6 4 4 4-4 4" stroke="#77777e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  )
+}`
+
+s.css.reset``
+
+s.css`
+  :root {
+    color-scheme light
+    font-family Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+    background #f7f7f8
+    color #1d1d20
+    font-synthesis none
+    text-rendering optimizeLegibility
+  }
+
+  * { box-sizing border-box }
+
+  body {
+    min-width 960
+    min-height 100svh
+    margin 0
+    background #f7f7f8
+  }
+
+  button, input, select { font inherit }
+  button { color inherit }
+  ::selection { background #ddd6fe }
+`
+
+const Shell = s`div
+  min-height 100svh
+  display grid
+  grid-template-rows 52px minmax(0, 1fr)
+`
+
+const Topbar = s`header
+  position sticky
+  z-index 20
+  top 0
+  display grid
+  grid-template-columns 264px minmax(0, 1fr) auto
+  align-items center
+  border-bottom 1px solid #e6e6e8
+  background rgb(252 252 253 / 0.92)
+  backdrop-filter blur(14px)
+`
+
+const Brand = s`button
+  height 100%
+  display flex
+  align-items center
+  gap 10
+  padding 0 18
+  border 0
+  background transparent
+  cursor pointer
+`
+
+const Mark = s`span
+  width 24
+  height 24
+  display grid
+  place-items center
+  border-radius 7
+  background #17171a
+  color white
+  font-size 11
+  font-weight 850
+  letter-spacing -0.04em
+`
+
+const Wordmark = s`span
+  font-size 13
+  font-weight 820
+  letter-spacing 0.11em
+`
+
+const Nav = s`nav
+  height 100%
+  display flex
+  align-items center
+  gap 3
+`
+
+const NavButton = s`button
+  height 32
+  padding 0 11
+  border 0
+  border-radius 7
+  background transparent
+  color #66666c
+  font-size 13
+  font-weight 620
+  cursor pointer
+
+  &:hover { background #f0f0f2; color #252528 }
+  &[aria-current='page'] { background #ededf0; color #19191c }
+`
+
+const TopbarEnd = s`div
+  display flex
+  align-items center
+  gap 8
+  padding-right 18
+  color #77777e
+  font-size 11
+`
+
+const SyncDot = s`span
+  width 6
+  height 6
+  border-radius 999
+  background #22a06b
+  box-shadow 0 0 0 3px #e6f5ee
+`
+
+const Workspace = s`div
+  min-height 0
+  display grid
+  grid-template-columns 264px minmax(0, 1fr)
+`
+
+const Sidebar = s`aside
+  position sticky
+  top 52
+  height calc(100svh - 52px)
+  display flex
+  flex-direction column
+  border-right 1px solid #e6e6e8
+  background #fafafa
+`
+
+const SidebarHeader = s`header
+  display grid
+  gap 4
+  padding 20 18 14
+`
+
+const SidebarTitleRow = s`div
+  display flex
+  align-items center
+  justify-content space-between
+  gap 12
+`
+
+const SidebarTitle = s`h2
+  font-size 12
+  font-weight 760
+  letter-spacing 0.01em
+`
+
+const SidebarMeta = s`p
+  color #8b8b92
+  font-size 11
+`
+
+const TreeToggle = s`label
+  display flex
+  align-items center
+  gap 6
+  color #6d6d73
+  font-size 11
+  cursor pointer
+
+  input {
+    width 14
+    height 14
+    margin 0
+    accent-color #5b50d6
+  }
+`
+
+const IncludeToggle = s`label
+  display flex
+  align-items center
+  gap 7
+  margin-top 6
+  color #6d6d73
+  font-size 10
+  cursor pointer
+
+  input {
+    position absolute
+    width 1
+    height 1
+    overflow hidden
+    opacity 0
+  }
+
+  span {
+    position relative
+    width 26
+    height 15
+    flex none
+    border-radius 999
+    background #d7d7db
+    transition background 120ms ease
+  }
+
+  span::after {
+    content ''
+    position absolute
+    top 2
+    left 2
+    width 11
+    height 11
+    border-radius 999
+    background white
+    box-shadow 0 1px 3px rgb(0 0 0 / 0.2)
+    transition transform 120ms ease
+  }
+
+  input:checked + span { background #655bd8 }
+  input:checked + span::after { transform translateX(11px) }
+  input:focus-visible + span { outline 2px solid #968eeb; outline-offset 2px }
+`
+
+const AccountList = s`div
+  flex 1
+  min-height 0
+  overflow auto
+  padding 2px 10px 20px
+`
+
+const AccountRow = s`div
+  min-height 30
+  display grid
+  grid-template-columns minmax(0, 1fr) auto
+  align-items center
+  gap 10
+  padding 5px 8px
+  border-radius 6
+  font-size 11
+
+  &:hover { background #f0f0f2 }
+  &[data-root='true'] { margin-top 5; color #5a5a60; font-weight 720 }
+`
+
+const AccountBranch = s`div
+  min-width 0
+  display flex
+  align-items center
+  gap 2
+`
+
+const AccountToggle = s`button
+  width 18
+  height 18
+  flex none
+  display grid
+  place-items center
+  padding 0
+  border 0
+  border-radius 4
+  background transparent
+  cursor pointer
+
+  &:hover { background #ebebee }
+  &:focus-visible { outline 2px solid #968eeb; outline-offset 1px }
+`
+
+const AccountIndent = s`span
+  width 18
+  height 18
+  flex none
+`
+
+const AccountName = s`span
+  overflow hidden
+  text-overflow ellipsis
+  white-space nowrap
+`
+
+const ChevronIcon = s`img
+  width 14
+  height 14
+  display block
+  transform rotate(0deg)
+  transition transform 120ms ease
+
+  &[data-expanded='true'] { transform rotate(90deg) }
+
+  @media (prefers-reduced-motion: reduce) { transition none }
+`
+
+const AccountValue = s`span
+  display grid
+  justify-items end
+  gap 1
+  font-variant-numeric tabular-nums
+  font-weight 610
+
+  &[data-staged='true'] { color #5b50c8 }
+
+  em {
+    margin-left 3
+    color #98989e
+    font-size 8
+    font-style normal
+    font-weight 650
+  }
+`
+
+const SidebarFooter = s`footer
+  display grid
+  gap 3
+  padding 13px 18px 16px
+  border-top 1px solid #e9e9eb
+  color #8a8a90
+  font-size 10
+
+  strong { color #626268; font-weight 680 }
+`
+
+const Main = s`main
+  min-width 0
+  padding 24px clamp(24px, 4vw, 56px) 64px
+`
+
+const MainHeader = s`header
+  display flex
+  align-items flex-end
+  justify-content space-between
+  gap 24
+  margin-bottom 18
+`
+
+const TitleGroup = s`div
+  display grid
+  gap 5
+`
+
+const Title = s`h1
+  font-size 22
+  font-weight 760
+  letter-spacing -0.035em
+`
+
+const Subtitle = s`p
+  color #7b7b82
+  font-size 12
+`
+
+const Toolbar = s`div
+  display flex
+  align-items center
+  gap 7
+`
+
+const Button = s`button
+  min-height 32
+  display inline-flex
+  align-items center
+  justify-content center
+  gap 7
+  padding 0 10
+  border 1px solid #dedee1
+  border-radius 7
+  background #fff
+  color #444448
+  box-shadow 0 1px 1px rgb(0 0 0 / 0.03)
+  font-size 12
+  font-weight 650
+  cursor pointer
+
+  &:hover { border-color #ccccd0; background #fafafa }
+  &[data-active='true'] { border-color #cbc5f6; background #f1efff; color #4f45bd }
+  &[data-primary='true'] { border-color #1c1c1f; background #1c1c1f; color white }
+  &[data-primary='true']:hover { background #303035 }
+  &:disabled { opacity 0.44; cursor default }
+`
+
+const Key = s`kbd
+  min-width 17
+  height 17
+  display inline-grid
+  place-items center
+  padding 0 4
+  border 1px solid currentColor
+  border-radius 4
+  opacity 0.54
+  font-family inherit
+  font-size 9
+  font-weight 700
+`
+
+const FilterPanel = s`section
+  display grid
+  grid-template-columns 112px 112px 152px minmax(170px, 1fr) minmax(170px, 1fr) auto
+  align-items end
+  gap 10
+  margin 0 0 16px
+  padding 14
+  border 1px solid #e1e1e4
+  border-radius 10
+  background #fdfdfd
+  box-shadow 0 8px 30px rgb(0 0 0 / 0.035)
+`
+
+const Field = s`label
+  display grid
+  gap 5
+  color #74747a
+  font-size 10
+  font-weight 690
+
+  input, select {
+    width 100%
+    height 30
+    padding 0 8
+    outline 0
+    border 1px solid #dedee1
+    border-radius 6
+    background white
+    color #2b2b2e
+    font-size 12
+    font-weight 500
+  }
+
+  input:focus, select:focus {
+    border-color #8c82e8
+    box-shadow 0 0 0 2px #ece9ff
+  }
+`
+
+const FilterChips = s`div
+  display flex
+  flex-wrap wrap
+  gap 6
+  margin -6px 0 14px
+`
+
+const Chip = s`button
+  height 24
+  display inline-flex
+  align-items center
+  gap 5
+  padding 0 8
+  border 0
+  border-radius 999
+  background #eceafc
+  color #584ec0
+  font-size 10
+  font-weight 650
+  cursor pointer
+`
+
+const SectionHeader = s`header
+  min-height 34
+  display flex
+  align-items center
+  justify-content space-between
+  gap 16
+  padding 0 2px
+`
+
+const SectionLabel = s`h2
+  display flex
+  align-items center
+  gap 7
+  color #66666d
+  font-size 10
+  font-weight 780
+  letter-spacing 0.065em
+  text-transform uppercase
+
+  span {
+    min-width 18
+    height 18
+    display inline-grid
+    place-items center
+    border-radius 999
+    background #ececef
+    color #707076
+    font-size 9
+    letter-spacing 0
+  }
+`
+
+const Ledger = s`section
+  overflow hidden
+  border 1px solid #e0e0e3
+  border-radius 10
+  background #fff
+`
+
+const Transaction = s`article
+  position relative
+  border-bottom 1px solid #ededee
+  background white
+
+  &:last-child { border-bottom 0 }
+  &[data-selected='true'] { box-shadow inset 2px 0 #655bd8 }
+  &[data-draft='true'] { background #fffdf7 }
+`
+
+const TransactionHeader = s`header
+  min-height 46
+  display grid
+  grid-template-columns 24px 118px minmax(0, 1fr) auto auto
+  align-items center
+  gap 10
+  padding 7px 9px 7px 10px
+  cursor default
+`
+
+const CollapseButton = s`button
+  width 24
+  height 24
+  display grid
+  place-items center
+  padding 0
+  border 0
+  border-radius 5
+  background transparent
+  color #96969c
+  cursor pointer
+
+  &:hover { background #f0f0f2; color #4e4e53 }
+  &:focus-visible { outline 2px solid #968eeb; outline-offset 1px }
+`
+
+const DateText = s`time
+  color #6d6d73
+  font-size 11
+  font-variant-numeric tabular-nums
+`
+
+const Description = s`strong
+  min-width 0
+  overflow hidden
+  text-overflow ellipsis
+  white-space nowrap
+  font-size 12
+  font-weight 670
+`
+
+const StateBadge = s`span
+  padding 3px 6px
+  border-radius 999
+  background #f0f0f2
+  color #7b7b81
+  font-size 9
+  font-weight 760
+  letter-spacing 0.035em
+  text-transform uppercase
+
+  &[data-balanced='true'] { background #e9f6ef; color #168255 }
+  &[data-unbalanced='true'] { background #fff0d4; color #a05e08 }
+`
+
+const MenuDots = s`span
+  display inline-flex
+  letter-spacing 1px
+  transform translateY(-2px)
+`
+
+const Legs = s`div
+  padding 0 46px 10px 162px
+`
+
+const Leg = s`div
+  min-height 29
+  display grid
+  grid-template-columns minmax(180px, 1fr) 118px 46px 24px
+  align-items center
+  gap 8
+  color #55555b
+  font-family ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
+  font-size 11
+`
+
+const LegAccount = s`span
+  min-width 0
+  overflow hidden
+  text-overflow ellipsis
+  white-space nowrap
+`
+
+const LegAmount = s`span
+  justify-self end
+  font-variant-numeric tabular-nums
+  color #2c2c30
+
+  &[data-negative='true'] { color #a64444 }
+`
+
+const Commodity = s`span
+  color #9a9aa0
+  font-size 9
+`
+
+const DraftHeaderInput = s`input
+  width 100%
+  height 30
+  min-width 0
+  padding 0 6
+  outline 0
+  border 1px solid transparent
+  border-radius 5
+  background transparent
+  color #29292c
+  font-size 12
+  font-weight 620
+
+  &:hover { border-color #e5e1d7; background rgb(255 255 255 / 0.58) }
+  &:focus { border-color #afa7ee; background white; box-shadow 0 0 0 2px #efedff }
+`
+
+const DraftLeg = s`div
+  min-height 34
+  display grid
+  grid-template-columns minmax(180px, 1fr) 118px 66px 24px
+  align-items center
+  gap 8
+
+  input {
+    width 100%
+    height 28
+    min-width 0
+    padding 0 6
+    outline 0
+    border 1px solid transparent
+    border-radius 5
+    background transparent
+    color #4f4f54
+    font-family ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
+    font-size 11
+  }
+
+  input:hover { border-color #e5e1d7; background rgb(255 255 255 / 0.7) }
+  input:focus { border-color #afa7ee; background white; box-shadow 0 0 0 2px #efedff }
+  input[data-amount] { text-align right; font-variant-numeric tabular-nums }
+`
+
+const QuietButton = s`button
+  min-height 26
+  display inline-flex
+  align-items center
+  justify-content center
+  gap 5
+  padding 0 7
+  border 0
+  border-radius 5
+  background transparent
+  color #77777e
+  font-size 10
+  font-weight 650
+  cursor pointer
+
+  &:hover { background #efeff1; color #39393d }
+`
+
+const RemoveButton = s`button
+  width 24
+  height 24
+  display grid
+  place-items center
+  padding 0
+  border 0
+  border-radius 5
+  background transparent
+  color #aaa9a5
+  cursor pointer
+
+  &:hover { background #f7e8e8; color #a33d3d }
+`
+
+const DraftFooter = s`footer
+  min-height 38
+  display flex
+  align-items center
+  justify-content space-between
+  gap 16
+  padding 3px 0 1px
+`
+
+const DraftActions = s`div
+  display flex
+  align-items center
+  gap 6
+`
+
+const BalanceMessage = s`span
+  color #9d610f
+  font-size 10
+  font-weight 650
+
+  &[data-balanced='true'] { color #168255 }
+`
+
+const EmptyState = s`div
+  min-height 220
+  display grid
+  place-items center
+  padding 40
+  color #898990
+  font-size 12
+  text-align center
+`
+
+const KeyboardHint = s`footer
+  display flex
+  flex-wrap wrap
+  gap 13
+  margin-top 16
+  color #929298
+  font-size 10
+
+  span { display inline-flex; align-items center; gap 5 }
+`
+
+const Placeholder = s`section
+  min-height 480
+  display grid
+  place-items center
+  border 1px dashed #d9d9dc
+  border-radius 10
+  color #85858b
+  text-align center
+
+  div { display grid; gap 7 }
+  strong { color #47474c; font-size 15 }
+  p { font-size 12 }
+`
+
+const App = s(() => {
+  let transactions = structuredClone(initialTransactions)
+  let activeArea = 'transactions'
+  let filtersOpen = false
+  let tree = true
+  let includeStaged = false
+  const collapsed = new Set()
+  const collapsedAccounts = new Set()
+  let selectedId = transactions[0].id
+  let filters = { year: '', month: '', day: '', account: '', text: '' }
+  let nextId = 2000
+
+  const activeFilters = () => Object.values(filters).filter(Boolean).length
+  const visible = () => filterTransactions(transactions, filters)
+  const patchFilters = (patch) => filters = { ...filters, ...patch }
+
+  const mutateTransaction = (id, mutate) => {
+    const transaction = transactions.find((item) => item.id === id)
+    if (transaction?.status === 'draft') mutate(transaction)
+  }
+
+  const addDraft = () => {
+    const id = `draft-${nextId++}`
+    transactions.unshift({
+      id,
+      status: 'draft',
+      date: '2026-09-02',
+      description: 'Untitled transaction',
+      legs: [
+        { id: `${id}-1`, account: ['Assets', 'Bank'], amount: 0, commodity: DEFAULT_COMMODITY },
+        {
+          id: `${id}-2`,
+          account: ['Expenses', 'Uncategorized'],
+          amount: 0,
+          commodity: DEFAULT_COMMODITY,
+        },
+      ],
+    })
+    selectedId = id
+    collapsed.delete(id)
+  }
+
+  const duplicateToStaging = (source, reverse = false) => {
+    const id = `draft-${nextId++}`
+    transactions.unshift({
+      id,
+      status: 'draft',
+      date: '2026-09-02',
+      description: reverse ? `Reversal · ${source.description}` : `${source.description} · copy`,
+      legs: source.legs.map((leg, index) => ({
+        ...structuredClone(leg),
+        id: `${id}-${index + 1}`,
+        amount: reverse ? -leg.amount : leg.amount,
+      })),
+    })
+    selectedId = id
+  }
+
+  const removeDraft = (id) => {
+    transactions = transactions.filter((transaction) => transaction.id !== id)
+    selectedId = visible()[0]?.id ?? ''
+  }
+
+  const commitDraft = (id) =>
+    mutateTransaction(id, (transaction) => {
+      if (isBalanced(transaction)) transaction.status = 'committed'
+    })
+
+  const moveSelection = (direction) => {
+    const rows = visible()
+    if (!rows.length) return
+    const current = rows.findIndex(({ id }) => id === selectedId)
+    const next = current < 0 ? 0 : Math.min(rows.length - 1, Math.max(0, current + direction))
+    selectedId = rows[next].id
+  }
+
+  const onkeydown = (event) => {
+    const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)
+
+    if (event.key === 'Escape' && filtersOpen) {
+      filtersOpen = false
+      s.redraw()
+      return
+    }
+    if (typing || event.metaKey || event.ctrlKey || event.altKey) return
+
+    if (event.key === 'n') {
+      event.preventDefault()
+      addDraft()
+      s.redraw()
+    } else if (event.key === 'f') {
+      event.preventDefault()
+      filtersOpen = !filtersOpen
+      s.redraw()
+    } else if (event.key === '/') {
+      event.preventDefault()
+      filtersOpen = true
+      s.redraw()
+      requestAnimationFrame(() => document.querySelector('[data-filter-text]')?.focus())
+    } else if (event.key === 'j' || event.key === 'ArrowDown') {
+      event.preventDefault()
+      moveSelection(1)
+      s.redraw()
+    } else if (event.key === 'k' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      moveSelection(-1)
+      s.redraw()
+    } else if (event.key === 'Enter' && selectedId) {
+      event.preventDefault()
+      collapsed.has(selectedId) ? collapsed.delete(selectedId) : collapsed.add(selectedId)
+      s.redraw()
+    }
+  }
+
+  const topbar = () =>
+    Topbar(
+      Brand(
+        { onclick: () => activeArea = 'transactions', 'aria-label': 'Go to transactions' },
+        Mark('E'),
+        Wordmark('ENTX'),
+      ),
+      Nav(
+        { 'aria-label': 'Main navigation' },
+        ['transactions', 'accounts', 'files'].map((area) =>
+          NavButton({
+            key: area,
+            onclick: () => activeArea = area,
+            'aria-current': activeArea === area ? 'page' : undefined,
+          }, area[0].toUpperCase() + area.slice(1))
+        ),
+      ),
+      TopbarEnd(SyncDot(), s`span`('Local prototype')),
+    )
+
+  const sidebar = (visibleTransactions) => {
+    const committed = visibleTransactions.filter(({ status }) => status === 'committed')
+    const drafts = visibleTransactions.filter(({ status }) => status === 'draft')
+    const stagedKeys = new Set(accountBalances(drafts, tree).map(balanceKey))
+    const balances = accountBalances(includeStaged ? [...committed, ...drafts] : committed, tree)
+
+    return Sidebar(
+      SidebarHeader(
+        SidebarTitleRow(
+          SidebarTitle('Live balance'),
+          TreeToggle(
+            s`input`({
+              type: 'checkbox',
+              checked: tree,
+              onchange: (event) => tree = event.target.checked,
+            }),
+            'Tree',
+          ),
+        ),
+        SidebarMeta(
+          `${periodLabel(filters)} · ${committed.length} posted${
+            includeStaged && drafts.length ? ` + ${drafts.length} staged` : ''
+          }`,
+        ),
+        IncludeToggle(
+          s`input`({
+            type: 'checkbox',
+            role: 'switch',
+            checked: includeStaged,
+            onchange: (event) => includeStaged = event.target.checked,
+          }),
+          s`span`({ 'aria-hidden': 'true' }),
+          'Include staged',
+        ),
+      ),
+      AccountList(
+        balances
+          .filter(({ account }) =>
+            !tree ||
+            !account.slice(0, -1).some((_, index) =>
+              collapsedAccounts.has(accountLabel(account.slice(0, index + 1)))
+            )
+          )
+          .map(({ account, commodity, amount }) => {
+            const name = accountLabel(account)
+            const key = balanceKey({ account, commodity })
+            const indent = tree ? Math.max(0, account.length - 1) * 12 : 0
+            const hasChildren = tree &&
+              balances.some((candidate) => isDescendant(candidate.account, account))
+            const isCollapsed = collapsedAccounts.has(name)
+
+            return AccountRow(
+              { key, data: { root: tree && account.length === 1 } },
+              AccountBranch(
+                { style: { paddingLeft: `${indent}px` } },
+                tree
+                  ? hasChildren
+                    ? AccountToggle(
+                      {
+                        'aria-label': `${isCollapsed ? 'Expand' : 'Collapse'} ${name}`,
+                        'aria-expanded': String(!isCollapsed),
+                        onclick: () =>
+                          isCollapsed
+                            ? collapsedAccounts.delete(name)
+                            : collapsedAccounts.add(name),
+                      },
+                      ChevronIcon({
+                        src: CHEVRON_ICON,
+                        alt: '',
+                        'aria-hidden': 'true',
+                        data: { expanded: !isCollapsed },
+                      }),
+                    )
+                    : AccountIndent()
+                  : null,
+                AccountName(
+                  { title: name },
+                  tree ? account.at(-1) : name,
+                ),
+              ),
+              AccountValue(
+                { data: { staged: includeStaged && stagedKeys.has(key) } },
+                s`span`(
+                  formatAmount(amount),
+                  commodity === DEFAULT_COMMODITY ? null : s`em`(commodity),
+                ),
+              ),
+            )
+          }),
+      ),
+      SidebarFooter(
+        s`span`(s`strong`('DKK'), ' · default commodity'),
+        s`span`(includeStaged ? 'Staged effects included in purple' : 'Committed balances only'),
+      ),
+    )
+  }
+
+  const filterPanel = () =>
+    FilterPanel(
+      Field(
+        'Year',
+        s`select`(
+          {
+            value: filters.year,
+            onchange: (event) => patchFilters({ year: event.target.value, day: '' }),
+          },
+          s`option`({ value: '' }, 'Any year'),
+          s`option`({ value: '2026' }, '2026'),
+          s`option`({ value: '2025' }, '2025'),
+        ),
+      ),
+      Field(
+        'Month',
+        s`select`(
+          {
+            value: filters.month,
+            onchange: (event) => patchFilters({ month: event.target.value, day: '' }),
+          },
+          s`option`({ value: '' }, 'Any month'),
+          ...['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+            .map((month, index) => s`option`({ value: String(index + 1).padStart(2, '0') }, month)),
+        ),
+      ),
+      Field(
+        'Exact day',
+        s`input`({
+          type: 'date',
+          value: filters.day,
+          oninput: (event) =>
+            patchFilters({
+              day: event.target.value,
+              ...(event.target.value ? { year: '', month: '' } : {}),
+            }),
+        }),
+      ),
+      Field(
+        'Account',
+        s`input`({
+          value: filters.account,
+          placeholder: 'Assets:Bank',
+          oninput: (event) => patchFilters({ account: event.target.value }),
+        }),
+      ),
+      Field(
+        'Text',
+        s`input`({
+          data: { filterText: true },
+          value: filters.text,
+          placeholder: 'Description contains…',
+          oninput: (event) => patchFilters({ text: event.target.value }),
+        }),
+      ),
+      Button({
+        disabled: !activeFilters(),
+        onclick: () => filters = { year: '', month: '', day: '', account: '', text: '' },
+      }, 'Clear'),
+    )
+
+  const filterChips = () => {
+    const chips = [
+      filters.year && ['year', filters.year],
+      filters.month &&
+      [
+        'month',
+        new Date(`2026-${filters.month}-01T12:00:00`).toLocaleString('en', { month: 'long' }),
+      ],
+      filters.day && ['day', filters.day],
+      filters.account && ['account', filters.account],
+      filters.text && ['text', `“${filters.text}”`],
+    ].filter(Boolean)
+
+    return chips.length
+      ? FilterChips(
+        chips.map(([key, label]) =>
+          Chip(
+            {
+              key,
+              onclick: () => patchFilters({ [key]: '' }),
+              title: `Remove ${key} filter`,
+            },
+            label,
+            '×',
+          )
+        ),
+      )
+      : null
+  }
+
+  const transactionMenu = (transaction) =>
+    Dropdown(
+      Dropdown.Trigger({
+        size: '1',
+        variant: 'ghost',
+        color: 'gray',
+        'aria-label': `Actions for ${transaction.description}`,
+      }, MenuDots('•••')),
+      Dropdown.Content(
+        { size: '1', align: 'end', color: 'gray' },
+        Dropdown.Label('Transaction'),
+        Dropdown.Item({ onselect: () => duplicateToStaging(transaction) }, 'Duplicate to staging'),
+        transaction.status === 'committed'
+          ? Dropdown.Item(
+            { color: 'red', onselect: () => duplicateToStaging(transaction, true) },
+            'Create reversal',
+          )
+          : Dropdown.Item(
+            { color: 'red', onselect: () => removeDraft(transaction.id) },
+            'Discard draft',
+          ),
+      ),
+    )
+
+  const committedLegs = (transaction) =>
+    Legs(
+      transaction.legs.map((leg) =>
+        Leg(
+          { key: leg.id },
+          LegAccount(accountLabel(leg.account)),
+          LegAmount({ data: { negative: leg.amount < 0 } }, formatAmount(leg.amount)),
+          Commodity(leg.commodity),
+          s`span`(),
+        )
+      ),
+    )
+
+  const draftLegs = (transaction) =>
+    Legs(
+      transaction.legs.map((leg) =>
+        DraftLeg(
+          { key: leg.id },
+          s`input`({
+            value: accountLabel(leg.account),
+            'aria-label': 'Account',
+            oninput: (event) => leg.account = parseAccount(event.target.value),
+          }),
+          s`input`({
+            data: { amount: true },
+            type: 'number',
+            step: '0.01',
+            value: leg.amount,
+            'aria-label': 'Amount',
+            oninput: (event) => leg.amount = Number(event.target.value),
+          }),
+          s`input`({
+            value: leg.commodity,
+            'aria-label': 'Commodity',
+            oninput: (event) => leg.commodity = event.target.value.toUpperCase(),
+          }),
+          RemoveButton({
+            'aria-label': 'Remove leg',
+            onclick: () => transaction.legs = transaction.legs.filter(({ id }) => id !== leg.id),
+          }, '×'),
+        )
+      ),
+      DraftFooter(
+        QuietButton({
+          onclick: () =>
+            transaction.legs.push({
+              id: `${transaction.id}-${nextId++}`,
+              account: ['Expenses', 'Uncategorized'],
+              amount: 0,
+              commodity: DEFAULT_COMMODITY,
+            }),
+        }, '+ Add leg'),
+        DraftActions(
+          BalanceMessage(
+            { data: { balanced: isBalanced(transaction) } },
+            isBalanced(transaction)
+              ? 'Balanced'
+              : `${formatAmount(Math.abs(transactionTotal(transaction)))} DKK ${
+                transactionTotal(transaction) < 0 ? 'missing' : 'over'
+              }`,
+          ),
+          Button({
+            data: { primary: true },
+            disabled: !isBalanced(transaction),
+            onclick: () => commitDraft(transaction.id),
+          }, 'Commit'),
+        ),
+      ),
+    )
+
+  const transactionRow = (transaction) => {
+    const isDraft = transaction.status === 'draft'
+    const isCollapsed = collapsed.has(transaction.id)
+    const total = transactionTotal(transaction)
+
+    return Transaction(
+      {
+        key: transaction.id,
+        data: { selected: selectedId === transaction.id, draft: isDraft },
+        onclick: () => selectedId = transaction.id,
+      },
+      TransactionHeader(
+        CollapseButton(
+          {
+            'aria-label': isCollapsed ? 'Expand transaction' : 'Collapse transaction',
+            'aria-expanded': String(!isCollapsed),
+            onclick: (event) => {
+              event.stopPropagation()
+              isCollapsed ? collapsed.delete(transaction.id) : collapsed.add(transaction.id)
+            },
+          },
+          ChevronIcon({
+            src: CHEVRON_ICON,
+            alt: '',
+            'aria-hidden': 'true',
+            data: { expanded: !isCollapsed },
+          }),
+        ),
+        isDraft
+          ? DraftHeaderInput({
+            type: 'date',
+            value: transaction.date,
+            'aria-label': 'Transaction date',
+            oninput: (event) => transaction.date = event.target.value,
+          })
+          : DateText({ datetime: transaction.date }, transaction.date),
+        isDraft
+          ? DraftHeaderInput({
+            value: transaction.description,
+            'aria-label': 'Transaction description',
+            oninput: (event) => transaction.description = event.target.value,
+          })
+          : Description(transaction.description),
+        StateBadge({
+          data: {
+            balanced: isDraft && total === 0,
+            unbalanced: isDraft && total !== 0,
+          },
+        }, isDraft ? (total === 0 ? 'Ready' : 'Unbalanced') : 'Posted'),
+        transactionMenu(transaction),
+      ),
+      !isCollapsed && (isDraft ? draftLegs(transaction) : committedLegs(transaction)),
+    )
+  }
+
+  const transactionsView = (visibleTransactions) => {
+    const drafts = visibleTransactions.filter(({ status }) => status === 'draft')
+    const committed = visibleTransactions.filter(({ status }) => status === 'committed')
+
+    return [
+      MainHeader(
+        TitleGroup(
+          Title('Transactions'),
+          Subtitle(`${periodLabel(filters)} · newest first · ${committed.length} posted`),
+        ),
+        Toolbar(
+          Button(
+            {
+              data: { active: filtersOpen || activeFilters() },
+              onclick: () => filtersOpen = !filtersOpen,
+            },
+            'Filter',
+            activeFilters() ? `· ${activeFilters()}` : null,
+            Key('F'),
+          ),
+          Button({ data: { primary: true }, onclick: addDraft }, 'New transaction', Key('N')),
+        ),
+      ),
+      filtersOpen && filterPanel(),
+      filterChips(),
+      drafts.length
+        ? [
+          SectionHeader(SectionLabel('Staging', s`span`(drafts.length))),
+          Ledger(drafts.map(transactionRow)),
+        ]
+        : null,
+      SectionHeader(SectionLabel('Ledger', s`span`(committed.length))),
+      Ledger(
+        committed.length
+          ? committed.map(transactionRow)
+          : EmptyState(s`p`('No committed transactions match these filters.')),
+      ),
+      KeyboardHint(
+        s`span`(Key('J'), Key('K'), 'navigate'),
+        s`span`(Key('↵'), 'collapse / expand'),
+        s`span`(Key('/'), 'search'),
+        s`span`(Key('N'), 'new transaction'),
+      ),
+    ]
+  }
+
+  const placeholder = () => [
+    MainHeader(
+      TitleGroup(
+        Title(activeArea[0].toUpperCase() + activeArea.slice(1)),
+        Subtitle('Reserved for the next product-design pass'),
+      ),
+    ),
+    Placeholder(
+      s`div`(
+        s`strong`(`${activeArea[0].toUpperCase() + activeArea.slice(1)} comes next`),
+        s`p`('The navigation is active; this area is intentionally not designed yet.'),
+      ),
+    ),
+  ]
+
+  return () => {
+    const visibleTransactions = visible()
+
+    return Shell(
+      {
+        dom: (element) => {
+          element.ownerDocument.addEventListener('keydown', onkeydown)
+          return () => element.ownerDocument.removeEventListener('keydown', onkeydown)
+        },
+      },
+      topbar(),
+      Workspace(
+        sidebar(visibleTransactions),
+        Main(activeArea === 'transactions' ? transactionsView(visibleTransactions) : placeholder()),
+      ),
+    )
+  }
+})
+
+export default App
+
+function balanceKey({ account, commodity }) {
+  return `${accountLabel(account)}\u0000${commodity}`
+}
+
+function isDescendant(account, ancestor) {
+  return account.length > ancestor.length &&
+    ancestor.every((segment, index) => account[index] === segment)
+}

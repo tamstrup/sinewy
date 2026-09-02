@@ -1,0 +1,14 @@
+{
+  "name": "entx",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "sin dev",
+    "build": "sin generate"
+  },
+  "dependencies": {
+    "sin": "file:../../sin",
+    "sinewy": "file:.."
+  }
+}

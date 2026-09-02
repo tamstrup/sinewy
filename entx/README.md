@@ -58,9 +58,43 @@ The sticky top bar, document background, and `theme-color` metadata share `#fcfc
 header supports Safari's sticky-header color sampling; metadata also supports browsers that use an
 explicit theme color. The application canvas retains its slightly darker background.
 
-Only user preferences and the tab preference are persisted. Transaction edits and posting still
-reset on reload; this is not yet a durable accounting backend. The static build generates both tab
-routes for direct navigation.
+User preferences, the tab preference, and named queries are persisted locally. Transaction edits and
+posting still reset on reload; this is not yet a durable accounting backend. The static build
+generates both tab routes for direct navigation.
+
+## Query prototype
+
+The lazy `/query` page combines CodeMirror SQL editing with AG Grid Enterprise, styled to match
+ENTX. It starts with an empty editor and grid. Four sample views (`ledger_entries`, `transactions`,
+`accounts`, and `documents`) provide table/column autocomplete, visible schemas, and example SQL.
+Cmd+Enter, Ctrl+Enter, or **Run query** show a loading state and return a fixed sample dataset.
+
+**SQL is not executed.** The first recognized `FROM` view selects the fixture; projections,
+conditions, joins, ordering, and aggregation in SQL are ignored. Unknown queries fall back to ledger
+entries. Samples are independent of edits on the Transactions page. Numeric/date display uses the
+regional preferences, and controls support Danish/English.
+
+Grid sorting, filtering, column selection, and grouping are real. Drag column headers to the
+grouping bar to group rows; amount/balance columns aggregate with sums. IDs start hidden and can be
+enabled in the Columns panel. Do not interpret grouped totals across different commodities as
+currency conversions.
+
+Enter a name and **Save** to persist SQL in this browser (`entx.queries.v1`). Select saved queries
+with the Sinewy dropdown; change the name and save again to rename. **Delete** asks for confirmation
+and retains the SQL as an unsaved draft. Replacing unsaved work also asks for confirmation. Unsaved
+SQL, results, and grid layout survive navigation within the app, but not a reload. Browser storage
+errors are reported without overwriting malformed stored data. There is no database or cross-device
+synchronization.
+
+The grid runs in Enterprise evaluation mode. A key found in another project was licensed only for
+that application and is not reused. Supply a valid ENTX license as `window.ENTX_AG_GRID_LICENSE_KEY`
+before the Query page mounts; keep private license configuration out of source control. Production
+use requires an appropriate license.
+
+The npm dev/build/browser-test commands automatically bundle the grid dependency boundary with
+esbuild. This works around Sin's development import rewriter not handling all imports in AG Grid's
+large generated modules. The generated vendor file is ignored by git; application/editor code
+remains normal ES modules, and grid/editor dependencies are loaded only on the Query page.
 
 ## Language and regional preferences
 

@@ -1,2 +1,3 @@
 +build/
 .env
+src/query/grid-vendor.generated.js

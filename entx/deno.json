@@ -1,6 +1,6 @@
 {
   "lock": true,
-  "exclude": ["+build/", "node_modules/"],
+  "exclude": ["+build/", "node_modules/", "src/query/grid-vendor.generated.js"],
   "fmt": {
     "lineWidth": 100,
     "semiColons": false,

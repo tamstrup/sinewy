@@ -865,6 +865,8 @@ const App = s((_attrs, _children, context) => {
       ? 'files'
       : route.has('/settings')
       ? 'settings'
+      : route.has('/query')
+      ? 'query'
       : 'transactions'
   const activeTab = () =>
     route.has('/transactions/ledger')
@@ -1024,7 +1026,8 @@ const App = s((_attrs, _children, context) => {
 
   const onkeydown = (event) => {
     if (
-      reviewIds.length || event.defaultPrevented || event.target.closest('dialog, [role="menu"]')
+      reviewIds.length || event.defaultPrevented ||
+      event.target.closest('dialog, [role="menu"], [data-query-grid]')
     ) {
       goPressedAt = 0
       return
@@ -1128,7 +1131,7 @@ const App = s((_attrs, _children, context) => {
       ),
       Nav(
         { 'aria-label': t('mainNavigation') },
-        ['transactions', 'accounts', 'files'].map((area) =>
+        ['transactions', 'accounts', 'files', 'query'].map((area) =>
           NavButton({
             key: area,
             href: area === 'transactions' ? `/transactions/${lastTab}` : `/${area}`,
@@ -1840,6 +1843,7 @@ const App = s((_attrs, _children, context) => {
           '/accounts': placeholder,
           '/files': placeholder,
           '/settings': () => import('./settings.js'),
+          '/query': () => import('./query/index.js'),
         })),
       ),
       postingReview(),

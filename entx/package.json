@@ -4,12 +4,29 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prepare:grid": "esbuild src/query/grid-vendor.js --bundle --format=esm --platform=browser --outfile=src/query/grid-vendor.generated.js",
+    "predev": "npm run prepare:grid",
     "dev": "sin dev",
+    "prebuild": "npm run prepare:grid",
     "build": "sin generate",
-    "test:browser": "sin test test/navigation.browser.js --headless --ci"
+    "pretest:browser": "npm run prepare:grid",
+    "test:browser": "sin test test/index.browser.js --headless --ci"
   },
   "dependencies": {
+    "@ag-grid-community/locale": "^36.1.0",
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.0",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/state": "^6.7.2",
+    "@codemirror/view": "^6.43.10",
+    "@lezer/highlight": "^1.2.3",
+    "ag-grid-community": "^36.1.0",
+    "ag-grid-enterprise": "^36.1.0",
     "sin": "file:../../sin",
     "sinewy": "file:.."
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

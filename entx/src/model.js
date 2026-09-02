@@ -105,7 +105,69 @@ export function transactionTotal(transaction) {
 }
 
 export function isBalanced(transaction) {
-  return transaction.legs.length >= 2 && transactionTotal(transaction) === 0
+  return transaction.legs.length >= 2 &&
+    transactionTotals(transaction).every(({ amount }) => amount === 0)
+}
+
+export function transactionTotals(transaction) {
+  const totals = new Map()
+  for (const leg of transaction.legs) {
+    const commodity = leg.commodity || DEFAULT_COMMODITY
+    totals.set(commodity, round((totals.get(commodity) || 0) + Number(leg.amount || 0)))
+  }
+  return [...totals].map(([commodity, amount]) => ({ commodity, amount }))
+}
+
+export function draftReadiness(transaction) {
+  const date = new Date(`${transaction.date}T12:00:00Z`)
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(transaction.date) &&
+    Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === transaction.date
+  const complete = validDate && transaction.description.trim() && transaction.legs.length >= 2 &&
+    transaction.legs.every((leg) =>
+      leg.account.length && leg.account.every((part) => part.trim()) &&
+      leg.amount !== '' && leg.amount !== null && Number.isFinite(Number(leg.amount)) &&
+      typeof leg.commodity === 'string' && leg.commodity.trim()
+    )
+  return !complete ? 'Incomplete' : isBalanced(transaction) ? 'Ready' : 'Unbalanced'
+}
+
+export function transactionsForTab(transactions, tab, filters) {
+  return filterTransactions(
+    transactions.filter(({ status }) => status === (tab === 'drafts' ? 'draft' : 'committed')),
+    filters,
+  )
+}
+
+export function postDrafts(transactions, ids, postedAt = new Date().toISOString()) {
+  const selected = new Set(ids)
+  const drafts = transactions.filter(({ id }) => selected.has(id))
+  if (
+    !selected.size || drafts.length !== selected.size ||
+    drafts.some((draft) => draft.status !== 'draft' || draftReadiness(draft) !== 'Ready')
+  ) {
+    throw new Error('Only complete, balanced drafts can be posted.')
+  }
+  return transactions.map((transaction) =>
+    selected.has(transaction.id)
+      ? { ...structuredClone(transaction), status: 'committed', postedAt }
+      : transaction
+  )
+}
+
+export function createCorrection(source, id, date) {
+  if (source.status !== 'committed') throw new Error('Only posted transactions can be corrected.')
+  return {
+    id,
+    status: 'draft',
+    correctionOf: source.id,
+    date,
+    description: `Correction · ${source.description}`,
+    legs: source.legs.map((leg, index) => ({
+      ...structuredClone(leg),
+      id: `${id}-${index + 1}`,
+      amount: -Number(leg.amount),
+    })),
+  }
 }
 
 export function filterTransactions(transactions, filters) {

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "sin dev",
-    "build": "sin generate"
+    "build": "sin generate",
+    "test:browser": "sin test test/navigation.browser.js --headless --ci"
   },
   "dependencies": {
     "sin": "file:../../sin",

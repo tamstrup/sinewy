@@ -1,16 +1,19 @@
 import s from 'sin'
-import Dropdown from 'sinewy/theme'
+import Dropdown, { AlertDialog } from 'sinewy/theme'
 import {
   accountBalances,
   accountLabel,
+  createCorrection,
   DEFAULT_COMMODITY,
+  draftReadiness,
   filterTransactions,
   formatAmount,
   initialTransactions,
-  isBalanced,
   parseAccount,
   periodLabel,
-  transactionTotal,
+  postDrafts,
+  transactionsForTab,
+  transactionTotals,
 } from './model.js'
 
 const CHEVRON_ICON = `data:image/svg+xml,${
@@ -100,8 +103,10 @@ const Nav = s`nav
   gap 3
 `
 
-const NavButton = s`button
+const NavButton = s`a
   height 32
+  display inline-flex
+  align-items center
   padding 0 11
   border 0
   border-radius 7
@@ -110,6 +115,7 @@ const NavButton = s`button
   font-size 13
   font-weight 620
   cursor pointer
+  text-decoration none
 
   &:hover { background #f0f0f2; color #252528 }
   &[aria-current='page'] { background #ededf0; color #19191c }
@@ -495,6 +501,83 @@ const SectionLabel = s`h2
   }
 `
 
+const TransactionTabs = s`nav
+  display flex
+  gap 24
+  border-bottom 1px solid #e0e0e3
+  margin-bottom 18
+`
+
+const TransactionTab = s`a
+  display inline-flex
+  align-items center
+  gap 7
+  padding 0 1px 12px
+  border-bottom 2px solid transparent
+  color #77777e
+  text-decoration none
+  font-size 13
+  font-weight 650
+
+  &[aria-selected='true'] { border-color #655bd8; color #28252f }
+  &:focus-visible { outline 2px solid #968eeb; outline-offset 4px }
+  span { padding 2px 6px; border-radius 5; background #ececef; font-size 10; color #77777e }
+`
+
+const SelectionCell = s`div
+  display flex
+  align-items center
+  gap 7
+
+  input { width 14; height 14; margin 0; accent-color #655bd8; cursor pointer }
+`
+
+const PostingToolbar = s`div
+  display flex
+  align-items center
+  gap 10
+  margin-bottom 12
+  color #7b7b82
+  font-size 11
+
+  label { display inline-flex; align-items center; gap 6 }
+  input { accent-color #655bd8 }
+  > span { flex 1 }
+`
+
+const Notice = s`div
+  display flex
+  align-items center
+  gap 10
+  color #5a5277
+  font-size 12
+  margin-bottom 12
+
+  &:empty { display none }
+`
+
+const CorrectionNote = s`div
+  padding 0 46px 8px 193px
+  font-size 10
+  color #88818f
+
+  button { padding 0; border 0; background none; color #655bd8; cursor pointer }
+`
+
+const ReviewList = s`ul
+  display grid
+  gap 10
+  max-height 260
+  overflow auto
+  margin 18px 0
+  padding 0
+  list-style none
+  font-size 13
+
+  li { display grid; gap 3 }
+  time { color #77777e; font-size 11 }
+`
+
 const Ledger = s`section
   overflow hidden
   border 1px solid #e0e0e3
@@ -515,7 +598,7 @@ const Transaction = s`article
 const TransactionHeader = s`header
   min-height 46
   display grid
-  grid-template-columns 24px 118px minmax(0, 1fr) auto auto
+  grid-template-columns 45px 118px minmax(0, 1fr) auto auto
   align-items center
   gap 10
   padding 7px 9px 7px 10px
@@ -574,7 +657,7 @@ const MenuDots = s`span
 `
 
 const Legs = s`div
-  padding 0 46px 10px 172px
+  padding 0 46px 10px 193px
 `
 
 const Leg = s`div
@@ -742,25 +825,63 @@ const Placeholder = s`section
   p { font-size 12 }
 `
 
-const App = s(() => {
+const App = s((_attrs, _children, { route }) => {
+  let shell
   let transactions = structuredClone(initialTransactions)
-  let activeArea = 'transactions'
+  let lastTab = transactions.some(({ status }) => status === 'draft') ? 'drafts' : 'ledger'
+  const activeArea = () =>
+    route.has('/accounts') ? 'accounts' : route.has('/files') ? 'files' : 'transactions'
+  const activeTab = () =>
+    route.has('/transactions/ledger')
+      ? 'ledger'
+      : route.has('/transactions/drafts')
+      ? 'drafts'
+      : lastTab
   let filtersOpen = false
   let tree = true
-  let includeStaged = false
+  let includeDrafts = false
   const collapsed = new Set()
   const collapsedAccounts = new Set()
+  const checkedDrafts = new Set()
+  let reviewIds = []
+  let reviewError = ''
+  let notice = ''
+  let postedNotice = false
+  let goPressedAt = 0
   let selectedId = transactions[0].id
   let filters = { year: '', month: '', day: '', account: '', text: '' }
   let nextId = 2000
 
   const activeFilters = () => Object.values(filters).filter(Boolean).length
-  const visible = () => filterTransactions(transactions, filters)
+  const visible = () => transactionsForTab(transactions, activeTab(), filters)
   const patchFilters = (patch) => filters = { ...filters, ...patch }
-
-  const mutateTransaction = (id, mutate) => {
-    const transaction = transactions.find((item) => item.id === id)
-    if (transaction?.status === 'draft') mutate(transaction)
+  const selectedDrafts = () =>
+    visible().filter(({ id, status }) => status === 'draft' && checkedDrafts.has(id))
+  const rememberTab = () => {
+    if (activeArea() !== 'transactions') return
+    lastTab = activeTab()
+    try {
+      localStorage.setItem('entx.transactions.tab', lastTab)
+    } catch { /* Storage is optional. */ }
+  }
+  const navigateTab = (tab) => {
+    lastTab = tab
+    route(`/transactions/${tab}`, { scroll: false })
+    rememberTab()
+  }
+  const showDraft = (id, message) => {
+    const hadFilters = activeFilters()
+    filters = { year: '', month: '', day: '', account: '', text: '' }
+    selectedId = id
+    collapsed.delete(id)
+    notice = message + (hadFilters ? ' Filters cleared to show it.' : '')
+    postedNotice = false
+    navigateTab('drafts')
+    requestAnimationFrame(() =>
+      shell?.querySelector(
+        `[data-transaction-id="${id}"] input[aria-label="Transaction description"]`,
+      )?.focus()
+    )
   }
 
   const addDraft = () => {
@@ -768,47 +889,70 @@ const App = s(() => {
     transactions.unshift({
       id,
       status: 'draft',
-      date: '2026-09-02',
-      description: 'Untitled transaction',
+      date: today(),
+      description: '',
       legs: [
-        { id: `${id}-1`, account: ['Assets', 'Bank'], amount: 0, commodity: DEFAULT_COMMODITY },
+        { id: `${id}-1`, account: ['Assets', 'Bank'], amount: '', commodity: DEFAULT_COMMODITY },
         {
           id: `${id}-2`,
           account: ['Expenses', 'Uncategorized'],
-          amount: 0,
+          amount: '',
           commodity: DEFAULT_COMMODITY,
         },
       ],
     })
-    selectedId = id
-    collapsed.delete(id)
+    showDraft(id, 'New draft created.')
   }
 
-  const duplicateToStaging = (source, reverse = false) => {
+  const duplicateToDrafts = (source, reverse = false) => {
     const id = `draft-${nextId++}`
-    transactions.unshift({
+    transactions.unshift(
+      reverse ? createCorrection(source, id, today()) : {
+        id,
+        status: 'draft',
+        date: today(),
+        description: `${source.description} · copy`,
+        legs: source.legs.map((leg, index) => ({
+          ...structuredClone(leg),
+          id: `${id}-${index + 1}`,
+        })),
+      },
+    )
+    showDraft(
       id,
-      status: 'draft',
-      date: '2026-09-02',
-      description: reverse ? `Reversal · ${source.description}` : `${source.description} · copy`,
-      legs: source.legs.map((leg, index) => ({
-        ...structuredClone(leg),
-        id: `${id}-${index + 1}`,
-        amount: reverse ? -leg.amount : leg.amount,
-      })),
-    })
-    selectedId = id
+      reverse
+        ? 'Linked correction draft created. The original remains unchanged.'
+        : 'Transaction copied to Drafts.',
+    )
   }
 
   const removeDraft = (id) => {
+    if (!transactions.some((item) => item.id === id && item.status === 'draft')) return
     transactions = transactions.filter((transaction) => transaction.id !== id)
+    checkedDrafts.delete(id)
     selectedId = visible()[0]?.id ?? ''
   }
 
-  const commitDraft = (id) =>
-    mutateTransaction(id, (transaction) => {
-      if (isBalanced(transaction)) transaction.status = 'committed'
-    })
+  const reviewPosting = (drafts) => {
+    if (!drafts.length || drafts.some((draft) => draftReadiness(draft) !== 'Ready')) return
+    reviewError = ''
+    reviewIds = drafts.map(({ id }) => id)
+  }
+
+  const confirmPosting = (event) => {
+    try {
+      transactions = postDrafts(transactions, reviewIds)
+      reviewIds.forEach((id) => checkedDrafts.delete(id))
+      notice = `${reviewIds.length} ${
+        reviewIds.length === 1 ? 'transaction' : 'transactions'
+      } posted to the ledger.`
+      postedNotice = true
+      selectedId = visible()[0]?.id ?? ''
+    } catch (error) {
+      event.preventDefault()
+      reviewError = error.message
+    }
+  }
 
   const moveSelection = (direction) => {
     const rows = visible()
@@ -819,7 +963,21 @@ const App = s(() => {
   }
 
   const onkeydown = (event) => {
-    const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)
+    if (
+      reviewIds.length || event.defaultPrevented || event.target.closest('dialog, [role="menu"]')
+    ) return
+    const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) ||
+      event.target.isContentEditable
+
+    if (
+      (event.metaKey || event.ctrlKey) && event.key === 'Enter' &&
+      activeArea() === 'transactions' && activeTab() === 'drafts'
+    ) {
+      event.preventDefault()
+      reviewPosting(selectedDrafts())
+      s.redraw()
+      return
+    }
 
     if (event.key === 'Escape' && filtersOpen) {
       filtersOpen = false
@@ -828,10 +986,26 @@ const App = s(() => {
     }
     if (typing || event.metaKey || event.ctrlKey || event.altKey) return
 
+    if (event.key === 'g') {
+      goPressedAt = Date.now()
+      return
+    }
+    if (goPressedAt && Date.now() - goPressedAt < 1200 && ['d', 'l'].includes(event.key)) {
+      event.preventDefault()
+      goPressedAt = 0
+      navigateTab(event.key === 'd' ? 'drafts' : 'ledger')
+      return
+    }
+    goPressedAt = 0
+
     if (event.key === 'n') {
       event.preventDefault()
       addDraft()
       s.redraw()
+    } else if (
+      activeArea() !== 'transactions' || event.target.closest('button, a, [role="tablist"]')
+    ) {
+      return
     } else if (event.key === 'f') {
       event.preventDefault()
       filtersOpen = !filtersOpen
@@ -840,7 +1014,7 @@ const App = s(() => {
       event.preventDefault()
       filtersOpen = true
       s.redraw()
-      requestAnimationFrame(() => document.querySelector('[data-filter-text]')?.focus())
+      requestAnimationFrame(() => shell?.querySelector('[data-filter-text]')?.focus())
     } else if (event.key === 'j' || event.key === 'ArrowDown') {
       event.preventDefault()
       moveSelection(1)
@@ -859,7 +1033,7 @@ const App = s(() => {
   const topbar = () =>
     Topbar(
       Brand(
-        { onclick: () => activeArea = 'transactions', 'aria-label': 'Go to transactions' },
+        { onclick: () => navigateTab(lastTab), 'aria-label': 'Go to transactions' },
         Mark('E'),
         Wordmark('ENTX'),
       ),
@@ -868,8 +1042,8 @@ const App = s(() => {
         ['transactions', 'accounts', 'files'].map((area) =>
           NavButton({
             key: area,
-            onclick: () => activeArea = area,
-            'aria-current': activeArea === area ? 'page' : undefined,
+            href: area === 'transactions' ? `/transactions/${lastTab}` : `/${area}`,
+            'aria-current': activeArea() === area ? 'page' : undefined,
           }, area[0].toUpperCase() + area.slice(1))
         ),
       ),
@@ -879,8 +1053,8 @@ const App = s(() => {
   const sidebar = (visibleTransactions) => {
     const committed = visibleTransactions.filter(({ status }) => status === 'committed')
     const drafts = visibleTransactions.filter(({ status }) => status === 'draft')
-    const stagedKeys = new Set(accountBalances(drafts, tree).map(balanceKey))
-    const balances = accountBalances(includeStaged ? [...committed, ...drafts] : committed, tree)
+    const draftKeys = new Set(accountBalances(drafts, tree).map(balanceKey))
+    const balances = accountBalances(includeDrafts ? [...committed, ...drafts] : committed, tree)
 
     return Sidebar(
       SidebarHeader(
@@ -897,18 +1071,18 @@ const App = s(() => {
         ),
         SidebarMeta(
           `${periodLabel(filters)} · ${committed.length} posted${
-            includeStaged && drafts.length ? ` + ${drafts.length} staged` : ''
+            includeDrafts && drafts.length ? ` + ${drafts.length} drafts` : ''
           }`,
         ),
         IncludeToggle(
           s`input`({
             type: 'checkbox',
             role: 'switch',
-            checked: includeStaged,
-            onchange: (event) => includeStaged = event.target.checked,
+            checked: includeDrafts,
+            onchange: (event) => includeDrafts = event.target.checked,
           }),
           s`span`({ 'aria-hidden': 'true' }),
-          'Include staged',
+          'Include drafts',
         ),
       ),
       AccountList(
@@ -957,7 +1131,12 @@ const App = s(() => {
                 ),
               ),
               AccountValue(
-                { data: { staged: includeStaged && stagedKeys.has(key) } },
+                {
+                  data: { staged: includeDrafts && draftKeys.has(key) },
+                  title: includeDrafts && draftKeys.has(key)
+                    ? 'Includes draft transactions'
+                    : 'Posted balance',
+                },
                 s`span`(
                   formatAmount(amount),
                   commodity === DEFAULT_COMMODITY ? null : s`em`(commodity),
@@ -968,7 +1147,7 @@ const App = s(() => {
       ),
       SidebarFooter(
         s`span`(s`strong`('DKK'), ' · default commodity'),
-        s`span`(includeStaged ? 'Staged effects included in purple' : 'Committed balances only'),
+        s`span`(includeDrafts ? 'Draft effects included in purple' : 'Posted balances only'),
       ),
     )
   }
@@ -1075,11 +1254,11 @@ const App = s(() => {
       Dropdown.Content(
         { size: '1', align: 'end', color: 'gray' },
         Dropdown.Label('Transaction'),
-        Dropdown.Item({ onselect: () => duplicateToStaging(transaction) }, 'Duplicate to staging'),
+        Dropdown.Item({ onselect: () => duplicateToDrafts(transaction) }, 'Duplicate to drafts'),
         transaction.status === 'committed'
           ? Dropdown.Item(
-            { color: 'red', onselect: () => duplicateToStaging(transaction, true) },
-            'Create reversal',
+            { onselect: () => duplicateToDrafts(transaction, true) },
+            'Create correction',
           )
           : Dropdown.Item(
             { color: 'red', onselect: () => removeDraft(transaction.id) },
@@ -1117,7 +1296,8 @@ const App = s(() => {
             step: '0.01',
             value: leg.amount,
             'aria-label': 'Amount',
-            oninput: (event) => leg.amount = Number(event.target.value),
+            oninput: (event) =>
+              leg.amount = event.target.value === '' ? '' : Number(event.target.value),
           }),
           s`input`({
             value: leg.commodity,
@@ -1136,24 +1316,29 @@ const App = s(() => {
             transaction.legs.push({
               id: `${transaction.id}-${nextId++}`,
               account: ['Expenses', 'Uncategorized'],
-              amount: 0,
+              amount: '',
               commodity: DEFAULT_COMMODITY,
             }),
         }, '+ Add leg'),
         DraftActions(
           BalanceMessage(
-            { data: { balanced: isBalanced(transaction) } },
-            isBalanced(transaction)
-              ? 'Balanced'
-              : `${formatAmount(Math.abs(transactionTotal(transaction)))} DKK ${
-                transactionTotal(transaction) < 0 ? 'missing' : 'over'
-              }`,
+            { data: { balanced: draftReadiness(transaction) === 'Ready' } },
+            draftReadiness(transaction) === 'Incomplete'
+              ? 'Complete the date, description and all legs'
+              : draftReadiness(transaction) === 'Ready'
+              ? 'Balanced · ready to post'
+              : transactionTotals(transaction).filter(({ amount }) => amount !== 0)
+                .map(({ amount, commodity }) =>
+                  `${formatAmount(Math.abs(amount))} ${commodity} ${
+                    amount < 0 ? 'missing' : 'over'
+                  }`
+                ).join(' · '),
           ),
           Button({
             data: { primary: true },
-            disabled: !isBalanced(transaction),
-            onclick: () => commitDraft(transaction.id),
-          }, 'Commit'),
+            disabled: draftReadiness(transaction) !== 'Ready',
+            onclick: () => reviewPosting([transaction]),
+          }, 'Post'),
         ),
       ),
     )
@@ -1161,30 +1346,46 @@ const App = s(() => {
   const transactionRow = (transaction) => {
     const isDraft = transaction.status === 'draft'
     const isCollapsed = collapsed.has(transaction.id)
-    const total = transactionTotal(transaction)
+    const readiness = isDraft ? draftReadiness(transaction) : 'Posted'
 
     return Transaction(
       {
         key: transaction.id,
-        data: { selected: selectedId === transaction.id, draft: isDraft },
+        data: {
+          selected: selectedId === transaction.id,
+          draft: isDraft,
+          transactionId: transaction.id,
+        },
         onclick: () => selectedId = transaction.id,
       },
       TransactionHeader(
-        CollapseButton(
-          {
-            'aria-label': isCollapsed ? 'Expand transaction' : 'Collapse transaction',
-            'aria-expanded': String(!isCollapsed),
-            onclick: (event) => {
-              event.stopPropagation()
-              isCollapsed ? collapsed.delete(transaction.id) : collapsed.add(transaction.id)
-            },
-          },
-          ChevronIcon({
-            src: CHEVRON_ICON,
-            alt: '',
-            'aria-hidden': 'true',
-            data: { expanded: !isCollapsed },
+        SelectionCell(
+          isDraft && s`input`({
+            type: 'checkbox',
+            checked: checkedDrafts.has(transaction.id),
+            'aria-label': `Select ${transaction.description || 'untitled draft'}`,
+            onclick: (event) => event.stopPropagation(),
+            onchange: (event) =>
+              event.target.checked
+                ? checkedDrafts.add(transaction.id)
+                : checkedDrafts.delete(transaction.id),
           }),
+          CollapseButton(
+            {
+              'aria-label': isCollapsed ? 'Expand transaction' : 'Collapse transaction',
+              'aria-expanded': String(!isCollapsed),
+              onclick: (event) => {
+                event.stopPropagation()
+                isCollapsed ? collapsed.delete(transaction.id) : collapsed.add(transaction.id)
+              },
+            },
+            ChevronIcon({
+              src: CHEVRON_ICON,
+              alt: '',
+              'aria-hidden': 'true',
+              data: { expanded: !isCollapsed },
+            }),
+          ),
         ),
         isDraft
           ? DraftHeaderInput({
@@ -1197,31 +1398,60 @@ const App = s(() => {
         isDraft
           ? DraftHeaderInput({
             value: transaction.description,
+            placeholder: 'Describe this transaction…',
             'aria-label': 'Transaction description',
             oninput: (event) => transaction.description = event.target.value,
           })
           : Description(transaction.description),
         StateBadge({
           data: {
-            balanced: isDraft && total === 0,
-            unbalanced: isDraft && total !== 0,
+            balanced: readiness === 'Ready',
+            unbalanced: readiness === 'Unbalanced',
           },
-        }, isDraft ? (total === 0 ? 'Ready' : 'Unbalanced') : 'Posted'),
+        }, readiness),
         transactionMenu(transaction),
+      ),
+      transaction.correctionOf && CorrectionNote(
+        'Correction of ',
+        s`button`({
+          onclick: (event) => {
+            event.stopPropagation()
+            filters = { year: '', month: '', day: '', account: '', text: '' }
+            selectedId = transaction.correctionOf
+            collapsed.delete(selectedId)
+            navigateTab('ledger')
+            requestAnimationFrame(() =>
+              shell?.querySelector(`[data-transaction-id="${selectedId}"]`)?.scrollIntoView({
+                block: 'center',
+              })
+            )
+          },
+        }, transaction.correctionOf),
+        ' · opposing entries; the original stays unchanged',
       ),
       !isCollapsed && (isDraft ? draftLegs(transaction) : committedLegs(transaction)),
     )
   }
 
   const transactionsView = (visibleTransactions) => {
-    const drafts = visibleTransactions.filter(({ status }) => status === 'draft')
-    const committed = visibleTransactions.filter(({ status }) => status === 'committed')
+    const isDrafts = activeTab() === 'drafts'
+    const draftCount = transactions.filter(({ status }) => status === 'draft').length
+    const selected = selectedDrafts()
+    const ready = visibleTransactions.filter((transaction) =>
+      isDrafts && draftReadiness(transaction) === 'Ready'
+    )
+    const postableSelection = selected.length &&
+      selected.every((transaction) => draftReadiness(transaction) === 'Ready')
 
     return [
       MainHeader(
         TitleGroup(
           Title('Transactions'),
-          Subtitle(`${periodLabel(filters)} · newest first · ${committed.length} posted`),
+          Subtitle(
+            isDrafts
+              ? 'Prepare and review before posting'
+              : 'Posted transactions · the authoritative record',
+          ),
         ),
         Toolbar(
           Button(
@@ -1236,39 +1466,171 @@ const App = s(() => {
           Button({ data: { primary: true }, onclick: addDraft }, 'New transaction', Key('N')),
         ),
       ),
+      TransactionTabs(
+        { role: 'tablist', 'aria-label': 'Transaction workspace' },
+        ['drafts', 'ledger'].map((tab) =>
+          TransactionTab({
+            key: tab,
+            id: `tab-${tab}`,
+            href: `/transactions/${tab}`,
+            role: 'tab',
+            'aria-selected': String(activeTab() === tab),
+            'aria-controls': 'transaction-panel',
+            tabindex: activeTab() === tab ? 0 : -1,
+            onclick: (event) => {
+              if (
+                event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button
+              ) return
+              event.preventDefault()
+              navigateTab(tab)
+            },
+            onkeydown: (event) => {
+              if (!['ArrowLeft', 'ArrowRight', 'Home', 'End', ' '].includes(event.key)) return
+              event.preventDefault()
+              event.stopPropagation()
+              const next = event.key === 'Home'
+                ? 'drafts'
+                : event.key === 'End'
+                ? 'ledger'
+                : event.key === ' '
+                ? tab
+                : tab === 'drafts'
+                ? 'ledger'
+                : 'drafts'
+              navigateTab(next)
+              requestAnimationFrame(() => shell?.querySelector(`#tab-${next}`)?.focus())
+            },
+          }, tab === 'drafts' ? ['Drafts', s`span`(draftCount)] : 'Ledger')
+        ),
+      ),
+      Notice(
+        { role: 'status', 'aria-live': 'polite' },
+        notice,
+        postedNotice && QuietButton({ onclick: () => navigateTab('ledger') }, 'View in Ledger →'),
+      ),
       filtersOpen && filterPanel(),
       filterChips(),
-      drafts.length
-        ? [
-          SectionHeader(SectionLabel('Staging', s`span`(drafts.length))),
-          Ledger(drafts.map(transactionRow)),
-        ]
-        : null,
-      SectionHeader(SectionLabel('Ledger', s`span`(committed.length))),
-      Ledger(
-        committed.length
-          ? committed.map(transactionRow)
-          : EmptyState(s`p`('No committed transactions match these filters.')),
+      s`section`(
+        {
+          id: 'transaction-panel',
+          role: 'tabpanel',
+          'aria-labelledby': `tab-${activeTab()}`,
+          tabindex: 0,
+        },
+        isDrafts && PostingToolbar(
+          s`label`(
+            s`input`({
+              type: 'checkbox',
+              checked: visibleTransactions.length > 0 &&
+                selected.length === visibleTransactions.length,
+              indeterminate: selected.length > 0 && selected.length < visibleTransactions.length,
+              disabled: !visibleTransactions.length,
+              onchange: (event) =>
+                visibleTransactions.forEach(({ id }) =>
+                  event.target.checked ? checkedDrafts.add(id) : checkedDrafts.delete(id)
+                ),
+            }),
+            'Select visible',
+          ),
+          s`span`(
+            selected.length
+              ? `${selected.length} selected in view`
+              : `${ready.length} ready to post`,
+          ),
+          Button({
+            disabled: !postableSelection,
+            title: selected.length && !postableSelection
+              ? 'Every selected draft must be complete and balanced'
+              : 'Review selected drafts before posting',
+            onclick: () => reviewPosting(selected),
+          }, 'Post selected'),
+          Button(
+            { disabled: !ready.length, onclick: () => reviewPosting(ready) },
+            'Post all ready',
+          ),
+        ),
+        SectionHeader(
+          SectionLabel(periodLabel(filters), s`span`(visibleTransactions.length)),
+          s`span`({ style: { color: '#929298', fontSize: '10px' } }, 'Newest first'),
+        ),
+        Ledger(
+          visibleTransactions.length ? visibleTransactions.map(transactionRow) : EmptyState(s`div`(
+            s`p`(
+              activeFilters()
+                ? `No ${isDrafts ? 'drafts' : 'posted transactions'} match these filters.`
+                : isDrafts
+                ? 'Your drafts are clear. Start a new transaction when you’re ready.'
+                : 'No posted transactions yet. Review and post a draft to start the ledger.',
+            ),
+            activeFilters() &&
+              QuietButton({
+                onclick: () => filters = { year: '', month: '', day: '', account: '', text: '' },
+              }, 'Clear filters'),
+          )),
+        ),
       ),
       KeyboardHint(
+        s`span`(Key('G D'), 'drafts'),
+        s`span`(Key('G L'), 'ledger'),
         s`span`(Key('J'), Key('K'), 'navigate'),
         s`span`(Key('↵'), 'collapse / expand'),
         s`span`(Key('/'), 'search'),
         s`span`(Key('N'), 'new transaction'),
+        isDrafts && s`span`(Key('⌘ / Ctrl ↵'), 'review selected'),
       ),
     ]
   }
 
+  const postingReview = () =>
+    AlertDialog(
+      {
+        id: 'posting-review',
+        open: reviewIds.length > 0,
+        onopenchange: (open) => {
+          if (!open) {
+            reviewIds = []
+            s.redraw()
+          }
+        },
+      },
+      AlertDialog.Content(
+        { size: '2', color: 'indigo' },
+        AlertDialog.Title(
+          `Post ${reviewIds.length} ${reviewIds.length === 1 ? 'transaction' : 'transactions'}?`,
+        ),
+        AlertDialog.Description(
+          'Posting makes these transactions read-only in the ledger. Changes must be made through a linked correction draft.',
+        ),
+        ReviewList(
+          transactions.filter(({ id }) => reviewIds.includes(id)).map((transaction) =>
+            s`li`(
+              { key: transaction.id },
+              s`strong`(transaction.description),
+              s`time`(`${transaction.date} · ${transaction.legs.length} legs · Ready`),
+            )
+          ),
+        ),
+        reviewError && s`p`({ role: 'alert' }, reviewError),
+        Toolbar(
+          AlertDialog.Close({ autofocus: true, variant: 'soft', color: 'gray' }, 'Cancel'),
+          AlertDialog.Close(
+            { variant: 'solid', color: 'indigo', onclick: confirmPosting },
+            'Post to ledger',
+          ),
+        ),
+      ),
+    )
+
   const placeholder = () => [
     MainHeader(
       TitleGroup(
-        Title(activeArea[0].toUpperCase() + activeArea.slice(1)),
+        Title(activeArea()[0].toUpperCase() + activeArea().slice(1)),
         Subtitle('Reserved for the next product-design pass'),
       ),
     ),
     Placeholder(
       s`div`(
-        s`strong`(`${activeArea[0].toUpperCase() + activeArea.slice(1)} comes next`),
+        s`strong`(`${activeArea()[0].toUpperCase() + activeArea().slice(1)} comes next`),
         s`p`('The navigation is active; this area is intentionally not designed yet.'),
       ),
     ),
@@ -1276,19 +1638,49 @@ const App = s(() => {
 
   return () => {
     const visibleTransactions = visible()
+    if (!visibleTransactions.some(({ id }) => id === selectedId)) {
+      selectedId = visibleTransactions[0]?.id ?? ''
+    }
 
     return Shell(
       {
         dom: (element) => {
-          element.ownerDocument.addEventListener('keydown', onkeydown)
-          return () => element.ownerDocument.removeEventListener('keydown', onkeydown)
+          shell = element
+          const keydown = (event) => {
+            if (element.contains(event.target) || event.target === element.ownerDocument.body) {
+              onkeydown(event)
+            }
+          }
+          try {
+            const saved = localStorage.getItem('entx.transactions.tab')
+            if (saved === 'drafts' || saved === 'ledger') lastTab = saved
+          } catch { /* Continue without a persisted navigation preference. */ }
+          if (route.has('/transactions/drafts') || route.has('/transactions/ledger')) rememberTab()
+          else if (activeArea() === 'transactions') {
+            route(`/transactions/${lastTab}`, { replace: true, scroll: false })
+          }
+          element.ownerDocument.addEventListener('keydown', keydown)
+          element.ownerDocument.defaultView.addEventListener('popstate', rememberTab)
+          return () => {
+            shell = undefined
+            element.ownerDocument.removeEventListener('keydown', keydown)
+            element.ownerDocument.defaultView.removeEventListener('popstate', rememberTab)
+          }
         },
       },
       topbar(),
       Workspace(
-        sidebar(visibleTransactions),
-        Main(activeArea === 'transactions' ? transactionsView(visibleTransactions) : placeholder()),
+        sidebar(filterTransactions(transactions, filters)),
+        Main(route({
+          '/': () => transactionsView(visible()),
+          '/transactions': () => transactionsView(visible()),
+          '/transactions/drafts': () => transactionsView(visible()),
+          '/transactions/ledger': () => transactionsView(visible()),
+          '/accounts': placeholder,
+          '/files': placeholder,
+        })),
       ),
+      postingReview(),
     )
   }
 })
@@ -1302,4 +1694,11 @@ function balanceKey({ account, commodity }) {
 function isDescendant(account, ancestor) {
   return account.length > ancestor.length &&
     ancestor.every((segment, index) => account[index] === segment)
+}
+
+function today() {
+  const date = new Date()
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${
+    String(date.getDate()).padStart(2, '0')
+  }`
 }

@@ -367,7 +367,7 @@ t`Vim boundary shortcuts`(
       return ['/transactions/drafts', location.pathname]
     })
   ),
-  t`held, expired, or interrupted g sequences do not jump to the first transaction`(() =>
+  t`held and cancelled g sequences do not jump, while the guide has no timeout`(() =>
     scrollingFixture(async (host) => {
       const panel = host.querySelector('[role="tabpanel"]')
       const last = host.querySelector('article:last-child')
@@ -388,17 +388,19 @@ t`Vim boundary shortcuts`(
         Date.now = () => clock
         key(panel, 'g')
         clock += 1201
+        t.is('true', last.dataset.selected)
         key(panel, 'g')
       } finally {
         Date.now = now
       }
       await settle()
-      t.is('true', last.dataset.selected)
+      t.is('true', host.querySelector('article').dataset.selected)
       key(panel, 'Escape')
+      key(panel, 'G', { shiftKey: true })
       key(panel, 'g')
       key(panel, 'x')
-      key(panel, 'g')
       await settle()
+      t.is(true, host.querySelector('#shortcut-panel').matches(':popover-open'))
       return ['true', last.dataset.selected]
     })
   ),
@@ -415,6 +417,233 @@ t`Vim boundary shortcuts`(
       await settle()
       t.is('true', first.dataset.selected)
       return [filter, document.activeElement]
+    })
+  ),
+)
+
+t`discoverable shortcut guide`(
+  t`g opens a nonmodal guide without moving ledger focus; sections and back are discoverable`(() =>
+    fixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      panel.focus()
+      key(panel, 'g')
+      await settle()
+      const guide = host.querySelector('#shortcut-panel')
+      t.is(true, guide.matches(':popover-open'))
+      t.is(panel, document.activeElement)
+      t.is(6, guide.querySelectorAll('[data-shortcut-key]').length)
+      t.is('10px', getComputedStyle(guide.querySelector('p')).fontSize)
+      t.is('flex', getComputedStyle(guide.querySelector('header > span')).display)
+      key(panel, 'p')
+      await settle()
+      t.is(
+        'y,c,a',
+        [...guide.querySelectorAll('[data-shortcut-key]')].map((item) => item.dataset.shortcutKey)
+          .join(','),
+      )
+      t.is(true, guide.textContent.includes('Select period'))
+      key(panel, 'Backspace')
+      key(panel, 'v')
+      await settle()
+      t.is(
+        'a,f,q,s',
+        [...guide.querySelectorAll('[data-shortcut-key]')].map((item) => item.dataset.shortcutKey)
+          .join(','),
+      )
+      key(panel, 'ArrowLeft')
+      key(panel, 'Escape')
+      await settle()
+      t.is(false, guide.matches(':popover-open'))
+      return [panel, document.activeElement]
+    })
+  ),
+  ...['en', 'da'].map((language) =>
+    t`fast g p y opens a translated, focused year dialog in ${language}`(() =>
+      fixture(async (host) => {
+        const panel = host.querySelector('[role="tabpanel"]')
+        panel.focus()
+        for (const letter of ['g', 'p', 'y']) key(panel, letter)
+        await settle()
+        const dialog = host.querySelector('#shortcut-year-content')
+        const year = dialog.querySelector('input')
+        t.is(true, dialog.open)
+        t.is(false, host.querySelector('#shortcut-panel').matches(':popover-open'))
+        t.is(String(new Date().getFullYear()), year.value)
+        t.is(year, document.activeElement)
+        t.is(0, year.selectionStart)
+        t.is(4, year.selectionEnd)
+        t.is(language === 'en' ? 'Set year' : 'Vælg år', dialog.querySelector('h2').textContent)
+        button(dialog, language === 'en' ? 'Cancel' : 'Annuller').click()
+        await settle()
+        return [panel, document.activeElement]
+      }, { language, locale: language === 'en' ? 'en-GB' : 'da-DK', commodity: 'DKK' })
+    )
+  ),
+  t`applying a year clears finer periods but retains account and text filters`(() =>
+    fixture(async (host) => {
+      host.querySelector('#tab-ledger').click()
+      button(host, 'Filter', true).click()
+      await settle()
+      const month = host.querySelectorAll('main select')[1]
+      month.value = '08'
+      month.dispatchEvent(new Event('change', { bubbles: true }))
+      input(host.querySelector('[data-filter-text]'), 'invoice')
+      await settle()
+      host.querySelector('aside button[title="Income"]').click()
+      await settle()
+      const panel = host.querySelector('[role="tabpanel"]')
+      panel.focus()
+      for (const letter of ['g', 'p', 'y']) key(panel, letter)
+      await settle()
+      const dialog = host.querySelector('#shortcut-year-content')
+      input(dialog.querySelector('input'), '2026')
+      dialog.querySelector('form').requestSubmit()
+      await settle()
+      t.is(false, dialog.open)
+      t.is('', month.value)
+      t.is('2026', host.querySelector('main select').value)
+      t.is('invoice', host.querySelector('[data-filter-text]').value)
+      t.is('true', host.querySelector('aside button[title="Income"]').getAttribute('aria-pressed'))
+      t.is(panel, document.activeElement)
+      return [2, host.querySelectorAll('article').length]
+    })
+  ),
+  t`year validation stays in the dialog; cancel is nonmutating and reopening resets to the current year`(
+    () =>
+      fixture(async (host) => {
+        const panel = host.querySelector('[role="tabpanel"]')
+        for (const letter of ['g', 'p', 'y']) key(panel, letter)
+        await settle()
+        const dialog = host.querySelector('#shortcut-year-content')
+        const field = dialog.querySelector('input')
+        for (const value of ['', '0000', '26', '20x6', '2026.5', '10000']) {
+          input(field, value)
+          dialog.querySelector('form').requestSubmit()
+          await settle()
+          t.is(true, dialog.open)
+          t.is('true', field.getAttribute('aria-invalid'))
+        }
+        input(field, '2025')
+        await settle()
+        t.is(null, field.getAttribute('aria-invalid'))
+        dialog.dispatchEvent(new Event('cancel', { cancelable: true }))
+        await settle()
+        t.is(false, dialog.open)
+        t.is(1, host.querySelectorAll('article').length)
+        for (const letter of ['g', 'p', 'y']) key(panel, letter)
+        await settle()
+        return [String(new Date().getFullYear()), field.value]
+      }),
+  ),
+  t`arbitrary years appear in the filter pane; current year and all dates are direct commands`(() =>
+    fixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      panel.focus()
+      for (const letter of ['g', 'p', 'y']) key(panel, letter)
+      await settle()
+      const dialog = host.querySelector('#shortcut-year-content')
+      input(dialog.querySelector('input'), '2024')
+      dialog.querySelector('form').requestSubmit()
+      await settle()
+      button(host, 'Filter', true).click()
+      await settle()
+      t.is('2024', host.querySelector('main select').value)
+      t.is(0, host.querySelectorAll('article').length)
+      for (const letter of ['g', 'p', 'c']) key(panel, letter)
+      await settle()
+      t.is(String(new Date().getFullYear()), host.querySelector('main select').value)
+      for (const letter of ['g', 'p', 'a']) key(panel, letter)
+      await settle()
+      t.is('', host.querySelector('main select').value)
+      return [1, host.querySelectorAll('article').length]
+    })
+  ),
+  t`mouse navigation uses the same sections and year command`(() =>
+    fixture(async (host) => {
+      const toggle = host.querySelector('#shortcut-toggle')
+      toggle.focus()
+      toggle.click()
+      await settle()
+      const guide = host.querySelector('#shortcut-panel')
+      guide.querySelector('[data-shortcut-key="v"]').click()
+      await settle()
+      button(guide, '← Back').click()
+      await settle()
+      guide.querySelector('[data-shortcut-key="p"]').click()
+      await settle()
+      guide.querySelector('[data-shortcut-key="y"]').click()
+      await settle()
+      const dialog = host.querySelector('#shortcut-year-content')
+      t.is(true, dialog.open)
+      t.is(dialog.querySelector('input'), document.activeElement)
+      t.is(0, document.activeElement.selectionStart)
+      t.is(4, document.activeElement.selectionEnd)
+      button(dialog, 'Cancel').click()
+      await settle()
+      return [toggle, document.activeElement]
+    })
+  ),
+  t`arrows focus choices without navigating transactions and Escape only dismisses the guide`(() =>
+    fixture(async (host) => {
+      button(host, 'Filter', true).click()
+      await settle()
+      const panel = host.querySelector('[role="tabpanel"]')
+      panel.focus()
+      key(panel, 'g')
+      await settle()
+      key(panel, 'ArrowDown')
+      await settle()
+      t.is('d', document.activeElement.dataset.shortcutKey)
+      key(document.activeElement, 'End')
+      t.is('v', document.activeElement.dataset.shortcutKey)
+      key(document.activeElement, 'Escape')
+      await settle()
+      t.is(true, !!host.querySelector('[data-filter-text]'))
+      return [false, host.querySelector('#shortcut-panel').matches(':popover-open')]
+    })
+  ),
+  t`direct commands and nested page commands work, and actions are blocked while typing`(() =>
+    fixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      for (const letter of ['g', 'v', 's']) key(panel, letter)
+      await settle()
+      t.is('/settings', location.pathname)
+      const toggle = host.querySelector('#shortcut-toggle')
+      key(toggle, 'g')
+      key(toggle, 'n')
+      await settle()
+      t.is('/transactions/drafts', location.pathname)
+      const description = document.activeElement
+      t.is('Transaction description', description.getAttribute('aria-label'))
+      key(description, 'g')
+      await settle()
+      t.is(false, host.querySelector('#shortcut-panel').matches(':popover-open'))
+      return [2, host.querySelectorAll('article').length]
+    })
+  ),
+  t`outside dismissal, Tab and composition do not leave a pending shortcut`(() =>
+    fixture(async (host) => {
+      const panel = host.querySelector('[role="tabpanel"]')
+      key(panel, 'g', { isComposing: true })
+      await settle()
+      const guide = host.querySelector('#shortcut-panel')
+      t.is(false, guide.matches(':popover-open'))
+      key(panel, 'g')
+      await settle()
+      guide.hidePopover()
+      await settle()
+      t.is('false', host.querySelector('#shortcut-toggle').getAttribute('aria-expanded'))
+      key(panel, 'g')
+      key(panel, 'Tab')
+      await settle()
+      t.is(false, guide.matches(':popover-open'))
+      key(panel, 'g')
+      await settle()
+      const description = host.querySelector('[data-description]')
+      description.focus()
+      description.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+      await settle()
+      return [false, guide.matches(':popover-open')]
     })
   ),
 )

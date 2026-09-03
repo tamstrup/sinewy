@@ -2,6 +2,8 @@ import s from 'sin'
 import Dropdown, { AlertDialog, SplitPanel } from 'sinewy/theme'
 import { ButtonBase, Checkbox, DraftSwitch, Select } from './controls.js'
 import AccountPicker from './account-picker.js'
+import ShortcutPanel from './shortcut-panel.js'
+import YearDialog from './year-dialog.js'
 import { createI18n } from './i18n/index.js'
 import { formatAmount as displayAmount, parseAmount } from './i18n/format.js'
 import {
@@ -916,7 +918,12 @@ const App = s((_attrs, _children, context) => {
   let reviewError = ''
   let notice = ''
   let postedNotice = false
-  let goPressedAt = 0
+  let shortcutPath = null
+  let shortcutOrigin
+  let shortcutCanNavigate = false
+  let yearOpen = false
+  let yearValue = String(new Date().getFullYear())
+  let yearError = false
   let selectedId = transactions[0].id
   let selectionScrollRequest = 0
   const emptyFilters = () => ({ year: '', month: '', day: '', account: '', accounts: [], text: '' })
@@ -1072,16 +1079,151 @@ const App = s((_attrs, _children, context) => {
     selectTransaction(rows[next].id)
   }
 
+  const restoreShortcutFocus = () => {
+    const target = shortcutOrigin?.isConnected && shortcutOrigin.getClientRects().length &&
+        shortcutOrigin !== shell?.ownerDocument.body
+      ? shortcutOrigin
+      : shell?.querySelector('[role="tabpanel"], #shortcut-toggle')
+    target?.focus({ preventScroll: true })
+  }
+  const closeShortcuts = (restore = false) => {
+    if (shortcutPath === null) return
+    shortcutPath = null
+    s.redraw().then(() => {
+      if (restore && !yearOpen) restoreShortcutFocus()
+    })
+  }
+  const openShortcuts = (canNavigate) => {
+    shortcutOrigin = shell?.ownerDocument.activeElement
+    shortcutCanNavigate = canNavigate
+    shortcutPath = []
+    s.redraw()
+  }
+  const closeYear = () => {
+    yearOpen = false
+    s.redraw().then(restoreShortcutFocus)
+  }
+  const setYear = (year) => {
+    patchFilters({ year, month: '', day: '' })
+    if (activeArea() !== 'transactions') navigateTab(lastTab)
+  }
+  const openYear = () => {
+    yearValue = String(new Date().getFullYear())
+    yearError = false
+    yearOpen = true
+    s.redraw().then(() => {
+      if (!yearOpen) return
+      const input = shell?.querySelector('#shortcut-year-input')
+      input?.focus()
+      input?.select()
+    })
+  }
+  // Add commands or nested sections here; the panel and key handling use the same tree.
+  const shortcutEntries = () => [
+    { key: 'd', label: 'drafts', run: () => navigateTab('drafts') },
+    { key: 'l', label: 'ledger', run: () => navigateTab('ledger') },
+    {
+      key: 'g',
+      label: 'firstTransaction',
+      disabled: !shortcutCanNavigate || !visible().length,
+      run: () => selectTransaction(visible()[0]?.id),
+    },
+    { key: 'n', label: 'newTransaction', run: addDraft },
+    {
+      key: 'p',
+      label: 'selectPeriod',
+      children: [
+        { key: 'y', label: 'setYear', run: openYear },
+        { key: 'c', label: 'currentYear', run: () => setYear(String(new Date().getFullYear())) },
+        { key: 'a', label: 'allDates', run: () => setYear('') },
+      ],
+    },
+    {
+      key: 'v',
+      label: 'shortcutPages',
+      children: [
+        { key: 'a', label: 'accounts', run: () => route('/accounts') },
+        { key: 'f', label: 'files', run: () => route('/files') },
+        { key: 'q', label: 'query', run: () => route('/query') },
+        { key: 's', label: 'settings', run: () => route('/settings') },
+      ],
+    },
+  ]
+  const shortcutSection = () => {
+    let entries = shortcutEntries()
+    const crumbs = []
+    for (const key of shortcutPath || []) {
+      const entry = entries.find((entry) => entry.key === key)
+      if (!entry?.children) break
+      crumbs.push(entry)
+      entries = entry.children
+    }
+    return { entries, crumbs }
+  }
+  const chooseShortcut = (entry) => {
+    if (entry.disabled) return
+    if (entry.children) {
+      shortcutPath = [...shortcutPath, entry.key]
+      s.redraw()
+    } else {
+      const focusedInside = shell?.querySelector('#shortcut-panel')?.contains(
+        shell.ownerDocument.activeElement,
+      )
+      closeShortcuts(focusedInside)
+      entry.run()
+    }
+  }
+  const backShortcut = () => {
+    shortcutPath = shortcutPath.slice(0, -1)
+    s.redraw()
+  }
+  const shortcutKeydown = (event) => {
+    if (event.key === 'Tab') {
+      closeShortcuts()
+      return
+    }
+    if (['Shift', 'Control', 'Alt', 'Meta'].includes(event.key)) return
+    // Leave Space/Enter to focused native buttons, but never to ledger actions.
+    if (['Enter', ' '].includes(event.key) && event.target.closest('#shortcut-panel button')) return
+    event.preventDefault()
+    if (event.repeat) return
+    if (event.key === 'Escape') closeShortcuts(true)
+    else if (event.key === 'Backspace' || event.key === 'ArrowLeft') backShortcut()
+    else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+      const items = [
+        ...(shell?.querySelectorAll('#shortcut-panel button[data-shortcut-key]:not(:disabled)') ||
+          []),
+      ]
+      const index = items.indexOf(shell?.ownerDocument.activeElement)
+      const next = event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+        ? items.length - 1
+        : (index + (event.key === 'ArrowUp' ? -1 : 1) + items.length) % items.length
+      items[index < 0 && event.key === 'ArrowUp' ? items.length - 1 : next]?.focus()
+    } else {
+      const entry = shortcutSection().entries.find((entry) => entry.key === event.key)
+      if (entry) chooseShortcut(entry)
+    }
+  }
+
   const onkeydown = (event) => {
     if (
-      reviewIds.length || event.defaultPrevented || event.target.closest('[role="separator"]') ||
+      yearOpen || reviewIds.length || event.defaultPrevented || event.isComposing ||
+      event.target.closest('[role="separator"]') ||
       event.target.closest('dialog, [role="menu"], [data-query-grid]')
     ) {
-      goPressedAt = 0
+      if (shortcutPath !== null) closeShortcuts()
       return
     }
     const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) ||
       event.target.isContentEditable
+
+    if (shortcutPath !== null) {
+      if (typing || event.metaKey || event.ctrlKey || event.altKey) closeShortcuts()
+      else shortcutKeydown(event)
+      return
+    }
 
     if (
       (event.metaKey || event.ctrlKey) && event.key === 'Enter' &&
@@ -1094,33 +1236,20 @@ const App = s((_attrs, _children, context) => {
     }
 
     if (event.key === 'Escape' && filtersOpen) {
-      goPressedAt = 0
       filtersOpen = false
       s.redraw()
       return
     }
     if (typing || event.metaKey || event.ctrlKey || event.altKey) {
-      goPressedAt = 0
       return
     }
 
     const canNavigate = activeArea() === 'transactions' &&
       !event.target.closest('button, a, [role="tablist"]')
-    const goPending = goPressedAt && Date.now() - goPressedAt < 1200
-
     if (event.key === 'g') {
       event.preventDefault()
       if (event.repeat) return
-      if (goPending) {
-        goPressedAt = 0
-        if (canNavigate) selectTransaction(visible()[0]?.id)
-      } else goPressedAt = Date.now()
-      return
-    }
-    goPressedAt = 0
-    if (goPending && ['d', 'l'].includes(event.key)) {
-      event.preventDefault()
-      navigateTab(event.key === 'd' ? 'drafts' : 'ledger')
+      openShortcuts(canNavigate)
       return
     }
 
@@ -1188,6 +1317,20 @@ const App = s((_attrs, _children, context) => {
         ),
       ),
       TopbarEnd(
+        ButtonBase(
+          {
+            id: 'shortcut-toggle',
+            size: '1',
+            'aria-controls': 'shortcut-panel',
+            'aria-expanded': String(shortcutPath !== null),
+            onclick: () =>
+              shortcutPath === null
+                ? openShortcuts(activeArea() === 'transactions')
+                : closeShortcuts(),
+          },
+          t('shortcuts'),
+          Key('g'),
+        ),
         SyncDot(),
         s`span`(t('localPrototype')),
         NavButton({
@@ -1334,9 +1477,14 @@ const App = s((_attrs, _children, context) => {
             value: filters.year,
             onchange: (event) => patchFilters({ year: event.target.value, day: '' }),
           },
-          s`option`({ value: '' }, t('anyYear')),
-          s`option`({ value: '2026' }, '2026'),
-          s`option`({ value: '2025' }, '2025'),
+          Select.Option({ value: '' }, t('anyYear')),
+          [
+            ...new Set([
+              String(new Date().getFullYear()),
+              ...transactions.map(({ date }) => date.slice(0, 4)),
+              filters.year,
+            ].filter(Boolean)),
+          ].sort().reverse().map((year) => Select.Option({ value: year }, year)),
         ),
       ),
       Field(
@@ -1800,6 +1948,7 @@ const App = s((_attrs, _children, context) => {
         ),
       ),
       KeyboardHint(
+        s`span`(Key('g'), t('shortcuts')),
         s`span`(Key('g d'), t('drafts')),
         s`span`(Key('g l'), t('ledger')),
         s`span`(Key('J'), Key('K'), t('navigate')),
@@ -1892,6 +2041,12 @@ const App = s((_attrs, _children, context) => {
               onkeydown(event)
             }
           }
+          const focusin = (event) => {
+            if (
+              shortcutPath !== null && event.target !== shortcutOrigin &&
+              !event.target.closest('#shortcut-panel, #shortcut-toggle')
+            ) closeShortcuts()
+          }
           try {
             const saved = localStorage.getItem('entx.transactions.tab')
             if (saved === 'drafts' || saved === 'ledger') lastTab = saved
@@ -1901,10 +2056,12 @@ const App = s((_attrs, _children, context) => {
             route(`/transactions/${lastTab}`, { replace: true, scroll: false })
           }
           element.ownerDocument.addEventListener('keydown', keydown)
+          element.ownerDocument.addEventListener('focusin', focusin)
           element.ownerDocument.defaultView.addEventListener('popstate', rememberTab)
           return () => {
             shell = undefined
             element.ownerDocument.removeEventListener('keydown', keydown)
+            element.ownerDocument.removeEventListener('focusin', focusin)
             element.ownerDocument.defaultView.removeEventListener('popstate', rememberTab)
           }
         },
@@ -1954,6 +2111,35 @@ const App = s((_attrs, _children, context) => {
         ),
       ),
       postingReview(),
+      ShortcutPanel({
+        open: shortcutPath !== null,
+        ...shortcutSection(),
+        t,
+        source: shortcutOrigin,
+        onchoose: chooseShortcut,
+        onback: backShortcut,
+        onclose: closeShortcuts,
+      }),
+      YearDialog({
+        open: yearOpen,
+        value: yearValue,
+        error: yearError,
+        t,
+        oninput: (value) => {
+          yearValue = value
+          yearError = false
+        },
+        onsubmit: () => {
+          const year = yearValue.trim()
+          if (!/^\d{4}$/.test(year) || Number(year) === 0) {
+            yearError = true
+            return
+          }
+          setYear(year)
+          closeYear()
+        },
+        onclose: closeYear,
+      }),
     )
   }
 })

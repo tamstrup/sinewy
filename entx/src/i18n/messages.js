@@ -3,6 +3,18 @@ import { formatNumber } from './format.js'
 const plurals = new Map()
 
 export const en = {
+  shortcuts: 'Shortcuts',
+  closeShortcuts: 'Close shortcuts',
+  shortcutBack: 'Back',
+  shortcutPages: 'Pages',
+  shortcutHelp: 'Press a key or click · ↑↓ to navigate · ← to go back · Esc to close',
+  selectPeriod: 'Select period',
+  setYear: 'Set year',
+  currentYear: 'Current year',
+  setYearDescription:
+    'Show transactions for this year. Month and day filters will be cleared; other filters are kept.',
+  invalidYear: 'Enter a four-digit year from 0001 to 9999.',
+  applyYear: 'Apply year',
   notifications: 'Notifications',
   dismissNotification: 'Dismiss notification',
   resizeAccounts: 'Accounts sidebar',
@@ -212,6 +224,19 @@ export const en = {
 }
 
 export const da = {
+  shortcuts: 'Genveje',
+  closeShortcuts: 'Luk genveje',
+  shortcutBack: 'Tilbage',
+  shortcutPages: 'Sider',
+  shortcutHelp:
+    'Tryk på en tast eller klik · ↑↓ for at navigere · ← for at gå tilbage · Esc for at lukke',
+  selectPeriod: 'Vælg periode',
+  setYear: 'Vælg år',
+  currentYear: 'Indeværende år',
+  setYearDescription:
+    'Vis transaktioner for dette år. Måneds- og dagsfiltre ryddes; øvrige filtre bevares.',
+  invalidYear: 'Indtast et firecifret år fra 0001 til 9999.',
+  applyYear: 'Anvend år',
   notifications: 'Beskeder',
   dismissNotification: 'Luk besked',
   resizeAccounts: 'Kontosidepanel',

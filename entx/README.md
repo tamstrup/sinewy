@@ -18,6 +18,18 @@ will be decided later.
 ## Prototype shortcuts
 
 - `g d` opens Drafts; `g l` opens Ledger.
+- `g` opens a shortcut guide (also available from the top-bar Shortcuts button). Press the shown
+  keys or click a choice. The guide stays open without a timeout; Escape closes it, Backspace/Left
+  goes back a section, and Up/Down/Home/End navigate choices. Unknown keys do nothing while it is
+  open.
+- `g p y` opens **Set year**, with the current year selected for replacement. Enter or Apply year
+  filters transactions to that year; Cancel/Escape leaves filters unchanged. Year selection clears
+  month/day restrictions but retains account/text filters. From another page it returns to the last
+  transaction tab. `g p c` chooses the current year directly; `g p a` clears date restrictions.
+- `g v` opens Pages: `a` Accounts, `f` Files, `q` Query, `s` Settings. `g n` creates a new draft.
+  Commands and nested sections share one definition in `src/app.js` (`shortcutEntries`), ready for
+  additional actions. The guide uses native popovers and Sinewy buttons; year entry uses Sinewy
+  Dialog.
 - Left/Right (or Home/End) on the tablist switches tabs and moves focus.
 - `N` creates a draft and opens it in Drafts, clearing filters so it is visible.
 - Cmd/Ctrl+Enter reviews the checked drafts in the current view before posting.
@@ -27,8 +39,8 @@ will be decided later.
   keeping clear of the sticky top bar. Oversized transactions reveal their header. Scrolling waits
   for Sin's redraw promise; rapid key repeats use only the latest selection, without moving focus.
 - `g g` selects the first transaction in the current filtered view; `G` (Shift+G) selects the last.
-  Both scroll the selection into view. The two-key sequences use a 1.2-second window; holding `g`
-  does not count as pressing it twice. Shortcuts do not run while typing in an editor or dialog.
+  Both scroll the selection into view; holding `g` does not count as pressing it twice. Shortcuts do
+  not run while typing in an editor, composing text, interacting with a menu, or using a dialog.
 - `Enter` collapses or expands the selected transaction.
 - `h` collapses the selected transaction; `l` expands it. Repeated presses keep the requested state;
   `g l` still opens the Ledger.

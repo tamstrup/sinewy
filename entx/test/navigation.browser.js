@@ -421,6 +421,46 @@ t`Vim boundary shortcuts`(
 
 t`sidebar account filters`(
   ...['metaKey', 'ctrlKey'].map((modifier) =>
+    t`full account rows select through padding, balances, and names with ${modifier}`(() =>
+      fixture(async (host) => {
+        host.querySelector('#tab-ledger').click()
+        await settle()
+        const sidebar = host.querySelector('aside')
+        const income = sidebar.querySelector('button[title="Income"]')
+        const expenses = sidebar.querySelector('button[title="Expenses"]')
+        const incomeRow = income.closest('[data-account-row]')
+        const expensesRow = expenses.closest('[data-account-row]')
+        incomeRow.click()
+        await settle()
+        t.is('true', income.getAttribute('aria-pressed'))
+        t.is(3, host.querySelectorAll('article').length)
+        t.is('pointer', getComputedStyle(incomeRow).cursor)
+        expensesRow.lastElementChild.firstElementChild.dispatchEvent(
+          new MouseEvent('click', { bubbles: true, [modifier]: true }),
+        )
+        await settle()
+        t.is(6, host.querySelectorAll('article').length)
+        t.is(2, sidebar.querySelectorAll('[aria-pressed="true"]').length)
+        // A name-button click must bubble once, not toggle twice.
+        expenses.dispatchEvent(new MouseEvent('click', { bubbles: true, [modifier]: true }))
+        await settle()
+        t.is('false', expenses.getAttribute('aria-pressed'))
+        sidebar.querySelector('button[aria-label="Collapse Expenses"]').click()
+        await settle()
+        t.is('true', income.getAttribute('aria-pressed'))
+        t.is('false', expenses.getAttribute('aria-pressed'))
+        t.is(null, sidebar.querySelector('button[title="Expenses:Phone"]'))
+        expensesRow.firstElementChild.click()
+        await settle()
+        t.is('true', expenses.getAttribute('aria-pressed'))
+        t.is('false', income.getAttribute('aria-pressed'))
+        sidebar.querySelector('[aria-label="Account filters"]').click()
+        await settle()
+        return [0, sidebar.querySelectorAll('[aria-pressed="true"]').length]
+      })
+    )
+  ),
+  ...['metaKey', 'ctrlKey'].map((modifier) =>
     t`account clicks replace selection and ${modifier} toggles additional accounts`(() =>
       fixture(async (host) => {
         host.querySelector('#tab-ledger').click()

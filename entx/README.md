@@ -47,14 +47,14 @@ read-only ledger; invalid selections are rejected as a whole. “Create correcti
 editable, linked opposing draft while preserving the original transaction.
 
 Live Balance follows the date, text, and typed account filters in both tabs, independent of their
-lifecycle. Click an account name to filter transactions by that account (including descendants).
-Cmd/Ctrl-click adds or removes accounts; a transaction can match any selected account. Click empty
-sidebar space to clear account selections, or remove individual filter chips. Other date/text
-filters are retained. Sidebar selections do not narrow the sidebar itself: its period balances and
-other account choices remain available. Selection works in both tree and flat views; expansion
-controls stay independent. “Include drafts” is off by default. When enabled, combined amounts
-affected by drafts are purple; there is no separate pending amount. Transactions remain expanded by
-default.
+lifecycle. Click anywhere in an account row, including its balance, to filter transactions by that
+account (including descendants). The expand/collapse arrow remains independent. Cmd/Ctrl-click adds
+or removes accounts; a transaction can match any selected account. Click empty sidebar space to
+clear account selections, or remove individual filter chips. Other date/text filters are retained.
+Sidebar selections do not narrow the sidebar itself: its period balances and other account choices
+remain available. Selection works in both tree and flat views; expansion controls stay independent.
+“Include drafts” is off by default. When enabled, combined amounts affected by drafts are purple;
+there is no separate pending amount. Transactions remain expanded by default.
 
 The top-left panel button hides or shows the accounts sidebar on every page. Its visibility is
 remembered locally; hiding it preserves balances, tree expansion, draft inclusion, and filter state.

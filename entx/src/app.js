@@ -263,6 +263,7 @@ const AccountRow = s`div
   padding 5px 8px
   border-radius 6
   font-size 11
+  cursor pointer
 
   &:hover { background #f0f0f2 }
   &[data-root='true'] { margin-top 5; color #5a5a60; font-weight 720 }
@@ -1265,6 +1266,7 @@ const App = s((_attrs, _children, context) => {
                   root: tree && account.length === 1,
                   selected: filters.accounts.some((path) => accountLabel(path) === name),
                 },
+                onclick: (event) => selectAccount(account, event),
               },
               AccountBranch(
                 { style: { paddingLeft: `${indent}px` } },
@@ -1276,10 +1278,10 @@ const App = s((_attrs, _children, context) => {
                           account: name,
                         }),
                         'aria-expanded': String(!isCollapsed),
-                        onclick: () =>
-                          isCollapsed
-                            ? collapsedAccounts.delete(name)
-                            : collapsedAccounts.add(name),
+                        onclick: (event) => {
+                          event.stopPropagation()
+                          isCollapsed ? collapsedAccounts.delete(name) : collapsedAccounts.add(name)
+                        },
                       },
                       ChevronIcon({
                         src: CHEVRON_ICON,
@@ -1297,7 +1299,6 @@ const App = s((_attrs, _children, context) => {
                     'aria-pressed': String(
                       filters.accounts.some((path) => accountLabel(path) === name),
                     ),
-                    onclick: (event) => selectAccount(account, event),
                   },
                   tree ? account.at(-1) : name,
                 ),

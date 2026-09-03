@@ -423,7 +423,7 @@ t`Vim boundary shortcuts`(
 
 t`discoverable shortcut guide`(
   ...['en', 'da'].map((language) =>
-    t`the ${language} shortcut launcher has padding and replaces the footer hints`(() =>
+    t`the ${language} shortcut launcher retains padding`(() =>
       fixture(async (host) => {
         const toggle = host.querySelector('#shortcut-toggle')
         const style = getComputedStyle(toggle)
@@ -432,7 +432,6 @@ t`discoverable shortcut guide`(
         t.is('9px', style.paddingLeft)
         t.is('9px', style.paddingRight)
         t.is(true, toggle.getBoundingClientRect().height >= 28)
-        t.is(0, host.querySelectorAll('main footer kbd').length)
         toggle.click()
         await settle()
         return [true, host.querySelector('#shortcut-panel').matches(':popover-open')]
@@ -960,6 +959,156 @@ t`sidebar and browser appearance`(
       },
       { language: 'en', locale: 'en-GB', commodity: 'DKK', sidebarVisible: false },
       '/settings',
+    )
+  ),
+)
+
+t`adding transaction legs`(
+  ...['en', 'da'].flatMap((language) =>
+    ['keyboard', 'mouse'].map((method) =>
+      t`${method} adds a leg and focuses its account in ${language}`(() =>
+        fixture(async (host) => {
+          const row = host.querySelector('article')
+          const before = [...row.querySelectorAll('[data-amount]')].map((field) => field.value)
+          if (method === 'keyboard') {
+            const panel = host.querySelector('[role="tabpanel"]')
+            panel.focus()
+            key(panel, 'h')
+            await settle()
+            key(panel, 'a')
+            key(panel, 'a', { repeat: true })
+          } else button(row, language === 'en' ? '+ Add leg' : '+ Tilføj postering').click()
+          await settle()
+          const legs = [...row.querySelectorAll('[data-leg-id]')]
+          t.is(3, legs.length)
+          t.is('true', row.querySelector('button[aria-expanded]').getAttribute('aria-expanded'))
+          const account = legs.at(-1).querySelector('input[role="combobox"]')
+          t.is(account, document.activeElement)
+          // Headless window focus may omit the native event even when activeElement changes.
+          account.dispatchEvent(new FocusEvent('focus'))
+          await settle()
+          t.is('true', account.getAttribute('aria-expanded'))
+          t.is('', account.value)
+          t.is('', legs.at(-1).querySelector('[data-amount]').value)
+          t.is(
+            'EUR',
+            legs.at(-1).querySelector(
+              'input[aria-label="' + (language === 'en' ? 'Commodity' : 'Valuta') + '"]',
+            ).value,
+          )
+          t.is(
+            before.join('|'),
+            [...row.querySelectorAll('[data-amount]')].slice(0, 2).map((field) => field.value).join(
+              '|',
+            ),
+          )
+          key(account, 'a')
+          await settle()
+          key(account, 'Escape')
+          await settle()
+          t.is('Expenses:Uncategorized', account.value)
+          return [3, row.querySelectorAll('[data-leg-id]').length]
+        }, { language, locale: language === 'en' ? 'en-GB' : 'da-DK', commodity: 'EUR' })
+      )
+    )
+  ),
+  t`a adds only to the selected draft and never a hidden or posted transaction`(() =>
+    fixture(async (host) => {
+      button(host, 'New transaction', true).click()
+      await settle()
+      const panel = host.querySelector('[role="tabpanel"]')
+      panel.focus()
+      key(panel, 'j')
+      await settle()
+      key(panel, 'a')
+      await settle()
+      const counts = () =>
+        [...host.querySelectorAll('article')]
+          .map((row) => row.querySelectorAll('[data-leg-id]').length).join(',')
+      t.is('2,3', counts())
+      button(host, 'Filter', true).click()
+      await settle()
+      input(host.querySelector('[data-filter-text]'), 'no matching transactions')
+      await settle()
+      key(panel, 'a')
+      await settle()
+      t.is(0, host.querySelectorAll('article').length)
+      input(host.querySelector('[data-filter-text]'), '')
+      await settle()
+      t.is('2,3', counts())
+      host.querySelector('#tab-ledger').click()
+      await settle()
+      const ledger = host.querySelector('[role="tabpanel"]')
+      const content = ledger.textContent
+      key(ledger, 'a')
+      await settle()
+      t.is(content, ledger.textContent)
+      host.querySelector('#tab-drafts').click()
+      await settle()
+      return ['2,3', counts()]
+    })
+  ),
+  t`a respects inputs, controls, modifiers, menus, dialogs and the g guide`(() =>
+    fixture(async (host) => {
+      const row = host.querySelector('article')
+      const panel = host.querySelector('[role="tabpanel"]')
+      for (const target of row.querySelectorAll('input, button')) key(target, 'a')
+      for (
+        const modifiers of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, {
+          isComposing: true,
+        }, { repeat: true }]
+      ) key(panel, 'a', modifiers)
+      await settle()
+      key(panel, 'g')
+      await settle()
+      key(panel, 'a')
+      key(panel, 'Escape')
+      await settle()
+      row.querySelector('button[aria-label="Actions for Train to client workshop"]').click()
+      await settle()
+      key(host.querySelector('[role="menu"]'), 'a')
+      key(host.querySelector('[role="menu"]'), 'Escape')
+      await settle()
+      input(row.querySelectorAll('[data-amount]')[1], '384')
+      await settle()
+      button(row, 'Post').click()
+      await settle()
+      key(host.querySelector('dialog'), 'a')
+      await settle()
+      return [2, row.querySelectorAll('[data-leg-id]').length]
+    })
+  ),
+)
+
+t`transaction shortcut footer`(
+  ...['en', 'da'].map((language) =>
+    t`the ${language} footer lists only complementary actions and hides draft-only hints in Ledger`(
+      () =>
+        fixture(async (host) => {
+          const footer = () => host.querySelector('[data-transaction-shortcuts]')
+          const keys = () =>
+            [...footer().querySelectorAll('kbd')].map((key) => key.textContent).join(',')
+          t.is('j,k,↑,↓,⇧ G,h,l,↵,<,>,f,/,a,⌘ / Ctrl ↵', keys())
+          t.is(
+            true,
+            footer().textContent.includes(language === 'en' ? 'add leg' : 'tilføj postering'),
+          )
+          t.is(
+            true,
+            footer().textContent.includes(language === 'en' ? 'collapse all' : 'fold alle sammen'),
+          )
+          t.is('flex', getComputedStyle(footer().querySelector('ul')).display)
+          t.is('wrap', getComputedStyle(footer().querySelector('ul')).flexWrap)
+          host.querySelector('#tab-ledger').click()
+          await settle()
+          t.is('j,k,↑,↓,⇧ G,h,l,↵,<,>,f,/', keys())
+          host.querySelector('a[href="/accounts"]').click()
+          await settle()
+          t.is(null, footer())
+          key(host.querySelector('main'), 'a')
+          await settle()
+          return ['/accounts', location.pathname]
+        }, { language, locale: language === 'en' ? 'en-GB' : 'da-DK', commodity: 'DKK' }),
     )
   ),
 )

@@ -842,6 +842,15 @@ const EmptyState = s`div
   text-align center
 `
 
+const TransactionShortcuts = s`footer
+  margin-top 16
+  color #85858c
+  font-size 10
+
+  ul { display flex; flex-wrap wrap; gap 10px 16px; list-style none; padding 0; margin 0 }
+  li { display inline-flex; align-items center; gap 5 }
+`
+
 const Placeholder = s`section
   min-height 480
   display grid
@@ -989,6 +998,27 @@ const App = s((_attrs, _children, context) => {
       ],
     })
     showDraft(id, 'newDraft')
+  }
+
+  const addLeg = (transaction) => {
+    if (transaction?.status !== 'draft') return
+    const id = `${transaction.id}-${nextId++}`
+    transaction.legs.push({
+      id,
+      account: ['Expenses', 'Uncategorized'],
+      amount: '',
+      commodity: i18n.preferences().commodity,
+    })
+    selectedId = transaction.id
+    collapsed.delete(transaction.id)
+    s.redraw().then(() => {
+      if (
+        activeArea() !== 'transactions' || activeTab() !== 'drafts' ||
+        selectedId !== transaction.id
+      ) return
+      const account = shell?.querySelector(`[data-leg-id="${id}"] input[role="combobox"]`)
+      account?.focus()
+    })
   }
 
   const duplicateToDrafts = (source, reverse = false) => {
@@ -1248,6 +1278,11 @@ const App = s((_attrs, _children, context) => {
       s.redraw()
     } else if (!canNavigate) {
       return
+    } else if (event.key === 'a') {
+      const draft = visible().find(({ id, status }) => id === selectedId && status === 'draft')
+      if (!draft) return
+      event.preventDefault()
+      if (!event.repeat) addLeg(draft)
     } else if (event.key === '<' || event.key === '>') {
       event.preventDefault()
       for (const { id } of visible()) {
@@ -1660,7 +1695,7 @@ const App = s((_attrs, _children, context) => {
     Legs(
       transaction.legs.map((leg) =>
         DraftLeg(
-          { key: leg.id },
+          { key: leg.id, data: { legId: leg.id } },
           AccountPicker({
             value: accountLabel(leg.account),
             accounts: accountNames(),
@@ -1681,13 +1716,7 @@ const App = s((_attrs, _children, context) => {
       ),
       DraftFooter(
         QuietButton({
-          onclick: () =>
-            transaction.legs.push({
-              id: `${transaction.id}-${nextId++}`,
-              account: ['Expenses', 'Uncategorized'],
-              amount: '',
-              commodity: i18n.preferences().commodity,
-            }),
+          onclick: () => addLeg(transaction),
         }, t('addLeg')),
         DraftActions(
           BalanceMessage(
@@ -1941,6 +1970,22 @@ const App = s((_attrs, _children, context) => {
                 onclick: () => filters = emptyFilters(),
               }, t('clearFilters')),
           )),
+        ),
+      ),
+      TransactionShortcuts(
+        { 'aria-label': t('transactionShortcuts'), data: { transactionShortcuts: true } },
+        s`ul`(
+          s`li`(Key('j'), Key('k'), Key('↑'), Key('↓'), t('navigate')),
+          s`li`(Key('⇧ G'), t('lastTransaction')),
+          s`li`(Key('h'), t('collapse')),
+          s`li`(Key('l'), t('expand')),
+          s`li`(Key('↵'), t('collapseExpand')),
+          s`li`(Key('<'), t('collapseAll')),
+          s`li`(Key('>'), t('expandAll')),
+          s`li`(Key('f'), t('filter')),
+          s`li`(Key('/'), t('search')),
+          isDrafts && s`li`(Key('a'), t('addLegHint')),
+          isDrafts && s`li`(Key('⌘ / Ctrl ↵'), t('reviewSelectedHint')),
         ),
       ),
     ]

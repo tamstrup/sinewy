@@ -46,6 +46,11 @@ will be decided later.
   `g l` still opens the Ledger.
 - `<` collapses all transactions in the current filtered view; `>` expands them. These direct
   shortcuts are intentionally absent from the shortcut guide.
+- `a` adds a leg to the selected draft, expands it if needed, and focuses the new account combobox,
+  ready to search. The mouse Add leg button does the same. Held keys do not add repeated legs;
+  typing, dialogs, menus, and committed transactions are left untouched.
+- The transaction footer lists direct shortcuts whose actions are not in the `g` guide. Add leg and
+  posting-review hints appear only in Drafts; actions already in the guide are not repeated.
 
 ## Transaction workflow
 

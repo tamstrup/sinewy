@@ -183,6 +183,10 @@ export const en = {
   collapseExpand: 'collapse / expand',
   search: 'search',
   reviewSelectedHint: 'review selected',
+  transactionShortcuts: 'Transaction shortcuts',
+  addLegHint: 'add leg',
+  collapseAll: 'collapse all',
+  expandAll: 'expand all',
   postQuestion: { one: 'Post {count} transaction?', other: 'Post {count} transactions?' },
   postingExplanation:
     'Posting makes these transactions read-only in the ledger. Changes must be made through a linked correction draft.',
@@ -407,6 +411,10 @@ export const da = {
   collapseExpand: 'fold sammen / ud',
   search: 'søg',
   reviewSelectedHint: 'gennemgå valgte',
+  transactionShortcuts: 'Transaktionsgenveje',
+  addLegHint: 'tilføj postering',
+  collapseAll: 'fold alle sammen',
+  expandAll: 'fold alle ud',
   postQuestion: { one: 'Bogfør {count} transaktion?', other: 'Bogfør {count} transaktioner?' },
   postingExplanation:
     'Bogføring låser transaktionerne i regnskabet. Ændringer skal ske via en tilknyttet modpostering i kassekladden.',

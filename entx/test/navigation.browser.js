@@ -419,6 +419,129 @@ t`Vim boundary shortcuts`(
   ),
 )
 
+t`sidebar account filters`(
+  ...['metaKey', 'ctrlKey'].map((modifier) =>
+    t`account clicks replace selection and ${modifier} toggles additional accounts`(() =>
+      fixture(async (host) => {
+        host.querySelector('#tab-ledger').click()
+        await settle()
+        const sidebar = host.querySelector('aside')
+        const balances = sidebar.textContent
+        const income = sidebar.querySelector('button[title="Income"]')
+        const expenses = sidebar.querySelector('button[title="Expenses"]')
+        income.click()
+        await settle()
+        t.is('true', income.getAttribute('aria-pressed'))
+        t.is(3, host.querySelectorAll('article').length)
+        t.is(balances, sidebar.textContent)
+        expenses.dispatchEvent(new MouseEvent('click', { bubbles: true, [modifier]: true }))
+        await settle()
+        t.is(6, host.querySelectorAll('article').length)
+        t.is(2, sidebar.querySelectorAll('[aria-pressed="true"]').length)
+        t.is(2, host.querySelectorAll('main [title^="Remove "]').length)
+        expenses.dispatchEvent(new MouseEvent('click', { bubbles: true, [modifier]: true }))
+        await settle()
+        t.is(3, host.querySelectorAll('article').length)
+        expenses.click()
+        await settle()
+        t.is('false', income.getAttribute('aria-pressed'))
+        t.is('true', expenses.getAttribute('aria-pressed'))
+        t.is(3, host.querySelectorAll('article').length)
+        t.is(
+          'rgb(234, 231, 250)',
+          getComputedStyle(expenses.closest('[data-account-row]')).backgroundColor,
+        )
+        return [1, sidebar.querySelectorAll('[aria-pressed="true"]').length]
+      })
+    )
+  ),
+  t`blank sidebar space clears only selected accounts and chips remove individual accounts`(() =>
+    fixture(async (host) => {
+      host.querySelector('#tab-ledger').click()
+      button(host, 'Filter', true).click()
+      await settle()
+      const month = host.querySelectorAll('main select')[1]
+      month.value = '08'
+      month.dispatchEvent(new Event('change', { bubbles: true }))
+      await settle()
+      const sidebar = host.querySelector('aside')
+      sidebar.querySelector('button[title="Income"]').click()
+      await settle()
+      t.is(1, host.querySelectorAll('article').length)
+      sidebar.querySelector('button[title="Expenses"]').dispatchEvent(
+        new MouseEvent('click', { bubbles: true, ctrlKey: true }),
+      )
+      await settle()
+      host.querySelector('main [title="Remove Income filter"]').click()
+      await settle()
+      t.is(2, host.querySelectorAll('article').length)
+      t.is(1, sidebar.querySelectorAll('[aria-pressed="true"]').length)
+      sidebar.querySelector('[aria-label="Account filters"]').click()
+      await settle()
+      t.is(0, sidebar.querySelectorAll('[aria-pressed="true"]').length)
+      t.is('08', month.value)
+      return [4, host.querySelectorAll('article').length]
+    })
+  ),
+  t`tree expansion, draft inclusion, flat mode, and amounts do not clear account selection`(() =>
+    fixture(async (host) => {
+      const sidebar = host.querySelector('aside')
+      sidebar.querySelector('button[title="Expenses:Office:Rent"]').click()
+      await settle()
+      sidebar.querySelector('button[aria-label="Collapse Expenses"]').click()
+      sidebar.querySelector('[role="switch"]').click()
+      await settle()
+      t.is(null, sidebar.querySelector('button[title="Expenses:Office:Rent"]'))
+      sidebar.querySelector('input[type="checkbox"]').click()
+      await settle()
+      const rent = sidebar.querySelector('button[title="Expenses:Office:Rent"]')
+      t.is('true', rent.getAttribute('aria-pressed'))
+      t.is('Expenses:Office:Rent', rent.textContent)
+      t.is('button', rent.type)
+      t.is(0, host.querySelectorAll('article').length)
+      rent.closest('[data-account-row]').lastElementChild.click()
+      await settle()
+      t.is('true', rent.getAttribute('aria-pressed'))
+      host.querySelector('#tab-ledger').click()
+      await settle()
+      return [1, host.querySelectorAll('article').length]
+    })
+  ),
+  t`new drafts and clear filters reset sidebar selection as well`(() =>
+    fixture(async (host) => {
+      const sidebar = host.querySelector('aside')
+      sidebar.querySelector('button[title="Income"]').click()
+      await settle()
+      button(host, 'Filter', true).click()
+      await settle()
+      button(host, 'Clear').click()
+      await settle()
+      t.is(0, sidebar.querySelectorAll('[aria-pressed="true"]').length)
+      sidebar.querySelector('button[title="Income"]').click()
+      await settle()
+      button(host, 'New transaction', true).click()
+      await settle()
+      t.is(0, sidebar.querySelectorAll('[aria-pressed="true"]').length)
+      t.is('Transaction description', document.activeElement.getAttribute('aria-label'))
+      return [2, host.querySelectorAll('article').length]
+    })
+  ),
+  t`account controls translate and filtering survives other pages`(() =>
+    fixture(async (host) => {
+      host.querySelector('aside button[title="Assets:Bank"]').click()
+      await settle()
+      host.querySelector('a[href="/accounts"]').click()
+      await settle()
+      host.querySelector('a[href="/transactions/drafts"]').click()
+      await settle()
+      const account = host.querySelector('aside button[title="Assets:Bank"]')
+      t.is('Filtrér på Assets:Bank', account.getAttribute('aria-label'))
+      t.is('true', account.getAttribute('aria-pressed'))
+      return [1, host.querySelectorAll('article').length]
+    }, { language: 'da', locale: 'da-DK', commodity: 'DKK' })
+  ),
+)
+
 t`sidebar and browser appearance`(
   t`the opaque sticky topbar matches the document background`(() =>
     fixture((host) => {

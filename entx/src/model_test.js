@@ -84,6 +84,36 @@ Deno.test('tabs partition transactions and combine with the active filters', () 
   assertEquals(transactionsForTab(transactions, 'drafts', { ...filters, year: '2025' }), [])
 })
 
+Deno.test('selected account paths match any selection and include descendants, not name prefixes', () => {
+  const transaction = (id, account) => ({
+    ...readyDraft(id),
+    legs: [{ account, amount: 1, commodity: 'DKK' }],
+  })
+  const transactions = [
+    transaction('a', ['Expenses', 'Office', 'Rent']),
+    transaction('b', ['Expenses', 'Office']),
+    transaction('c', ['Expenses', 'Office supplies']),
+    transaction('d', ['Income', 'Consulting']),
+  ]
+  const filters = {
+    year: '',
+    month: '',
+    day: '',
+    account: '',
+    text: '',
+    accounts: [['Expenses', 'Office'], ['Income']],
+  }
+  const ids = (patch = {}) =>
+    filterTransactions(transactions, { ...filters, ...patch }).map(({ id }) => id)
+  assertEquals(ids(), ['d', 'b', 'a'])
+  assertEquals(ids({ accounts: [['Expenses'], ['Expenses', 'Office']] }), ['c', 'b', 'a'])
+  assertEquals(ids({ accounts: [] }), ['d', 'c', 'b', 'a'])
+  assertEquals(ids({ year: '2025' }), [])
+  assertEquals(ids({ account: 'rent' }), ['a'])
+  assertEquals(ids({ text: 'does not match' }), [])
+  assertEquals(ids({ accounts: [['expenses']] }), [])
+})
+
 Deno.test('posting changes only the selected ready drafts and snapshots their contents', () => {
   const transactions = [readyDraft(), readyDraft('draft-b')]
   const posted = postDrafts(transactions, ['draft-a'], '2026-09-02T12:00:00Z')

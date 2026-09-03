@@ -187,6 +187,15 @@ export function filterTransactions(transactions, filters) {
         accountLabel(leg.account).toLocaleLowerCase().includes(accountNeedle)
       )
     )
+    .filter((transaction) =>
+      !filters.accounts?.length ||
+      transaction.legs.some(({ account }) =>
+        filters.accounts.some((selected) =>
+          selected.length <= account.length &&
+          selected.every((segment, index) => segment === account[index])
+        )
+      )
+    )
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id))
 }
 

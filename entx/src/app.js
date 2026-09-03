@@ -266,6 +266,11 @@ const AccountRow = s`div
 
   &:hover { background #f0f0f2 }
   &[data-root='true'] { margin-top 5; color #5a5a60; font-weight 720 }
+  &[data-selected='true'] { background #eae7fa; color #5146ad }
+
+  @media (forced-colors: active) {
+    &[data-selected='true'] { outline 1px solid Highlight; outline-offset -1px }
+  }
 `
 
 const AccountBranch = s`div
@@ -297,10 +302,22 @@ const AccountIndent = s`span
   flex none
 `
 
-const AccountName = s`span
+const AccountName = ButtonBase`
+  min-width 0
+  height 20
+  display block
+  padding 0
+  border 0
+  background transparent
+  color inherit
+  font inherit
+  text-align start
   overflow hidden
   text-overflow ellipsis
   white-space nowrap
+
+  &:hover { background transparent }
+  &:focus-visible { outline 2px solid #968eeb; outline-offset 2px }
 `
 
 const ChevronIcon = s`img
@@ -904,12 +921,28 @@ const App = s((_attrs, _children, context) => {
   let goPressedAt = 0
   let selectedId = transactions[0].id
   let selectionScrollRequest = 0
-  let filters = { year: '', month: '', day: '', account: '', text: '' }
+  const emptyFilters = () => ({ year: '', month: '', day: '', account: '', accounts: [], text: '' })
+  let filters = emptyFilters()
   let nextId = 2000
 
-  const activeFilters = () => Object.values(filters).filter(Boolean).length
+  const activeFilters = () =>
+    Object.values(filters).reduce(
+      (count, value) => count + (Array.isArray(value) ? value.length : Number(!!value)),
+      0,
+    )
   const visible = () => transactionsForTab(transactions, activeTab(), filters)
   const patchFilters = (patch) => filters = { ...filters, ...patch }
+  const selectAccount = (account, event) => {
+    const name = accountLabel(account)
+    const selected = filters.accounts.some((path) => accountLabel(path) === name)
+    patchFilters({
+      accounts: event.metaKey || event.ctrlKey
+        ? selected
+          ? filters.accounts.filter((path) => accountLabel(path) !== name)
+          : [...filters.accounts, account]
+        : [account],
+    })
+  }
   const selectedDrafts = () =>
     visible().filter(({ id, status }) => status === 'draft' && checkedDrafts.has(id))
   const rememberTab = () => {
@@ -926,7 +959,7 @@ const App = s((_attrs, _children, context) => {
   }
   const showDraft = (id, message) => {
     const hadFilters = activeFilters()
-    filters = { year: '', month: '', day: '', account: '', text: '' }
+    filters = emptyFilters()
     selectedId = id
     collapsed.delete(id)
     notice = { key: message, filtersCleared: !!hadFilters }
@@ -1177,6 +1210,11 @@ const App = s((_attrs, _children, context) => {
         id: 'accounts-sidebar',
         hidden: !i18n.preferences().sidebarVisible,
         'aria-label': t('liveBalance'),
+        onclick: (event) => {
+          if (!event.target.closest('[data-account-row], button, input, label, header, footer')) {
+            patchFilters({ accounts: [] })
+          }
+        },
       },
       SidebarHeader(
         SidebarTitleRow(
@@ -1203,6 +1241,7 @@ const App = s((_attrs, _children, context) => {
         ),
       ),
       AccountList(
+        { role: 'group', 'aria-label': t('accountFilters'), title: t('accountFilterHint') },
         balances
           .filter(({ account }) =>
             !tree ||
@@ -1219,7 +1258,14 @@ const App = s((_attrs, _children, context) => {
             const isCollapsed = collapsedAccounts.has(name)
 
             return AccountRow(
-              { key, data: { root: tree && account.length === 1 } },
+              {
+                key,
+                data: {
+                  accountRow: true,
+                  root: tree && account.length === 1,
+                  selected: filters.accounts.some((path) => accountLabel(path) === name),
+                },
+              },
               AccountBranch(
                 { style: { paddingLeft: `${indent}px` } },
                 tree
@@ -1245,7 +1291,14 @@ const App = s((_attrs, _children, context) => {
                     : AccountIndent()
                   : null,
                 AccountName(
-                  { title: name },
+                  {
+                    title: name,
+                    'aria-label': t('filterByAccount', { account: name }),
+                    'aria-pressed': String(
+                      filters.accounts.some((path) => accountLabel(path) === name),
+                    ),
+                    onclick: (event) => selectAccount(account, event),
+                  },
                   tree ? account.at(-1) : name,
                 ),
               ),
@@ -1334,7 +1387,7 @@ const App = s((_attrs, _children, context) => {
       ),
       Button({
         disabled: !activeFilters(),
-        onclick: () => filters = { year: '', month: '', day: '', account: '', text: '' },
+        onclick: () => filters = emptyFilters(),
       }, t('clear')),
     )
 
@@ -1349,6 +1402,7 @@ const App = s((_attrs, _children, context) => {
       filters.day && ['day', i18n.date(filters.day)],
       filters.account && ['account', filters.account],
       filters.text && ['text', `“${filters.text}”`],
+      ...filters.accounts.map((account) => ['accounts', accountLabel(account)]),
     ].filter(Boolean)
 
     return chips.length
@@ -1356,9 +1410,14 @@ const App = s((_attrs, _children, context) => {
         chips.map(([key, label]) =>
           Chip(
             {
-              key,
-              onclick: () => patchFilters({ [key]: '' }),
-              title: t('removeFilter', { filter: t(key) }),
+              key: `${key}:${label}`,
+              onclick: () =>
+                patchFilters({
+                  [key]: key === 'accounts'
+                    ? filters.accounts.filter((account) => accountLabel(account) !== label)
+                    : '',
+                }),
+              title: t('removeFilter', { filter: key === 'accounts' ? label : t(key) }),
             },
             label,
             '×',
@@ -1586,7 +1645,7 @@ const App = s((_attrs, _children, context) => {
         ButtonBase({
           onclick: (event) => {
             event.stopPropagation()
-            filters = { year: '', month: '', day: '', account: '', text: '' }
+            filters = emptyFilters()
             selectedId = transaction.correctionOf
             collapsed.delete(selectedId)
             navigateTab('ledger')
@@ -1735,7 +1794,7 @@ const App = s((_attrs, _children, context) => {
             ),
             activeFilters() &&
               QuietButton({
-                onclick: () => filters = { year: '', month: '', day: '', account: '', text: '' },
+                onclick: () => filters = emptyFilters(),
               }, t('clearFilters')),
           )),
         ),
@@ -1872,7 +1931,9 @@ const App = s((_attrs, _children, context) => {
         },
         SplitPanel.Start(
           { style: { overflow: 'visible' } },
-          sidebar(filterTransactions(transactions, filters)),
+          // Account selection narrows the ledger, not its own available choices
+          // or period balances. All other filters still apply to the sidebar.
+          sidebar(filterTransactions(transactions, { ...filters, accounts: [] })),
         ),
         SplitPanel.Divider({ 'aria-label': t('resizeAccounts'), style: { background: '#e6e6e8' } }),
         SplitPanel.End(

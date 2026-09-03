@@ -104,6 +104,10 @@ export const en = {
   postedOnly: 'Posted balances only',
   expandAccount: 'Expand {account}',
   collapseAccount: 'Collapse {account}',
+  accountFilters: 'Account filters',
+  filterByAccount: 'Filter by {account}',
+  accountFilterHint:
+    'Click an account to filter. Cmd/Ctrl-click to select more. Click empty space to clear.',
   year: 'Year',
   month: 'Month',
   day: 'Exact day',
@@ -310,6 +314,10 @@ export const da = {
   postedOnly: 'Kun bogførte saldi',
   expandAccount: 'Fold {account} ud',
   collapseAccount: 'Fold {account} sammen',
+  accountFilters: 'Kontofiltre',
+  filterByAccount: 'Filtrér på {account}',
+  accountFilterHint:
+    'Klik på en konto for at filtrere. Cmd/Ctrl-klik for at vælge flere. Klik på et tomt område for at rydde.',
   year: 'År',
   month: 'Måned',
   day: 'Bestemt dato',

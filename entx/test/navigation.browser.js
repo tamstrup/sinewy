@@ -420,6 +420,43 @@ t`Vim boundary shortcuts`(
 )
 
 t`sidebar account filters`(
+  ...['hover', 'active'].map((state) =>
+    t`account names keep the row colors on ${state}, including when selected`(() =>
+      fixture(async (host) => {
+        const account = host.querySelector('aside button[title="Assets"]')
+        const row = account.closest('[data-account-row]')
+        // Exercise the real generated cascade with equivalent-specificity states.
+        // Synthetic mouse events cannot activate native :hover or :active.
+        const states = document.createElement('style')
+        // Retain all rules and their order: selected-row rules follow hover rules.
+        states.textContent = [...document.styleSheets].flatMap((sheet) => [...sheet.cssRules])
+          .map((rule) =>
+            rule.cssText.replaceAll(':hover', '[data-test-hover]').replaceAll(
+              ':active',
+              '[data-test-active]',
+            )
+          )
+          .join('\n')
+        document.head.append(states)
+        try {
+          account.style.transition = 'none'
+          account.setAttribute(`data-test-${state}`, '')
+          row.setAttribute('data-test-hover', '')
+          t.is('rgba(0, 0, 0, 0)', getComputedStyle(account).backgroundColor)
+          t.is(getComputedStyle(row).color, getComputedStyle(account).color)
+          t.is('rgb(240, 240, 242)', getComputedStyle(row).backgroundColor)
+          account.click()
+          await settle()
+          t.is('true', account.getAttribute('aria-pressed'))
+          t.is('rgb(234, 231, 250)', getComputedStyle(row).backgroundColor)
+          t.is(getComputedStyle(row).color, getComputedStyle(account).color)
+          return ['rgba(0, 0, 0, 0)', getComputedStyle(account).backgroundColor]
+        } finally {
+          states.remove()
+        }
+      })
+    )
+  ),
   ...['metaKey', 'ctrlKey'].map((modifier) =>
     t`full account rows select through padding, balances, and names with ${modifier}`(() =>
       fixture(async (host) => {

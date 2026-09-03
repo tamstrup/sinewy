@@ -309,15 +309,12 @@ const AccountName = ButtonBase`
   display block
   padding 0
   border 0
-  background transparent
-  color inherit
   font inherit
   text-align start
   overflow hidden
   text-overflow ellipsis
   white-space nowrap
 
-  &:hover { background transparent }
   &:focus-visible { outline 2px solid #968eeb; outline-offset 2px }
 `
 
@@ -1295,6 +1292,8 @@ const App = s((_attrs, _children, context) => {
                 AccountName(
                   {
                     title: name,
+                    // The row owns hover/selection colors, not the ghost button.
+                    style: { background: 'transparent', color: 'inherit' },
                     'aria-label': t('filterByAccount', { account: name }),
                     'aria-pressed': String(
                       filters.accounts.some((path) => accountLabel(path) === name),

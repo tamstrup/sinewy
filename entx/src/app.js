@@ -842,17 +842,6 @@ const EmptyState = s`div
   text-align center
 `
 
-const KeyboardHint = s`footer
-  display flex
-  flex-wrap wrap
-  gap 13
-  margin-top 16
-  color #929298
-  font-size 10
-
-  span { display inline-flex; align-items center; gap 5 }
-`
-
 const Placeholder = s`section
   min-height 480
   display grid
@@ -1259,6 +1248,12 @@ const App = s((_attrs, _children, context) => {
       s.redraw()
     } else if (!canNavigate) {
       return
+    } else if (event.key === '<' || event.key === '>') {
+      event.preventDefault()
+      for (const { id } of visible()) {
+        event.key === '<' ? collapsed.add(id) : collapsed.delete(id)
+      }
+      s.redraw()
     } else if (event.key === 'G') {
       event.preventDefault()
       selectTransaction(visible().at(-1)?.id)
@@ -1321,6 +1316,7 @@ const App = s((_attrs, _children, context) => {
           {
             id: 'shortcut-toggle',
             size: '1',
+            style: { minHeight: '28px', padding: '5px 9px' },
             'aria-controls': 'shortcut-panel',
             'aria-expanded': String(shortcutPath !== null),
             onclick: () =>
@@ -1946,20 +1942,6 @@ const App = s((_attrs, _children, context) => {
               }, t('clearFilters')),
           )),
         ),
-      ),
-      KeyboardHint(
-        s`span`(Key('g'), t('shortcuts')),
-        s`span`(Key('g d'), t('drafts')),
-        s`span`(Key('g l'), t('ledger')),
-        s`span`(Key('J'), Key('K'), t('navigate')),
-        s`span`(Key('h'), t('collapse')),
-        s`span`(Key('l'), t('expand')),
-        s`span`(Key('g g'), t('firstTransaction')),
-        s`span`(Key('⇧ G'), t('lastTransaction')),
-        s`span`(Key('↵'), t('collapseExpand')),
-        s`span`(Key('/'), t('search')),
-        s`span`(Key('N'), t('newTransaction')),
-        isDrafts && s`span`(Key('⌘ / Ctrl ↵'), t('reviewSelectedHint')),
       ),
     ]
   }

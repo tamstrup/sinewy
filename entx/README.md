@@ -44,6 +44,8 @@ will be decided later.
 - `Enter` collapses or expands the selected transaction.
 - `h` collapses the selected transaction; `l` expands it. Repeated presses keep the requested state;
   `g l` still opens the Ledger.
+- `<` collapses all transactions in the current filtered view; `>` expands them. These direct
+  shortcuts are intentionally absent from the shortcut guide.
 
 ## Transaction workflow
 

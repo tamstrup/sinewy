@@ -422,6 +422,23 @@ t`Vim boundary shortcuts`(
 )
 
 t`discoverable shortcut guide`(
+  ...['en', 'da'].map((language) =>
+    t`the ${language} shortcut launcher has padding and replaces the footer hints`(() =>
+      fixture(async (host) => {
+        const toggle = host.querySelector('#shortcut-toggle')
+        const style = getComputedStyle(toggle)
+        t.is('5px', style.paddingTop)
+        t.is('5px', style.paddingBottom)
+        t.is('9px', style.paddingLeft)
+        t.is('9px', style.paddingRight)
+        t.is(true, toggle.getBoundingClientRect().height >= 28)
+        t.is(0, host.querySelectorAll('main footer kbd').length)
+        toggle.click()
+        await settle()
+        return [true, host.querySelector('#shortcut-panel').matches(':popover-open')]
+      }, { language, locale: language === 'en' ? 'en-GB' : 'da-DK', commodity: 'DKK' })
+    )
+  ),
   t`g opens a nonmodal guide without moving ledger focus; sections and back are discoverable`(() =>
     fixture(async (host) => {
       const panel = host.querySelector('[role="tabpanel"]')
@@ -948,6 +965,119 @@ t`sidebar and browser appearance`(
 )
 
 t`Vim expand and collapse`(
+  ...['drafts', 'ledger'].map((tab) =>
+    t`< and > collapse and expand every ${tab} transaction idempotently`(() =>
+      fixture(
+        async (host) => {
+          if (tab === 'drafts') button(host, 'New transaction', true).click()
+          else host.querySelector('#tab-ledger').click()
+          await settle()
+          const panel = host.querySelector('[role="tabpanel"]')
+          panel.focus()
+          const toggles = () =>
+            [...host.querySelectorAll('article')]
+              .map((row) => row.querySelector('button[aria-expanded]'))
+          const assertExpanded = (expanded) => {
+            t.is(tab === 'drafts' ? 2 : 7, toggles().length)
+            for (const toggle of toggles()) {
+              t.is(String(expanded), toggle.getAttribute('aria-expanded'))
+            }
+          }
+          assertExpanded(true)
+          for (const repeat of [false, true]) {
+            key(panel, '<', { repeat })
+            await settle()
+            assertExpanded(false)
+          }
+          for (const repeat of [false, true]) {
+            key(panel, '>', { shiftKey: true, repeat })
+            await settle()
+            assertExpanded(true)
+          }
+          return [panel, document.activeElement]
+        },
+        undefined,
+        `/transactions/${tab}`,
+      )
+    )
+  ),
+  t`bulk expansion only affects the current filtered view and tolerates no matches`(() =>
+    fixture(
+      async (host) => {
+        button(host, 'Filter', true).click()
+        await settle()
+        const search = host.querySelector('[data-filter-text]')
+        const panel = host.querySelector('[role="tabpanel"]')
+        const states = () =>
+          [...host.querySelectorAll('article')]
+            .map((row) => row.querySelector('button[aria-expanded]').getAttribute('aria-expanded'))
+        input(search, 'invoice')
+        await settle()
+        key(panel, '<', { shiftKey: true })
+        await settle()
+        t.is('false,false', states().join(','))
+        input(search, '')
+        await settle()
+        t.is(5, states().filter((state) => state === 'true').length)
+        key(panel, '<')
+        await settle()
+        input(search, 'invoice')
+        await settle()
+        key(panel, '>')
+        await settle()
+        t.is('true,true', states().join(','))
+        input(search, '')
+        await settle()
+        t.is(5, states().filter((state) => state === 'false').length)
+        input(search, 'no matching transactions')
+        await settle()
+        key(panel, '<')
+        key(panel, '>')
+        await settle()
+        return [0, states().length]
+      },
+      undefined,
+      '/transactions/ledger',
+    )
+  ),
+  t`bulk shortcuts ignore typing, modifiers, and the open shortcut guide`(() =>
+    fixture(async (host) => {
+      const description = host.querySelector('[data-description]')
+      const panel = host.querySelector('[role="tabpanel"]')
+      const expanded = () =>
+        host.querySelector('article button[aria-expanded]')
+          .getAttribute('aria-expanded')
+      description.focus()
+      key(description, '<')
+      await settle()
+      t.is('true', expanded())
+      panel.focus()
+      for (
+        const modifiers of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, {
+          isComposing: true,
+        }]
+      ) {
+        key(panel, '<', modifiers)
+      }
+      await settle()
+      t.is('true', expanded())
+      key(panel, 'g')
+      await settle()
+      key(panel, '<')
+      await settle()
+      t.is('true', expanded())
+      t.is(0, host.querySelectorAll('[data-shortcut-key="<"], [data-shortcut-key=">"]').length)
+      key(panel, 'Escape')
+      await settle()
+      key(panel, '<')
+      await settle()
+      key(panel, 'g')
+      await settle()
+      key(panel, '>')
+      await settle()
+      return ['false', expanded()]
+    })
+  ),
   ...['drafts', 'ledger'].map((tab) =>
     t`h collapses and l expands the selected ${tab} transaction idempotently`(() =>
       fixture(async (host) => {

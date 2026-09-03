@@ -652,6 +652,24 @@ t`localization`(
       return ['Assets:Bank', account.value]
     })
   ),
+  t`account suggestions remain open while focused across redraws`(() =>
+    fixture(async (host) => {
+      const account = host.querySelector('input[aria-label="Account"]')
+      account.focus()
+      account.dispatchEvent(new FocusEvent('focus'))
+      await settle()
+      const popup = host.querySelector(`#${account.getAttribute('aria-controls')}`)
+      await s.redraw()
+      await new Promise((resolve) => setTimeout(resolve, 600))
+      t.is(account, document.activeElement)
+      t.is('true', account.getAttribute('aria-expanded'))
+      t.is(true, popup.matches(':popover-open'))
+      host.querySelector('[data-description]').focus()
+      account.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
+      await settle()
+      return [false, popup.matches(':popover-open')]
+    })
+  ),
   t`first visit defaults to Danish and new draft focus is language independent`(() =>
     fixture(async (host) => {
       t.is('da', document.documentElement.lang)
@@ -817,12 +835,15 @@ async function fixture(
   history.replaceState(null, '', path)
   const host = document.createElement('div')
   document.body.append(host)
-  const mounted = s.mount(host, App)
+  let active = true
+  const mounted = s.mount(host, () => active ? App() : null)
   try {
     await settle()
     return await run(host)
   } finally {
     host.querySelector('dialog[open]')?.close()
+    active = false
+    await s.redraw()
     mounted.unmount()
     host.remove()
     history.replaceState(null, '', url)

@@ -44,7 +44,9 @@ function syncPopup(state) {
   const open = element.matches(':popover-open')
   if (state.open && !open) {
     element.hidden = false
-    element.showPopover()
+    // The input/control is outside the popup. Associate it with the native
+    // popover so a click that focuses it is not treated as light dismissal.
+    element.showPopover({ source: state.input || state.control })
   } else if (!state.open && open) {
     element.hidePopover()
   }

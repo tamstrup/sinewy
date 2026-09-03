@@ -27,6 +27,40 @@ t`combobox`(
     return [true, items[2].hidden]
   })),
 
+  t`associates the native popup with its input and retains it across redraws`(() => withCombobox({}, async({ input, content }) => {
+    const show = content.showPopover.bind(content)
+    let source
+    content.showPopover = options => {
+      source = options?.source
+      return show(options)
+    }
+    input.focus()
+    // Background headless tabs can change activeElement without delivering focus.
+    input.dispatchEvent(new FocusEvent('focus'))
+    await settle()
+    t.is(input, source)
+    await s.redraw()
+    await new Promise(resolve => setTimeout(resolve, 600))
+    t.is(input, document.activeElement)
+    t.is('true', input.getAttribute('aria-expanded'))
+    t.is(true, content.matches(':popover-open'))
+    key(input, 'Escape')
+    await settle()
+    return [false, content.matches(':popover-open')]
+  })),
+
+  t`keeps input pointer interaction inside the control but dismisses outside it`(() => withCombobox({}, async({ host, input, content }) => {
+    input.focus()
+    input.dispatchEvent(new FocusEvent('focus'))
+    await settle()
+    input.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    await settle()
+    t.is(true, content.matches(':popover-open'))
+    host.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    await settle()
+    return [false, content.matches(':popover-open')]
+  })),
+
   t`selects one value and displays its text in the input`(() => withCombobox({}, async({ input, content, items }) => {
     input.focus()
     await settle()
@@ -144,7 +178,8 @@ t`combobox`(
 async function withCombobox(options, run) {
   const host = document.createElement('div')
   document.body.append(host)
-  const mounted = s.mount(host, () => Combobox(options.root || {},
+  let active = true
+  const mounted = s.mount(host, () => active ? Combobox(options.root || {},
     Combobox.Control(
       Combobox.Pills(options.pills || {}),
       Combobox.Input({ 'aria-label': 'Account' })
@@ -155,7 +190,7 @@ async function withCombobox(options, run) {
       Combobox.Item({ value: 'income', textValue: 'Income account', disabled: true }, 'Income account'),
       Combobox.Item({ value: 'bravo', textValue: 'Bravo account' }, 'Bravo account')
     )
-  ))
+  ) : null)
   const fixture = {
     host,
     input: host.querySelector('[role="combobox"]'),
@@ -165,8 +200,11 @@ async function withCombobox(options, run) {
   }
 
   try {
+    await settle()
     return await run(fixture)
   } finally {
+    active = false
+    await s.redraw()
     mounted.unmount()
     host.remove()
   }

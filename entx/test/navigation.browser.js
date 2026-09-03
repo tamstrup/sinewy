@@ -43,6 +43,18 @@ t`transaction workspace`(
       )
     )
   ),
+  t`primary toolbar action uses the solid Sinewy palette without an outlined border`(() =>
+    fixture((host) => {
+      const create = button(host, 'New transaction', true)
+      const filter = button(host, 'Filter', true)
+      t.is('solid', create.dataset.variant)
+      t.is('gray', create.dataset.color)
+      t.is('rgb(32, 32, 32)', getComputedStyle(create).backgroundColor)
+      t.is('rgb(252, 252, 252)', getComputedStyle(create).color)
+      t.is('rgba(0, 0, 0, 0)', getComputedStyle(create).borderTopColor)
+      return ['ghost', filter.dataset.variant]
+    })
+  ),
   ...['drafts', 'ledger'].flatMap((tab) =>
     ['mouse', 'keyboard'].map((method) =>
       t`new transaction focuses its description from ${tab} via ${method}`(() =>

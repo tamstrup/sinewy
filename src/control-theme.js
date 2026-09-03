@@ -113,12 +113,11 @@ function controlTheme(component) {
       color $sinewy-accent-1
     }
 
-    &[data-high-contrast][data-variant='solid']:hover:not(:disabled):not([data-disabled]),
-    &[data-high-contrast][data-variant='solid']:active:not(:disabled):not([data-disabled]),
-    &[data-high-contrast][data-variant='solid'][data-state='open'],
-    &[data-color='gray'][data-variant='solid']:hover:not(:disabled):not([data-disabled]),
-    &[data-color='gray'][data-variant='solid']:active:not(:disabled):not([data-disabled]),
-    &[data-color='gray'][data-variant='solid'][data-state='open'] {
+    &:is([data-high-contrast], [data-color='gray'])[data-variant='solid']:is(:hover, :active):not(:disabled):not([data-disabled]) {
+      background $sinewy-extreme
+    }
+
+    &:is([data-high-contrast], [data-color='gray'])[data-variant='solid'][data-state='open'] {
       background $sinewy-extreme
     }
 

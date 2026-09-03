@@ -400,16 +400,19 @@ const ButtonSurface = ButtonBase`
   font-weight 650
   cursor pointer
 
-  &:hover { border-color #ccccd0; background #fafafa }
+  &:hover:not([data-primary='true']):not(:disabled) { border-color #ccccd0; background #fafafa }
   &[data-active='true'] { border-color #cbc5f6; background #f1efff; color #4f45bd }
-  &[data-primary='true'] { border-color #1c1c1f; background #1c1c1f; color white }
-  &[data-primary='true']:hover { background #303035 }
+  &[data-primary='true'] { border-color transparent }
   &:disabled { opacity 0.44; cursor default }
 `
 
 // Override the compact adapter's inline minimum, not just its lower-priority CSS.
 const Button = s((attrs, children) =>
-  ButtonSurface({ ...attrs, style: { minHeight: '32px', ...attrs.style } }, children)
+  ButtonSurface({
+    variant: attrs.data?.primary ? 'solid' : 'ghost',
+    ...attrs,
+    style: { minHeight: '32px', ...attrs.style },
+  }, children)
 )
 
 const Key = s`kbd

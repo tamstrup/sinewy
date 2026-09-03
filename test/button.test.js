@@ -102,6 +102,31 @@ t`button`(
     return [true, focus?.style.outline.includes('3px')]
   })),
 
+  ...['light', 'dark'].flatMap(scheme => ['hover', 'active'].map(state =>
+    t`solid gray and high-contrast ${scheme} buttons retain endpoint colors on ${state}`(() => withButtons([
+      { color: 'gray', variant: 'solid', style: { transition: 'none' } },
+      { color: 'amber', variant: 'solid', highContrast: true, style: { transition: 'none' } },
+      { color: 'gray', variant: 'solid', disabled: true, style: { transition: 'none' } }
+    ], buttons => {
+      // Exercise the generated cascade with equivalent-specificity state attributes.
+      // Dispatching mouse events alone does not activate browser :hover/:active states.
+      const states = document.createElement('style')
+      states.textContent = cssRules().filter(rule => /:hover|:active/.test(rule.selectorText))
+        .map(rule => rule.cssText.replaceAll(':hover', '[data-test-hover]').replaceAll(':active', '[data-test-active]')).join('\n')
+      document.head.append(states)
+      try {
+        for (const button of buttons) {
+          button.parentElement.style.colorScheme = scheme
+          button.setAttribute('data-test-' + state, '')
+        }
+        const endpoint = scheme === 'light' ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)'
+        t.is(endpoint, getComputedStyle(buttons[1]).backgroundColor)
+        t.is(scheme === 'light' ? 'rgb(32, 32, 32)' : 'rgb(238, 238, 238)', getComputedStyle(buttons[2]).backgroundColor)
+        return [endpoint, getComputedStyle(buttons[0]).backgroundColor]
+      } finally { states.remove() }
+    }))
+  )),
+
   t`uses dark palette values and high contrast endpoints`(() => withButtons([
     { variant: 'soft', color: 'cyan' },
     { variant: 'solid', color: 'amber', highContrast: true }

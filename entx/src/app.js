@@ -57,6 +57,7 @@ s.css`
 
   button, input, select { font inherit }
   button { color inherit }
+  #shortcut-toggle[data-focus-restored]:focus-visible { outline none }
   ::selection { background #ddd6fe }
 `
 
@@ -1103,6 +1104,7 @@ const App = s((_attrs, _children, context) => {
         shortcutOrigin !== shell?.ownerDocument.body
       ? shortcutOrigin
       : shell?.querySelector('[role="tabpanel"], #shortcut-toggle')
+    if (target?.id === 'shortcut-toggle') target.dataset.focusRestored = ''
     target?.focus({ preventScroll: true })
   }
   const closeShortcuts = (restore = false) => {
@@ -2065,6 +2067,11 @@ const App = s((_attrs, _children, context) => {
           i18n.load()
           const keydown = (event) => {
             if (element.contains(event.target) || event.target === element.ownerDocument.body) {
+              if (event.key === 'Tab') {
+                element.querySelector('#shortcut-toggle[data-focus-restored]')?.removeAttribute(
+                  'data-focus-restored',
+                )
+              }
               onkeydown(event)
             }
           }

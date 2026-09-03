@@ -495,6 +495,36 @@ t`discoverable shortcut guide`(
       }, { language, locale: language === 'en' ? 'en-GB' : 'da-DK', commodity: 'DKK' })
     )
   ),
+  t`restoring focus after setting a year does not ring the shortcut launcher`(() =>
+    fixture(async (host) => {
+      const toggle = host.querySelector('#shortcut-toggle')
+      toggle.focus()
+      for (const letter of ['g', 'p', 'y']) key(toggle, letter)
+      await settle()
+      const dialog = host.querySelector('#shortcut-year-content')
+      dialog.querySelector('form').requestSubmit()
+      await settle()
+      t.is(toggle, document.activeElement)
+      t.is(true, toggle.hasAttribute('data-focus-restored'))
+      // Synthetic keyboard events do not activate the browser's native :focus-visible state.
+      const focusRules = document.createElement('style')
+      focusRules.textContent = [...document.styleSheets].flatMap((sheet) => [...sheet.cssRules])
+        .map((rule) => rule.cssText.replaceAll(':focus-visible', '[data-test-focus-visible]'))
+        .join('\n')
+      document.head.append(focusRules)
+      try {
+        toggle.setAttribute('data-test-focus-visible', '')
+        t.is('none', getComputedStyle(toggle).outlineStyle)
+        key(toggle, 'Tab')
+        t.is(false, toggle.hasAttribute('data-focus-restored'))
+        t.is('3px', getComputedStyle(toggle).outlineWidth)
+      } finally {
+        toggle.removeAttribute('data-test-focus-visible')
+        focusRules.remove()
+      }
+      return [false, toggle.hasAttribute('data-focus-restored')]
+    })
+  ),
   t`applying a year clears finer periods but retains account and text filters`(() =>
     fixture(async (host) => {
       host.querySelector('#tab-ledger').click()

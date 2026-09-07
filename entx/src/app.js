@@ -333,6 +333,14 @@ const ChevronIcon = s`img
   @media (prefers-reduced-motion: reduce) { transition none }
 `
 
+const AccountSeparator = s`img
+  display inline-block
+  width 12
+  height 12
+  margin 0 2px
+  vertical-align -2px
+`
+
 const AccountValue = s`span
   display grid
   justify-items end
@@ -1475,7 +1483,10 @@ const App = s((_attrs, _children, context) => {
                       filters.accounts.some((path) => accountLabel(path) === name),
                     ),
                   },
-                  tree ? account.at(-1) : name,
+                  tree ? account.at(-1) : account.map((segment, index) => [
+                    index > 0 && AccountSeparator({ src: CHEVRON_ICON, alt: '', 'aria-hidden': 'true' }),
+                    segment,
+                  ]),
                 ),
               ),
               AccountValue(

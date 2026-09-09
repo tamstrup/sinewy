@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prepare:grid": "esbuild src/query/grid-vendor.js --bundle --format=esm --platform=browser --outfile=src/query/grid-vendor.generated.js",
+    "prepare:grid": "node scripts/prepare-grid.js",
     "predev": "npm run prepare:grid",
     "dev": "sin dev",
     "prebuild": "npm run prepare:grid",

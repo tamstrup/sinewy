@@ -15,6 +15,7 @@ import { tags } from '@lezer/highlight'
 import {
   AG_GRID_LOCALE_DK,
   AG_GRID_LOCALE_EN,
+  agGridLicenseKey,
   AllEnterpriseModule,
   createGrid,
   LicenseManager,
@@ -122,8 +123,7 @@ export function createSqlEditor(element, { value, label, hint, onchange, onrun }
 }
 
 export function createResultsGrid(element, { i18n, result, state }) {
-  // Supply a key valid for ENTX before mounting. No other application's key is bundled.
-  const license = element.ownerDocument.defaultView.ENTX_AG_GRID_LICENSE_KEY
+  const license = element.ownerDocument.defaultView.ENTX_AG_GRID_LICENSE_KEY || agGridLicenseKey
   if (license) LicenseManager.setLicenseKey(license)
   const theme = themeQuartz.withParams({
     accentColor: '#655bd8',

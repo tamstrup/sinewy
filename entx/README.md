@@ -137,10 +137,12 @@ grid. The latest confirmation replaces the previous one. Toasts can be dismissed
 after five seconds, pausing while hovered, focused, or the window is inactive. Errors remain inline
 until resolved; important failures never depend on a temporary toast. Labels support both languages.
 
-The grid runs in Enterprise evaluation mode. A key found in another project was licensed only for
-that application and is not reused. Supply a valid ENTX license as `window.ENTX_AG_GRID_LICENSE_KEY`
-before the Query page mounts; keep private license configuration out of source control. Production
-use requires an appropriate license.
+Place the private AG Grid key in `license.js` at the ENTX root as a default-exported string.
+`prepare:grid` copies it to `src/query/license.generated.js` and includes it in the grid bundle.
+Both license files and the generated bundle are ignored by Git. Without the file, the grid runs in
+Enterprise evaluation mode. `window.ENTX_AG_GRID_LICENSE_KEY` can override the bundled key before
+the Query page mounts. The key is included in browser assets; production use requires an appropriate
+license.
 
 The npm dev/build/browser-test commands automatically bundle the grid dependency boundary with
 esbuild. This works around Sin's development import rewriter not handling all imports in AG Grid's

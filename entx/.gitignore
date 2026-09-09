@@ -1,3 +1,5 @@
 +build/
 .env
+license.js
+src/query/license.generated.js
 src/query/grid-vendor.generated.js

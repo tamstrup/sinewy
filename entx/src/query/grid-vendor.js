@@ -4,3 +4,4 @@
 export { createGrid, ModuleRegistry, themeQuartz } from 'ag-grid-community'
 export { AllEnterpriseModule, LicenseManager } from 'ag-grid-enterprise'
 export { AG_GRID_LOCALE_DK, AG_GRID_LOCALE_EN } from '@ag-grid-community/locale'
+export { default as agGridLicenseKey } from './license.generated.js'

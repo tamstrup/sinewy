@@ -15,20 +15,20 @@ currently no JavaScript positioning fallback.
 
 ## Local setup
 
-Sin.js has not been published yet. During development, `package.json` links the
-private sibling checkout at `../sin`:
+Use Node.js 22 LTS and install the locked dependencies:
 
 ```sh
-npm install
+npm ci
 ```
 
-The expected local layout is:
+Development uses a commit-pinned version of `tamstrup/sin` from GitHub. No sibling
+checkout is required. Sin's installation downloads its native server binary, so
+installation requires network access.
 
-```text
-personal/
-├── sin/
-└── sinewy/
-```
+Applications consuming Sinewy must provide Sin `1.0.0-rc.1` as a peer dependency.
+ENTX pins the same fork commit, allowing both packages to share one Sin instance.
+
+ENTX is maintained separately in [tamstrup/entx](https://github.com/tamstrup/entx).
 
 ## Documentation
 

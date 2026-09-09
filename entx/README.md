@@ -199,6 +199,17 @@ deno task dev
 ```
 
 The backend currently exposes `GET /api/health` on port 8000.
+Sin's server entry point, `+/index.js`, proxies `/api` and `/api/*` to that backend,
+preserving the request path and query string. Frontend requests can use relative URLs
+such as `fetch('/api/health')`.
+
+With both servers running, request `/api/health` on the frontend's development URL
+(use the port printed by Sin):
+
+```sh
+curl http://localhost:1337/api/health
+# {"status":"ok","service":"entx"}
+```
 
 ## Verify
 

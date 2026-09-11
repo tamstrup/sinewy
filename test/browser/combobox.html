@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Combobox pointer regression</title>
+<style>#outside { margin-top: 240px; }</style>
+<script type="importmap">
+  { "imports": { "sin": "/node_modules/sin/src/index.js" } }
+</script>
+<button id="before">Before</button>
+<div id="fixture"></div>
+<button id="outside">Outside</button>
+<script type="module">
+  import s from 'sin'
+  import Combobox from '/src/combobox.js'
+
+  let active = true
+  let disabled = false
+  const fixture = document.querySelector('#fixture')
+  s.mount(fixture, () => active ? Combobox({ disabled },
+    Combobox.Control(
+      Combobox.Input({ 'aria-label': 'Account', disabled })
+    ),
+    Combobox.Content(
+      Combobox.Item({ value: 'assets', textValue: 'Assets account' }, 'Assets account'),
+      Combobox.Item({ value: 'beta', textValue: 'Beta account' }, 'Beta account'),
+      Combobox.Item({ value: 'income', textValue: 'Income account', disabled: true }, 'Income account')
+    )
+  ) : null)
+  window.fixture = {
+    remove() { active = false; s.redraw() },
+    mount() { active = true; s.redraw() },
+    disable() { disabled = true; s.redraw() }
+  }
+  window.events = []
+  for (const type of ['pointerdown', 'focus', 'pointerup', 'pointercancel', 'click', 'beforetoggle', 'toggle']) {
+    document.addEventListener(type, event => {
+      window.events.push({
+        type, trusted: event.isTrusted, pointerType: event.pointerType,
+        target: event.target.id, newState: event.newState,
+        open: !!fixture.querySelector(':popover-open')
+      })
+    }, true)
+  }
+</script>
+</html>

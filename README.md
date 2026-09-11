@@ -66,6 +66,9 @@ npm run button-demo
 npm test
 ```
 
+Browser tests use an installed Google Chrome. Run the trusted mouse, keyboard,
+and touch Combobox regressions separately with `npm run test:pointer`.
+
 ## Imports
 
 ```js

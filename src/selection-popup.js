@@ -14,9 +14,23 @@ function mountPopup(state, element) {
     state.editing = false
     s.redraw()
   }
+  const escape = event => {
+    if (state.selectOnly || !state.open || event.defaultPrevented || event.key !== 'Escape')
+      return
+    if (!state.control?.contains(event.target) && !element.contains(event.target))
+      return
+    event.preventDefault()
+    if (element.contains(event.target))
+      state.input?.focus()
+    state.open = false
+    state.activeId = undefined
+    state.editing = false
+    s.redraw()
+  }
   view.addEventListener('resize', position)
   view.addEventListener('scroll', position, true)
-  element.ownerDocument.addEventListener('pointerdown', dismiss)
+  element.ownerDocument.addEventListener('pointerdown', dismiss, true)
+  element.ownerDocument.addEventListener('keydown', escape)
   const observer = new ResizeObserver(position)
   observer.observe(element)
   // Control may follow Content in DOM order for correct SSR option labels.
@@ -28,7 +42,8 @@ function mountPopup(state, element) {
   return () => {
     view.removeEventListener('resize', position)
     view.removeEventListener('scroll', position, true)
-    element.ownerDocument.removeEventListener('pointerdown', dismiss)
+    element.ownerDocument.removeEventListener('pointerdown', dismiss, true)
+    element.ownerDocument.removeEventListener('keydown', escape)
     observer.disconnect()
     if (element.matches(':popover-open'))
       element.hidePopover()
@@ -44,8 +59,8 @@ function syncPopup(state) {
   const open = element.matches(':popover-open')
   if (state.open && !open) {
     element.hidden = false
-    // The input/control is outside the popup. Associate it with the native
-    // popover so a click that focuses it is not treated as light dismissal.
+    // Retain the native source association for focus navigation and anchoring.
+    // This alone does not exempt a text input from auto-popover light dismissal.
     element.showPopover({ source: state.input || state.control })
   } else if (!state.open && open) {
     element.hidePopover()

@@ -172,6 +172,48 @@ function createSelection({ name = 'Combobox', selectOnly = false } = {}) {
 
   Combobox.Input = s(({}, [], context) => {
     const state = useCombobox(context, 'Input')
+    let pointer
+    let releasePointer = () => {}
+
+    function trackPointer(event, element) {
+      releasePointer()
+      pointer = event.pointerId
+      const doc = element.ownerDocument
+      const view = doc.defaultView
+      let timer
+      const finish = event => {
+        if (event.pointerId !== pointer)
+          return
+        // Touch may focus during pointerup. Keep deferring through its default
+        // action and click; a release without a click must also clear the guard.
+        if (event.type === 'pointercancel')
+          releasePointer()
+        else
+          timer = setTimeout(() => releasePointer(), 0)
+      }
+      releasePointer = () => {
+        clearTimeout(timer)
+        pointer = undefined
+        doc.removeEventListener('pointerup', finish, true)
+        doc.removeEventListener('pointercancel', finish, true)
+        view.removeEventListener('blur', releasePointer)
+      }
+      doc.addEventListener('pointerup', finish, true)
+      doc.addEventListener('pointercancel', finish, true)
+      view.addEventListener('blur', releasePointer)
+    }
+
+    function openInput(element) {
+      if (state.disabled || element.matches(':disabled'))
+        return
+      state.editing = true
+      state.open = true
+      state.activePill = undefined
+      if (!state.multiple) {
+        state.query = ''
+        element.select()
+      }
+    }
 
     return (attrs, [], context) => s`input`({
       ...attrs,
@@ -185,21 +227,33 @@ function createSelection({ name = 'Combobox', selectOnly = false } = {}) {
       'aria-expanded': String(state.open),
       'aria-activedescendant': state.open ? state.activeId : null,
       dom: compact([
-        element => state.input = element,
+        element => {
+          state.input = element
+          return () => {
+            releasePointer()
+            if (state.input === element)
+              state.input = undefined
+          }
+        },
         ...array(attrs.dom)
       ]),
+      onpointerdown: (event, element, elementAttrs, elementContext) => {
+        invokeHandler(attrs.onpointerdown, event, element, elementAttrs, elementContext)
+        if (!event.defaultPrevented && event.button === 0 && event.isPrimary && !state.disabled)
+          trackPointer(event, element)
+      },
       onfocus: (event, element, elementAttrs, elementContext) => {
         invokeHandler(attrs.onfocus, event, element, elementAttrs, elementContext)
-        if (event.defaultPrevented)
-          return
-
-        state.editing = true
-        state.open = true
-        state.activePill = undefined
-        if (!state.multiple) {
-          state.query = ''
-          element.select()
-        }
+        // Opening between trusted pointerdown and pointerup lets native light
+        // dismissal close the new popup. Keyboard/programmatic focus is immediate.
+        if (!event.defaultPrevented && pointer === undefined)
+          openInput(element)
+      },
+      onclick: (event, element, elementAttrs, elementContext) => {
+        releasePointer()
+        invokeHandler(attrs.onclick, event, element, elementAttrs, elementContext)
+        if (!event.defaultPrevented && !state.open && element.isConnected && element.ownerDocument.activeElement === element)
+          openInput(element)
       },
       oninput: (event, element, elementAttrs, elementContext) => {
         invokeHandler(attrs.oninput, event, element, elementAttrs, elementContext)
@@ -216,8 +270,10 @@ function createSelection({ name = 'Combobox', selectOnly = false } = {}) {
         if (!event.defaultPrevented)
           inputKeydown(state, event, element)
       },
-      onblur: (event, element, elementAttrs, elementContext) =>
+      onblur: (event, element, elementAttrs, elementContext) => {
+        releasePointer()
         invokeHandler(attrs.onblur, event, element, elementAttrs, elementContext)
+      }
     })
   })
 
@@ -232,7 +288,9 @@ function createSelection({ name = 'Combobox', selectOnly = false } = {}) {
       ...attrs,
       id: state.contentId,
       role: 'listbox',
-      popover: 'auto',
+      // Native light dismissal only recognizes button invokers, not text inputs.
+      // Searchable controls use our outside-pointer, focusout and Escape handling.
+      popover: state.selectOnly ? 'auto' : 'manual',
       hidden: state.open ? null : true,
       'aria-multiselectable': state.multiple ? 'true' : null,
       data: {

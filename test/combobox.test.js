@@ -8,6 +8,7 @@ t`combobox`(
   t`connects the input and listbox with accessible state`(() => withCombobox({}, ({ input, content, items }) => {
     t.is('combobox', input.getAttribute('role'))
     t.is('listbox', content.getAttribute('role'))
+    t.is('manual', content.getAttribute('popover'))
     t.is(content.id, input.getAttribute('aria-controls'))
     t.is('false', input.getAttribute('aria-expanded'))
     t.is(true, content.hidden)
@@ -70,6 +71,38 @@ t`combobox`(
     t.is('Beta account', input.value)
     t.is(true, content.hidden)
     return ['true', items[1].getAttribute('aria-selected')]
+  })),
+
+  t`honors consumer click cancellation after pointer focus`(() => {
+    let clicked = 0
+    return withCombobox({ input: { onclick: event => {
+      clicked++
+      event.preventDefault()
+    } } }, async({ input, content }) => {
+      input.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }))
+      input.focus()
+      input.dispatchEvent(new FocusEvent('focus'))
+      await settle()
+      t.is(false, content.matches(':popover-open'))
+      input.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 }))
+      input.click()
+      await settle()
+      t.is(1, clicked)
+      return [false, content.matches(':popover-open')]
+    })
+  }),
+
+  t`Escape from a multiple-selection pill still dismisses the popup`(() => withCombobox({
+    root: { multiple: true, defaultValue: ['assets'] }
+  }, async({ input, content, pills }) => {
+    input.focus()
+    input.dispatchEvent(new FocusEvent('focus'))
+    await settle()
+    pills()[0].focus()
+    key(pills()[0], 'Escape')
+    await settle()
+    t.is(pills()[0], document.activeElement)
+    return [false, content.matches(':popover-open')]
   })),
 
   t`resolves an initial stored value to its item text`(() => withCombobox({
@@ -182,7 +215,7 @@ async function withCombobox(options, run) {
   const mounted = s.mount(host, () => active ? Combobox(options.root || {},
     Combobox.Control(
       Combobox.Pills(options.pills || {}),
-      Combobox.Input({ 'aria-label': 'Account' })
+      Combobox.Input({ 'aria-label': 'Account', ...options.input })
     ),
     Combobox.Content(
       Combobox.Item({ value: 'assets', textValue: 'Assets account' }, 'Assets account'),

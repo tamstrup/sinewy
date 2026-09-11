@@ -175,8 +175,7 @@ SplitPanel.Divider = s(({
     'aria-disabled': String(config.disabled), data: { ...data, splitDivider: '' },
     dom: [element => { state.divider = element; state.schedule() }, ...array(dom)],
     onkeydown: handler(onkeydown, event => {
-      state.divider.removeAttribute('data-pointer-focus')
-      keyboard(state, event)
+      if (keyboard(state, event)) state.divider.removeAttribute('data-pointer-focus')
     }),
     onblur: handler(onblur, () => state.divider.removeAttribute('data-pointer-focus')),
     onpointerdown: handler(onpointerdown, event => {
@@ -324,6 +323,7 @@ function keyboard(state, event) {
   }
   // Keyboard steps deliberately do not snap: a nearby snap point must not trap arrow navigation.
   request(state, next, event)
+  return true
 }
 function readInput(state) {
   const { bind, positionInPixels, position } = state.attrs

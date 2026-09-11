@@ -32,7 +32,7 @@ const Handle = s`div
   cursor col-resize
   z-index 1
   outline-offset 2px
-  &[data-pointer-focus]:focus { outline none }
+  &[data-split-divider][data-pointer-focus]:focus-visible { outline none }
   &[aria-orientation='horizontal'] { cursor row-resize }
   &[aria-disabled='true'] { cursor default }
   &::before {

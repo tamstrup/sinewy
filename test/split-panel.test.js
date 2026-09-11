@@ -6,18 +6,30 @@ import { SplitPanel as Themed } from '../src/theme.js'
 t.timeout = 6000
 t`split panel`(
   t`pointer focus suppresses the ring without removing keyboard focus`(() => fixture({}, async(root) => {
-    start(root).querySelector('input').focus()
-    drag(root, 280)
-    await settle()
-    t.is(divider(root), document.activeElement)
-    t.is('none', getComputedStyle(divider(root)).outlineStyle)
-    key(root, 'ArrowRight'); await settle()
-    t.is(false, divider(root).hasAttribute('data-pointer-focus'))
-    // Synthetic keys cannot set :focus-visible; the marker must release its override.
-    // The native keyboard ring is additionally checked with real browser input.
-    drag(root, 280); await settle()
-    divider(root).dispatchEvent(new FocusEvent('blur'))
-    return [false, divider(root).hasAttribute('data-pointer-focus')]
+    // Synthetic events cannot activate native :focus-visible, so mirror those rules
+    // onto a test-only attribute while exercising the real component state.
+    const focusRules = document.createElement('style')
+    focusRules.textContent = [...document.styleSheets].flatMap(sheet => [...sheet.cssRules])
+      .map(rule => rule.cssText.replaceAll(':focus-visible', '[data-test-focus-visible]'))
+      .join('\n')
+    document.head.append(focusRules)
+    try {
+      start(root).querySelector('input').focus()
+      drag(root, 280)
+      await settle()
+      const handle = divider(root)
+      handle.setAttribute('data-test-focus-visible', '')
+      t.is(handle, document.activeElement)
+      t.is('none', getComputedStyle(handle).outlineStyle)
+      key(root, 'ArrowRight'); await settle()
+      t.is(false, handle.hasAttribute('data-pointer-focus'))
+      t.is('solid', getComputedStyle(handle).outlineStyle)
+      drag(root, 280); await settle()
+      handle.dispatchEvent(new FocusEvent('blur'))
+      return [false, handle.hasAttribute('data-pointer-focus')]
+    } finally {
+      focusRules.remove()
+    }
   }, Themed)),
   t`percentage layout, parts, accessible relationships, and theme`(() => fixture({}, async(root) => {
     near(300, start(root).getBoundingClientRect().width)

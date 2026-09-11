@@ -1,5 +1,14 @@
 import s from 'sin'
 
+const Popup = s`div
+  position fixed
+  inset auto
+  box-sizing border-box
+  width max-content
+  height auto
+  margin 0
+`
+
 // A top-layer list shared by both selection controls. Fixed positioning also
 // provides a geometry fallback in browsers without CSS anchor positioning.
 function mountPopup(state, element) {
@@ -82,16 +91,8 @@ function positionPopup(state) {
   // Safari's UA popover height is intrinsic, which stretches fixed grid
   // popovers (WebKit 270334). Use ordinary content height in every browser.
   // The trigger is a minimum width, not a cap on readable option labels.
-  Object.assign(element.style, {
-    position: 'fixed',
-    margin: '0',
-    inset: 'auto',
-    boxSizing: 'border-box',
-    height: 'auto',
-    width: 'max-content',
-    minWidth: Math.min(rect.width, maxWidth) + 'px',
-    maxWidth: maxWidth + 'px'
-  })
+  element.style.minWidth = Math.min(rect.width, maxWidth) + 'px'
+  element.style.maxWidth = maxWidth + 'px'
   const width = element.getBoundingClientRect().width
   const below = view.innerHeight - rect.bottom - gap - gutter
   const above = rect.top - gap - gutter
@@ -105,4 +106,4 @@ function positionPopup(state) {
   })
 }
 
-export { mountPopup, syncPopup }
+export { Popup, mountPopup, syncPopup }

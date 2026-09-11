@@ -106,7 +106,7 @@ import Component from '../component.js'
 
 ## Styling
 
-How to extend the component with Sin's tagged-template styles.
+Show how to extend the component with Sin's tagged-template styles. Use interpolation for values that change on redraw. Reserve `style` objects for consumer forwarding, generated property maps, or imperative browser geometry with a concrete benefit.
 
 ## API reference
 

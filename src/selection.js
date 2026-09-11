@@ -1,5 +1,5 @@
 import s from 'sin'
-import { mountPopup, syncPopup } from './selection-popup.js'
+import { Popup, mountPopup, syncPopup } from './selection-popup.js'
 import { invokeHandler, readState as readSelection, stateBinding as selectionState, syncBinding } from './control-state.js'
 // Shared, internal selection foundation for searchable and select-only controls.
 
@@ -284,7 +284,7 @@ function createSelection({ name = 'Combobox', selectOnly = false } = {}) {
     const state = useCombobox(context, 'Content')
     queueMicrotask(() => syncPopup(state))
 
-    return s`div`({
+    return Popup({
       ...attrs,
       id: state.contentId,
       role: 'listbox',

@@ -208,8 +208,8 @@ t`custom select`(
   }, async({ trigger, content, options }) => {
     trigger.click()
     await settle()
-    // An explicit override prevents Safari's intrinsic UA popover height.
-    t.is('auto', content.style.height)
+    // A component rule prevents Safari's intrinsic UA popover height.
+    t.is('', content.style.height)
     t.is('start', getComputedStyle(content).alignContent)
     const groups = Array.from(content.querySelectorAll('[role="group"]'))
     for (const group of groups) {

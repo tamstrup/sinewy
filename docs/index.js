@@ -351,6 +351,9 @@ const Progress = s`div
     background #7966dc
   }
 `
+const CompleteProgress = s`span
+  width 100%
+`
 
 const ComponentCard = s`a
   display grid
@@ -991,8 +994,8 @@ function Overview({}, [], { route, doc }) {
       Section(
         s`header`(s`h2`('Where things stand'), s`p`('The status here follows implemented and verified behavior, not a speculative component catalog.')),
         StatusGrid(
-          StatusCard(StatusTop(s`strong`('Portable reference'), Badge('Markdown')), s`p`('Component prose, API tables, and platform limits now come directly from the repository documents.'), Progress(s`span`({ style: { width: '100%' } }))),
-          StatusCard(StatusTop(s`strong`('Behavior suite'), Badge('Green')), s`p`('Browser, server rendering, hydration, submenu, and type declaration coverage are in place.'), Progress(s`span`({ style: { width: '100%' } }))),
+          StatusCard(StatusTop(s`strong`('Portable reference'), Badge('Markdown')), s`p`('Component prose, API tables, and platform limits now come directly from the repository documents.'), Progress(CompleteProgress())),
+          StatusCard(StatusTop(s`strong`('Behavior suite'), Badge('Green')), s`p`('Browser, server rendering, hydration, submenu, and type declaration coverage are in place.'), Progress(CompleteProgress())),
           StatusCard(StatusTop(s`strong`('Accessibility sign-off'), Badge({ data: { tone: 'manual' } }, 'Manual')), s`p`('Keyboard behavior is covered; supported-browser and assistive-technology verification remains.'))
         )
       ),
@@ -1203,16 +1206,32 @@ const ToastExample = s(() => {
   )
 })
 
+const PreviewSplitPanel = SplitPanel`
+  width 100%
+  height 320
+  --min 100px
+  --max calc(100% - 200px)
+  --divider-width 2px
+`
+const PreviewSplitPanelStart = SplitPanel.Start`
+  overflow auto
+`
+const PreviewVerticalSplitPanel = SplitPanel`
+  height 100%
+  --min 60px
+  --max calc(100% - 60px)
+`
+
 function SplitPanelPreview() {
   const content = text => s`div padding 20`(text)
   return s`section`(
     s`h2#live-example`('Live example'),
     s`p`('Drag either divider, or focus it and use arrow keys. Enter minimizes and restores the pane.'),
-    SplitPanel({ primary: 'start', defaultPositionInPixels: 200, color: 'indigo', style: { height: '320px', width: '100%', '--min': '100px', '--max': 'calc(100% - 200px)', '--divider-width': '2px' } },
-      SplitPanel.Start({ style: { overflow: 'auto' } }, content('Navigation — fixed pixel width')),
+    PreviewSplitPanel({ primary: 'start', defaultPositionInPixels: 200, color: 'indigo' },
+      PreviewSplitPanelStart(content('Navigation — fixed pixel width')),
       SplitPanel.Divider({ 'aria-label': 'Navigation' }),
       SplitPanel.End(
-        SplitPanel({ orientation: 'vertical', snap: '50%', style: { height: '100%', '--min': '60px', '--max': 'calc(100% - 60px)' } },
+        PreviewVerticalSplitPanel({ orientation: 'vertical', snap: '50%' },
           SplitPanel.Start(content('Editor — proportional height')),
           SplitPanel.Divider({ 'aria-label': 'Editor' }),
           SplitPanel.End(content('Results'))
@@ -1221,6 +1240,10 @@ function SplitPanelPreview() {
     )
   )
 }
+
+const PreviewCustomSelect = CustomSelect`
+  width 140
+`
 
 function CustomSelectPreview() {
   return s`section#live-example`(
@@ -1259,7 +1282,7 @@ const CustomSelectExample = s(() => {
       )
     ),
     s`div display flex; gap 12; flex-wrap wrap`(['1', '2', '3'].map(size =>
-      CustomSelect({ size, defaultValue: 'pear', 'aria-label': 'Size ' + size, style: { width: '140px' } }, produceOptions(CustomSelect))
+      PreviewCustomSelect({ size, defaultValue: 'pear', 'aria-label': 'Size ' + size }, produceOptions(CustomSelect))
     )),
     s`form display grid; gap 12`({
       onsubmit: event => {

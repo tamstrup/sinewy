@@ -44,7 +44,7 @@ t`combobox theme`(
     input.focus()
     key(input, 'ArrowDown')
     await settle()
-    t.is('auto', content.style.height)
+    t.is('', content.style.height)
     t.is('start', getComputedStyle(content).alignContent)
     return [true, content.getBoundingClientRect().width >= control.getBoundingClientRect().width]
   })),

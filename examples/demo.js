@@ -27,6 +27,9 @@ s.css`
 `
 
 const Menu = Dropdown.Content
+const UncappedMenu = Menu`
+  max-height none
+`
 const Submenu = Dropdown.SubContent
 const Item = Dropdown.Item
 const Checkbox = Dropdown.Checkbox
@@ -688,13 +691,11 @@ function EdgeCase({ label, corner, side, align, strategy, viewport }) {
   ].join(' ')
 
   return Dropdown(
-    PlacementTrigger({
-      style: {
-        position: viewport ? 'fixed' : 'absolute',
-        inset,
-        zIndex: viewport ? 20 : 'auto'
-      }
-    }, label),
+    PlacementTrigger`
+      position ${viewport ? 'fixed' : 'absolute'}
+      inset ${inset}
+      z-index ${viewport ? 20 : 'auto'}
+    `(label),
     Menu({
       side,
       align,
@@ -729,12 +730,10 @@ const MovingAnchorLab = s(() => {
     ),
     MovingStage(
       Dropdown(
-        PlacementTrigger({
-          style: {
-            position: 'absolute',
-            inset: '56px auto auto ' + position() + '%'
-          }
-        }, 'Moving anchor'),
+        PlacementTrigger`
+          position absolute
+          inset 56px auto auto ${position()}%
+        `('Moving anchor'),
         Menu({
           side: 'bottom',
           align: 'start',
@@ -757,11 +756,10 @@ const OversizedLab = s(() =>
     DemoStage(
       Dropdown(
         PlacementTrigger('Open 30-item menu'),
-        Menu({
+        UncappedMenu({
           side: 'bottom',
           align: 'start',
           offset: 7,
-          style: { maxHeight: 'none' },
           data: { demoMenu: '', evaluationMenu: '' }
         },
           Array.from({ length: 30 }, (_, index) =>

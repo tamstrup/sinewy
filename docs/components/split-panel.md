@@ -25,8 +25,13 @@ import s from 'sin'
 import { SplitPanel } from 'sinewy/theme'
 
 const position = s.live(35)
+const Workspace = SplitPanel`
+  height 320
+  --min 120px
+  --max calc(100% - 160px)
+`
 
-SplitPanel({ bind: position, style: { height: '320px', '--min': '120px', '--max': 'calc(100% - 160px)' } },
+Workspace({ bind: position },
   SplitPanel.Start({ id: 'navigation' }, 'Navigation'),
   SplitPanel.Divider({ 'aria-label': 'Navigation' }),
   SplitPanel.End('Content')
@@ -95,6 +100,20 @@ independently of orientation or text direction.
 | `color` | theme color | accent | Themed export only. |
 
 ## Styling
+
+Extend the root or any part with a Sin tagged template. Interpolation can supply values that change on redraw without moving ordinary styling into a `style` object:
+
+```js
+const panelHeight = s.live(320)
+const SidebarSplit = SplitPanel`
+  height ${panelHeight}
+  --min 12rem
+`
+
+const ScrollablePane = SplitPanel.Start`
+  overflow auto
+`
+```
 
 Root CSS properties: `--divider-width` (4px), `--divider-hit-area` (12px), `--min` (0px), and `--max`
 (100%). Constraints accept CSS lengths, percentages, and `calc()`, relative to the space available to

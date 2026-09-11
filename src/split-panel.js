@@ -62,7 +62,14 @@ const Limits = s`div
   contain strict
   top 0
   left 0
+  height 0
   > div { position absolute; top 0; left 0; height 0 }
+`
+const MinLimit = s`div
+  width clamp(0px, var(--min, 0px), 100%)
+`
+const MaxLimit = s`div
+  width clamp(0px, var(--max, 100%), 100%)
 `
 
 const SplitPanel = s((initial, [], context) => {
@@ -122,9 +129,13 @@ const SplitPanel = s((initial, [], context) => {
     state.schedule()
     const basis = state.pixels != null ? state.pixels + 'px'
       : `calc((100% - var(--divider-width, 4px)) * ${clamp(state.percent, 0, 100)} / 100)`
-    return Root({
+    const SizedRoot = Root`
+      --split-start ${primary === 'end' ? '1fr' : basis}
+      --split-end ${primary === 'end' ? basis : '1fr'}
+    `
+    return SizedRoot({
       ...attrs,
-      style: { ...style, '--split-start': primary === 'end' ? '1fr' : basis, '--split-end': primary === 'end' ? basis : '1fr' },
+      style,
       data: { ...data, splitPanel: '', orientation },
       dom: [element => {
         state.root = element
@@ -137,8 +148,8 @@ const SplitPanel = s((initial, [], context) => {
     },
       s({ context: childContext }, () => children),
       Limits({ 'aria-hidden': 'true', dom: element => { state.limits = element } },
-        s`div`({ style: { width: 'clamp(0px, var(--min, 0px), 100%)' } }),
-        s`div`({ style: { width: 'clamp(0px, var(--max, 100%), 100%)' } })
+        MinLimit(),
+        MaxLimit()
       )
     )
   }
@@ -221,7 +232,6 @@ function measure(state) {
   const size = Math.max(0, whole - padding - divider)
   if (!size) return // Preserve intent while hidden; never divide by zero.
   state.limits.style.width = size + 'px'
-  state.limits.style.height = '0px'
   const [min, max] = state.limits.children
   state.high = clamp(max.getBoundingClientRect().width, 0, size)
   state.low = clamp(min.getBoundingClientRect().width, 0, state.high)

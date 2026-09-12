@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "Generating documentation..."
+npm run generate
+git add -- +build docs/content.generated.js

@@ -83,6 +83,7 @@
     "predocs": "npm run docs:content",
     "docs": "sin dev docs/index.js",
     "docs:content": "node docs/build-content.js",
+    "hooks:install": "git config core.hooksPath .githooks",
     "pregenerate": "npm run docs:content",
     "generate": "sin generate docs/index.js",
     "demo": "sin dev examples/demo.js",

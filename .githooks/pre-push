@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "Checking generated documentation..."
+npm run generate
+
+if ! git diff --quiet -- +build docs/content.generated.js || \
+   ! git diff --cached --quiet -- +build docs/content.generated.js
+then
+  echo >&2 "Generated documentation changed. Commit +build and docs/content.generated.js before pushing."
+  exit 1
+fi

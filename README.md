@@ -42,6 +42,16 @@ Generate the static documentation routes with:
 npm run generate
 ```
 
+Install the repository hooks once per checkout:
+
+```sh
+npm run hooks:install
+```
+
+The pre-commit hook regenerates and stages `+build` and
+`docs/content.generated.js`. The pre-push hook rejects a push if those generated
+files differ from the committed versions.
+
 ## Dropdown demo
 
 ```sh
